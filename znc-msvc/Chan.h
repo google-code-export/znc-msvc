@@ -9,9 +9,9 @@
 #ifndef _CHAN_H
 #define _CHAN_H
 
+#include "main.h"
 #include "FileUtils.h"
 #include "Nick.h"
-#include "ZNCString.h"
 #include <map>
 #include <set>
 #include <vector>
@@ -25,7 +25,7 @@ class CUser;
 class CClient;
 // !Forward Declarations
 
-class CChan {
+class ZNC_API CChan {
 public:
 	typedef enum {
 		Voice	= '+',

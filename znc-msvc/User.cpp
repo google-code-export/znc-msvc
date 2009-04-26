@@ -54,6 +54,7 @@ CUser::CUser(const CString& sUserName) {
 	CZNC::Get().GetManager().AddCron(m_pMiscTimer);
 	m_sUserPath = CZNC::Get().GetUserPath() + "/" + sUserName;
 	m_sDLPath = GetUserPath() + "/downloads";
+	m_bModRepliesAsNotices = false;
 }
 
 CUser::~CUser() {

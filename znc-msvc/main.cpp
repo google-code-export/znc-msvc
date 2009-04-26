@@ -42,6 +42,7 @@ static void GenerateHelp(const char *appname) {
 	CUtils::PrintMessage("\t-d, --datadir      Set a different znc repository (default is ~/.znc)");
 }
 
+#ifndef _WIN32
 static void die(int sig) {
 	signal(SIGPIPE, SIG_DFL);
 
@@ -60,21 +61,58 @@ static void rehash(int sig) {
 	CUtils::PrintMessage("Caught SIGHUP");
 	CZNC::Get().SetNeedRehash(true);
 }
+#endif
 
 static bool isRoot() {
+#ifndef _WIN32
 	// User root? If one of these were root, we could switch the others to root, too
 	if (geteuid() == 0 || getuid() == 0)
 		return true;
+#endif
 
 	return false;
 }
+
+#ifdef ZNC_DLL_EXPORTS
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	return TRUE;
+}
+
+#ifdef _WIN32
+#include "openssl/applink.c"
+// for OpenSSL. see http://www.openssl.org/support/faq.html
+#endif
+
+#else
 
 int main(int argc, char** argv) {
 	CString sConfig;
 	CString sDataDir = "";
 
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
+#ifndef _WIN32
 	CUtils::SetStdoutIsTTY(isatty(1));
+#else
+	// Win32 doesn't support shell escape codes, so we do this.
+	CUtils::SetStdoutIsTTY(false);
+
+	CString sConsoleTitle = "ZNC " + CZNC::GetVersion();
+	SetConsoleTitle(sConsoleTitle.c_str());
+
+	// this prevents open()/read() and friends from stripping \r
+	// from files... simply adding _O_BINARY to the modes doesn't seem
+	// to be enough for some reason...
+	// if we don't do this, Template.cpp will break
+	// because it uses string.size() for file pos
+	// calculations.
+	_set_fmode(_O_BINARY);
+
+#ifdef HAVE_LIBSSL
+	CRYPTO_malloc_init();
+#endif
+#endif
 
 	int iArg, iOptIndex = -1;
 	bool bMakeConf = false;
@@ -191,6 +229,7 @@ int main(int argc, char** argv) {
 		sleep(30);
 	}
 
+#ifndef _WIN32
 	if (bForeground) {
 		int iPid = getpid();
 		CUtils::PrintMessage("Staying open for debugging [pid: " + CString(iPid) + "]");
@@ -252,6 +291,7 @@ int main(int argc, char** argv) {
 	sigaction(SIGBUS,  &sa, (struct sigaction*) NULL);
 	sigaction(SIGSEGV, &sa, (struct sigaction*) NULL);
 	sigaction(SIGTERM, &sa, (struct sigaction*) NULL);
+#endif
 
 	int iRet = 0;
 
@@ -283,3 +323,6 @@ int main(int argc, char** argv) {
 
 	return iRet;
 }
+
+#endif // ! ZNC_DLL_EXPORTS
+

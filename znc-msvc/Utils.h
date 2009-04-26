@@ -9,7 +9,7 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
-#include "ZNCString.h"
+#include "main.h"
 #include <assert.h>
 #include <cstdio>
 #include <fcntl.h>
@@ -34,16 +34,18 @@ using std::endl;
 
 static inline void SetFdCloseOnExec(int fd)
 {
+#ifndef _WIN32
 	int flags = fcntl(fd, F_GETFD, 0);
 	if (flags < 0)
 		return; // Ignore errors
 	// When we execve() a new process this fd is now automatically closed.
 	fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+#endif // ! _WIN32
 }
 
 static const char g_HexDigits[] = "0123456789abcdef";
 
-class CUtils {
+class ZNC_API CUtils {
 public:
 	CUtils();
 	~CUtils();
@@ -106,7 +108,7 @@ protected:
 };
 
 
-class CTable : protected vector<vector<CString> > {
+class ZNC_API CTable : protected vector<vector<CString> > {
 public:
 	CTable() {}
 	virtual ~CTable() {}
@@ -133,7 +135,7 @@ protected:
 #include <openssl/blowfish.h>
 #include <openssl/md5.h>
 //! does Blowfish w/64 bit feedback, no padding
-class CBlowfish {
+class ZNC_API CBlowfish {
 public:
 	/**
 	 * @param sPassword key to encrypt with
@@ -255,7 +257,7 @@ public:
 	 * @return true if item existed and was removed, false if it never existed
 	 */
 	bool RemItem(const K& Item) {
-		return m_mItems.erase(Item);
+		return (m_mItems.erase(Item) != 0);
 	}
 
 	/**

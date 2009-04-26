@@ -49,8 +49,39 @@
 		GMods.SetClient(pOldGClient);			\
 		UMods.SetClient(pOldUClient);								\
 	}
+# ifndef _WIN32
+#  define MODULE_FILE_EXT ".so"
+#  define MODULE_FILE_EXT_LEN 3
+ #else
+#  define MODULE_FILE_EXT ".dll"
+#  define MODULE_FILE_EXT_LEN 4
+# endif
 #else
 #define MODULECALL(macFUNC, macUSER, macCLIENT, macEXITER)
 #endif
+
+#ifdef _WIN32
+#if 0 // wtf, how is this supposed to work if I need the header file for NTDDI_WINXP but it also already defines NTDDI_VERSION !??
+#include <sdkddkver.h>
+#define NTDDI_VERSION NTDDI_WINXP
+#else
+#define WINVER		0x0501
+#define _WIN32_WINNT   0x0501
+#define _WIN32_WINDOWS 0x0501
+#define _WIN32_IE      0x0501
+#endif
+#define WIN32_LEAN_AND_MEAN
+#ifdef WIN_MSVC
+#define VC_EXTRALEAN
+#endif
+#endif
+
+#include "exports.h"
+
+#ifdef WIN_MSVC
+#include "znc_msvc.h"
+#endif
+
+#include "ZNCString.h"
 
 #endif // !_MAIN_H

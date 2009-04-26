@@ -20,6 +20,26 @@
 #  define O_BINARY	0
 #endif
 
+#ifdef _WIN32
+#  define fchmod(a, b)	0
+#  define chmod(a, b)	0
+
+#  define O_NOCTTY	0
+
+#  define LOCK_SH      1
+#  define LOCK_EX      2
+#  define LOCK_NB      4
+#  define LOCK_UN      8
+#  define LOCK_MAND    32
+#  define LOCK_READ    64
+#  define LOCK_WRITE   128
+#  define LOCK_RW      192
+#  define flock(a, b)  0
+
+#  define mkdir(a, b)	mkdir(a)
+#  define fsync(a)     _commit(a)
+#endif
+
 CFile::CFile() {
 	m_iFD = -1;
 }
@@ -95,12 +115,14 @@ bool CFile::FType(const CString sFileName, EFileTypes eType, bool bUseLstat) {
 			return S_ISBLK(st.st_mode);
 		case FT_FIFO:
 			return S_ISFIFO(st.st_mode);
+#ifndef _WIN32
 		case FT_LINK:
 			return S_ISLNK(st.st_mode);
 		case FT_SOCK:
 			return S_ISSOCK(st.st_mode);
 		default:
 			break;
+#endif
 	}
 	return false;
 }
@@ -178,12 +200,21 @@ bool CFile::Delete(const CString& sFileName) {
 }
 
 bool CFile::Move(const CString& sOldFileName, const CString& sNewFileName, bool bOverwrite) {
+#ifndef WIN_MSVC
 	if ((!bOverwrite) && (CFile::Exists(sNewFileName))) {
 		return false;
 	}
 
 	//CString sNewLongName = (sNewFileName[0] == '/') ? sNewFileName : m_sPath + "/" + sNewFileName;
 	return (rename(sOldFileName.c_str(), sNewFileName.c_str()) == 0) ? true : false;
+#else
+	// msvc's rename() doesn't seem to overwrite files. d'oh.
+
+	DWORD dFlags = MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED;
+	if(bOverwrite) dFlags |= MOVEFILE_REPLACE_EXISTING;
+	
+	return (MoveFileEx(sOldFileName.c_str(), sNewFileName.c_str(), dFlags) != 0);
+#endif
 }
 
 bool CFile::Copy(const CString& sOldFileName, const CString& sNewFileName, bool bOverwrite) {
@@ -425,6 +456,48 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 		return sHomeDir;
 	}
 
+	CString sActualPath = sPath;
+
+#ifdef _WIN32
+	if(!PathIsRelative(sAdd.c_str()))
+	{
+		return sAdd;
+	}
+
+	if(PathIsRelative(sPath.c_str()))
+	{
+		char szPathBuffer[1024];
+		char szPathFixed[1024];
+		char *localDir;
+
+		if(!_get_pgmptr(&localDir))
+		{
+			strcpy_s(szPathFixed, 1024, sPath.c_str());
+			if(szPathFixed[strlen(szPathFixed) - 1] == '/') szPathFixed[strlen(szPathFixed) - 1] = 0;
+
+			strcpy_s(szPathBuffer, 1024, localDir); // don't modify the string from _get_pgmptr directly...
+			PathRemoveFileSpec(szPathBuffer);
+
+			if(PathIsDirectory(szPathBuffer))
+			{
+				PathCombine(szPathBuffer, szPathBuffer, szPathFixed);
+				sActualPath = szPathBuffer;
+
+				for(CString::size_type p = 0; p < sActualPath.size(); p++)
+				{
+					if(sActualPath[p] == '\\') sActualPath[p] = '/';
+				}
+
+				if(!sActualPath.empty() && sActualPath[sActualPath.size() - 1] != '/' &&
+					!sPath.empty() && sPath[sPath.size() - 1] == '/')
+				{
+					sActualPath += '/';
+				}
+			}
+		}
+	}
+#endif
+
 	CString sAddDir = sAdd;
 
 	if (sAddDir.Left(2) == "~/") {
@@ -432,7 +505,7 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 		sAddDir = sHomeDir + sAddDir;
 	}
 
-	CString sRet = ((sAddDir.size()) && (sAddDir[0] == '/')) ? "" : sPath;
+	CString sRet = ((sAddDir.size()) && (sAddDir[0] == '/')) ? "" : sActualPath;
 	sAddDir += "/";
 	CString sCurDir;
 
@@ -461,6 +534,17 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 }
 
 bool CDir::MakeDir(const CString& sPath, mode_t iMode) {
+#ifdef _WIN32
+	if (sPath.empty())
+		return false;
+
+	CString sFixedPath = sPath;
+	sFixedPath.Replace("//", "\\");
+
+	int iResult = SHCreateDirectoryEx(0, sFixedPath.c_str(), NULL);
+
+	return (iResult == ERROR_SUCCESS || iResult == ERROR_FILE_EXISTS || iResult == ERROR_ALREADY_EXISTS);
+#else
 	CString sDir;
 	VCString dirs;
 	VCString::iterator it;
@@ -496,8 +580,10 @@ bool CDir::MakeDir(const CString& sPath, mode_t iMode) {
 
 	// All went well
 	return true;
+#endif
 }
 
+#ifndef _WIN32
 int CExecSock::popen2(int & iReadFD, int & iWriteFD, const CString & sCommand) {
 	int rpipes[2] = { -1, -1 };
 	int wpipes[2] = { -1, -1 };
@@ -564,3 +650,4 @@ void CExecSock::close2(int iPid, int iReadFD, int iWriteFD) {
 	}
 	return;
 }
+#endif // ! _WIN32

@@ -1,5 +1,3 @@
-/* C implementation by Christophe Devine, C++ "class-ified" by [T3] */
-
 #ifndef _MD5_H
 #define _MD5_H
 
@@ -14,6 +12,17 @@ using std::string;
 #define uint32 unsigned long int
 #endif
 
+#ifdef HAVE_LIBSSL
+
+// MD5 OpenSSL patch by flakes. Thanks!
+
+#define md5_context MD5_CTX
+#include <openssl/md5.h>
+
+#else
+
+/* C implementation by Christophe Devine, C++ "class-ified" by [T3] */
+
 typedef struct
 {
     uint32 total[2];
@@ -21,6 +30,8 @@ typedef struct
     uint8 buffer[64];
 }
 md5_context;
+
+#endif
 
 class CMD5 {
 protected:
@@ -49,8 +60,10 @@ protected:
 	void md5_update( md5_context *ctx, const uint8 *input, uint32 length ) const;
 	void md5_finish( md5_context *ctx, uint8 digest[16] ) const;
 
+#ifndef HAVE_LIBSSL
 private:
 	void md5_process( md5_context *ctx, const uint8 data[64] ) const;
+#endif
 };
 
 #endif /* _MD5_H */

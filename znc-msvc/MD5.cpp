@@ -37,6 +37,27 @@ CMD5::CMD5(const char* szText, uint32 nTextLen) {
 
 CMD5::~CMD5() {}
 
+#ifdef HAVE_LIBSSL
+
+void CMD5::md5_starts(md5_context *ctx) const
+{
+	MD5_Init(ctx);
+}
+
+void CMD5::md5_update(md5_context *ctx, const uint8 *input, uint32 length) const
+{
+	MD5_Update(ctx, input, length);
+}
+
+void CMD5::md5_finish(md5_context *ctx, uint8 digest[16]) const
+{
+	MD5_Final(digest, ctx);
+}
+
+#else
+
+/* C implementation by Christophe Devine, C++ "class-ified" by [T3] */
+
 #define GET_UINT32(n,b,i) {                 \
 	(n) = ((uint32) (b)[(i)    ]      )     \
 	    | ((uint32) (b)[(i) + 1] <<  8)     \
@@ -245,6 +266,8 @@ void CMD5::md5_finish(md5_context *ctx, uint8 digest[16]) const {
 	PUT_UINT32(ctx->state[2], digest,  8);
 	PUT_UINT32(ctx->state[3], digest, 12);
 }
+
+#endif
 
 char* CMD5::MakeHash(const char* szText, uint32 nTextLen) {
 	md5_context ctx;

@@ -35,6 +35,7 @@
 
 #ifndef _HAS_CSOCKET_
 #define _HAS_CSOCKET_
+#include <main.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -330,7 +331,7 @@ unsigned long long millitime();
 * @author Jim Hull <imaginos@imaginos.net>
 */
 
-class CCron
+class ZNC_API CCron
 {
 public:
 	CCron();
@@ -399,7 +400,7 @@ typedef int (*FPCertVerifyCB)( int, X509_STORE_CTX * );
 * @see TSocketManager
 * @author Jim Hull <imaginos@imaginos.net>
 */
-class Csock
+class ZNC_API Csock
 {
 public:
 	//! default constructor, sets a timeout of 60 seconds
@@ -885,7 +886,7 @@ public:
 	{
 		if( m_iLastCheckTimeoutTime == 0 )
 			return( 0 );
-		return( ( iNow > 0 ? iNow : time( NULL ) ) - m_iLastCheckTimeoutTime );
+		return (int)( ( iNow > 0 ? iNow : time( NULL ) ) - m_iLastCheckTimeoutTime );
 	}
 	time_t GetLastCheckTimeout() { return( m_iLastCheckTimeoutTime ); }
 
@@ -1555,11 +1556,10 @@ public:
 		SetSelectTimeout( iLowerBounds );
 		if( m_errno == SELECT_TIMEOUT )
 		{ // only do this if the previous call to select was a timeout
-			time_t iNow = time( NULL );
-			u_long iSelectTimeout = GetDynamicSleepTime( iNow, iMaxResolution );
+			unsigned int iSelectTimeout = (unsigned int)GetDynamicSleepTime( time(NULL), iMaxResolution );
 			iSelectTimeout *= 1000000;
-			iSelectTimeout = std::max( iLowerBounds, iSelectTimeout );
-			iSelectTimeout = std::min( iSelectTimeout, iUpperBounds );
+			iSelectTimeout = std::max<unsigned int>( iLowerBounds, iSelectTimeout );
+			iSelectTimeout = std::min<unsigned int>( iSelectTimeout, iUpperBounds );
 			if( iLowerBounds != iSelectTimeout )
 				SetSelectTimeout( iSelectTimeout );
 		}

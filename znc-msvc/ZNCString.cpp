@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "ZNCString.h"
+#include "main.h"
 #include "FileUtils.h"
 #include "MD5.h"
 #include "Utils.h"
@@ -892,12 +892,12 @@ CString CString::ToByteStr(unsigned long long d) {
 	return CString(d) + " B";
 }
 
-CString CString::ToTimeStr(unsigned long s) {
-	const unsigned long m = 60;
-	const unsigned long h = m * 60;
-	const unsigned long d = h * 24;
-	const unsigned long w = d * 7;
-	const unsigned long y = d * 365;
+CString CString::ToTimeStr(time_t s) {
+	const time_t m = 60;
+	const time_t h = m * 60;
+	const time_t d = h * 24;
+	const time_t w = d * 7;
+	const time_t y = d * 365;
 	CString sRet;
 
 #define TIMESPAN(time, str)			\
@@ -919,11 +919,11 @@ CString CString::ToTimeStr(unsigned long s) {
 }
 
 bool CString::ToBool() const { return (!Trim_n().Trim_n("0").empty() && !Trim_n().Equals("false")); }
-short CString::ToShort() const { return strtoul(this->c_str(), (char**) NULL, 10); }
-unsigned short CString::ToUShort() const { return strtoul(this->c_str(), (char**) NULL, 10); }
-unsigned int CString::ToUInt() const { return strtoul(this->c_str(), (char**) NULL, 10); }
-int CString::ToInt() const { return strtoul(this->c_str(), (char**) NULL, 10); }
-long CString::ToLong() const { return strtoul(this->c_str(), (char**) NULL, 10); }
+short CString::ToShort() const { return (short)strtol(this->c_str(), NULL, 10); }
+unsigned short CString::ToUShort() const { return (unsigned short)strtoul(this->c_str(), NULL, 10); }
+unsigned int CString::ToUInt() const { return strtoul(this->c_str(), NULL, 10); }
+int CString::ToInt() const { return strtol(this->c_str(), NULL, 10); }
+long CString::ToLong() const { return strtol(this->c_str(), NULL, 10); }
 unsigned long CString::ToULong() const { return strtoul(c_str(), NULL, 10); }
 unsigned long long CString::ToULongLong() const { return strtoull(c_str(), NULL, 10); }
 long long CString::ToLongLong() const { return strtoll(c_str(), NULL, 10); }

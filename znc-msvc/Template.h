@@ -79,7 +79,7 @@ protected:
 };
 
 
-class CTemplate : public MCString {
+class ZNC_API CTemplate : public MCString {
 public:
 	CTemplate() : MCString(), m_spOptions(new CTemplateOptions) {}
 	CTemplate(const CString& sFileName) : MCString(), m_sFileName(sFileName), m_spOptions(new CTemplateOptions) {}

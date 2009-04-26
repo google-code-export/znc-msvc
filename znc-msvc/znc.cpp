@@ -89,11 +89,19 @@ CString CZNC::GetVersion() {
 
 CString CZNC::GetTag(bool bIncludeVersion) {
 	if (!bIncludeVersion) {
+#ifndef _WIN32
 		return "ZNC - http://znc.sourceforge.net";
+#else
+		return "ZNC - http://znc.sourceforge.net (native Win32)";
+#endif
 	}
 
 	char szBuf[128];
-	snprintf(szBuf, sizeof(szBuf), "ZNC %1.3f"VERSION_EXTRA" - http://znc.sourceforge.net", VERSION);
+	snprintf(szBuf, sizeof(szBuf), "ZNC %1.3f"VERSION_EXTRA" - http://znc.sourceforge.net"
+#ifdef _WIN32
+		" (native Win32)"
+#endif
+		, VERSION);
 	// If snprintf overflows (which I doubt), we want to be on the safe side
 	szBuf[sizeof(szBuf) - 1] = '\0';
 
@@ -400,12 +408,16 @@ bool CZNC::IsHostAllowed(const CString& sHostMask) const {
 void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 	char *home;
 
+#ifndef _WIN32
 	// If the bin was not ran from the current directory, we need to add that dir onto our cwd
 	CString::size_type uPos = sArgvPath.rfind('/');
 	if (uPos == CString::npos)
 		m_sCurPath = "./";
 	else
 		m_sCurPath = CDir::ChangeDir("./", sArgvPath.Left(uPos), "");
+#else
+	m_sCurPath = CDir::ChangeDir("./", "", "");
+#endif
 
 	// Try to set the user's home dir, default to binpath on failure
 	home = getenv("HOME");
@@ -415,6 +427,7 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 		m_sHomePath = home;
 	}
 
+#ifndef _WIN32
 	if (m_sHomePath.empty()) {
 		struct passwd* pUserInfo = getpwuid(getuid());
 
@@ -422,6 +435,7 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 			m_sHomePath = pUserInfo->pw_dir;
 		}
 	}
+#endif
 
 	if (m_sHomePath.empty()) {
 		m_sHomePath = m_sCurPath;
@@ -574,6 +588,18 @@ bool CZNC::WriteConfig() {
 	m_LockFile.Sync();
 
 	// We wrote to a temporary name, move it to the right place
+#ifdef _WIN32
+	// on win32, we need to close the ~ temp file first.
+	m_LockFile.Close();
+
+	bool bResult = m_LockFile.Move(GetConfigFile(), true);
+
+	// re-open config to keep it from being deleted.
+	// aka restore state before entering this function.
+	m_LockFile.Open(GetConfigFile());
+
+	return bResult;
+#else
 	if (!m_LockFile.Move(GetConfigFile(), true))
 		return false;
 
@@ -581,6 +607,7 @@ bool CZNC::WriteConfig() {
 	m_LockFile.SetFileName(GetConfigFile());
 
 	return true;
+#endif
 }
 
 bool CZNC::WriteNewConfig(const CString& sConfigFile) {
@@ -1653,7 +1680,7 @@ bool CZNC::FindModPath(const CString& sModule, CString& sModPath,
 	CString sMod = sModule;
 	CString sDir = sMod;
 	if (sModule.find(".") == CString::npos)
-		sMod += ".so";
+		sMod += MODULE_FILE_EXT;
 
 	sDataPath = GetCurPath() + "/modules/";
 	sModPath = sDataPath + sMod;

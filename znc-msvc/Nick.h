@@ -9,7 +9,7 @@
 #ifndef _NICK_H
 #define _NICK_H
 
-#include "ZNCString.h"
+#include "main.h"
 #include <set>
 #include <vector>
 
@@ -21,7 +21,7 @@ class CUser;
 class CChan;
 // !Forward Decl
 
-class CNick
+class ZNC_API CNick
 {
 public:
 	CNick();

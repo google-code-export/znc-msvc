@@ -17,7 +17,7 @@ class CChan;
 class CUser;
 // !Forward Declarations
 
-class CIRCSock : public Csock {
+class ZNC_API CIRCSock : public Csock {
 public:
 	CIRCSock(CUser* pUser);
 	virtual ~CIRCSock();

@@ -9,8 +9,8 @@
 #ifndef _FILEUTILS_H
 #define _FILEUTILS_H
 
+#include "main.h"
 #include "Csocket.h"
-#include "ZNCString.h"
 #include <dirent.h>
 #include <map>
 #include <signal.h>
@@ -19,7 +19,7 @@
 using std::vector;
 using std::map;
 
-class CFile {
+class ZNC_API CFile {
 public:
 	CFile();
 	CFile(const CString& sLongName);
@@ -130,7 +130,7 @@ protected:
 	CString	m_sShortName;	//!< Filename alone, without path
 };
 
-class CDir : public vector<CFile*> {
+class ZNC_API CDir : public vector<CFile*> {
 public:
 
 	CDir(const CString& sDir) {
@@ -283,6 +283,8 @@ protected:
 	bool				m_bDesc;
 };
 
+#ifndef _WIN32
+
 //! @author imaginos@imaginos.net
 class CExecSock : public Csock {
 public:
@@ -315,4 +317,7 @@ public:
 private:
 	int			m_iPid;
 };
+
+#endif // !_WIN32
+
 #endif // !_FILEUTILS_H

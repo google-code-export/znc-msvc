@@ -28,7 +28,7 @@ class CJoinTimer;
 class CMiscTimer;
 class CServer;
 
-class CUser {
+class ZNC_API CUser {
 public:
 	CUser(const CString& sUserName);
 	~CUser();
@@ -144,6 +144,7 @@ public:
 	void SetJoinTries(unsigned int i) { m_uMaxJoinTries = i; }
 	void SetMaxJoins(unsigned int i) { m_uMaxJoins = i; }
 	void SetIRCConnectEnabled(bool b) { m_bIRCConnectEnabled = b; }
+	void SetModRepliesAsNotices(bool b) { m_bModRepliesAsNotices = b; }
 	// !Setters
 
 	// Getters
@@ -195,6 +196,7 @@ public:
 	unsigned long long BytesWritten() const { return m_uBytesWritten; }
 	unsigned int JoinTries() const { return m_uMaxJoinTries; }
 	unsigned int MaxJoins() const { return m_uMaxJoins; }
+	bool ModRepliesAsNotices() const { return m_bModRepliesAsNotices; }
 	// !Getters
 private:
 protected:
@@ -253,6 +255,7 @@ protected:
 	unsigned long long      m_uBytesWritten;
 	unsigned int		m_uMaxJoinTries;
 	unsigned int		m_uMaxJoins;
+	bool				m_bModRepliesAsNotices;
 
 #ifdef _MODULES
 	CModules*		m_pModules;
