@@ -317,11 +317,20 @@ void CClient::ReadLine(const CString& sData) {
 		}
 
 		if (sTarget.TrimPrefix(m_pUser->GetStatusPrefix())) {
-#ifdef _MODULES
 			if (!sTarget.Equals("status")) {
+#ifdef _MODULES
 				CALLMOD(sTarget, this, m_pUser, OnModNotice(sMsg));
-			}
+				
+				m_pUser->SetModRepliesAsNotices(true);
+				CALLMOD(sTarget, this, m_pUser, OnModCommand(sMsg));
+				m_pUser->SetModRepliesAsNotices(false);
 #endif
+			} else {
+				m_pUser->SetModRepliesAsNotices(true);
+				MODULECALL(OnStatusCommand(sMsg), m_pUser, this, return);
+				UserCommand(sMsg);
+				m_pUser->SetModRepliesAsNotices(false);
+			}
 			return;
 		}
 
@@ -760,7 +769,11 @@ unsigned int CClient::PutStatus(const CTable& table) {
 }
 
 void CClient::PutStatus(const CString& sLine) {
-	PutModule("status", sLine);
+	if(m_pUser->ModRepliesAsNotices()) {
+		PutModNotice("status", sLine);
+	} else {
+		PutModule("status", sLine);
+	}
 }
 
 void CClient::PutModNotice(const CString& sModule, const CString& sLine) {

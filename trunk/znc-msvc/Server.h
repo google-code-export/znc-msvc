@@ -9,9 +9,9 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include "ZNCString.h"
+#include "main.h"
 
-class CServer {
+class ZNC_API CServer {
 public:
 	CServer(const CString& sName, unsigned short uPort = 6667, const CString& sPass = "", bool bSSL = false);
 	~CServer();

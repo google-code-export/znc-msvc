@@ -13,7 +13,7 @@
 
 #include "Modules.h"
 
-class CHTTPSock : public CSocket {
+class ZNC_API CHTTPSock : public CSocket {
 public:
 	CHTTPSock(CModule *pMod);
 	CHTTPSock(CModule *pMod, const CString& sHostname, unsigned short uPort, int iTimeout = 60);

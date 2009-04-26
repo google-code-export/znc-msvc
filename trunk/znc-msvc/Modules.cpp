@@ -551,6 +551,8 @@ unsigned int CModule::PutModule(const CTable& table, const CString& sIdent, cons
 bool CModule::PutModule(const CString& sLine, const CString& sIdent, const CString& sHost) {
 	if (!m_pUser)
 		return false;
+	if(m_pUser->ModRepliesAsNotices())
+		return PutModNotice(sLine, sIdent, sHost);
 	return m_pUser->PutUser(":" + GetModNick() + "!" +
 		(sIdent.empty() ? GetModName() : sIdent) + "@" + sHost +
 		" PRIVMSG " + m_pUser->GetCurNick() + " :" + sLine,
@@ -982,12 +984,13 @@ void CModules::GetAvailableMods(set<CModInfo>& ssMods, bool bGlobal) {
 	unsigned int a = 0;
 	CDir Dir;
 
-	Dir.FillByWildcard(CZNC::Get().GetCurPath() + "/modules", "*.so");
+	Dir.FillByWildcard(CZNC::Get().GetCurPath() + "/modules", "*" MODULE_FILE_EXT);
+
 	for (a = 0; a < Dir.size(); a++) {
 		CFile& File = *Dir[a];
 		CString sName = File.GetShortName();
 		CModInfo ModInfo;
-		sName.RightChomp(3);
+		sName.RightChomp(MODULE_FILE_EXT_LEN);
 
 		if (GetModInfo(ModInfo, sName)) {
 			if (ModInfo.IsGlobal() == bGlobal) {
@@ -996,12 +999,13 @@ void CModules::GetAvailableMods(set<CModInfo>& ssMods, bool bGlobal) {
 		}
 	}
 
-	Dir.FillByWildcard(CZNC::Get().GetModPath(), "*.so");
+	Dir.FillByWildcard(CZNC::Get().GetModPath(), "*" MODULE_FILE_EXT);
+
 	for (a = 0; a < Dir.size(); a++) {
 		CFile& File = *Dir[a];
 		CString sName = File.GetShortName();
 		CModInfo ModInfo;
-		sName.RightChomp(3);
+		sName.RightChomp(MODULE_FILE_EXT_LEN);
 
 		if (GetModInfo(ModInfo, sName)) {
 			if (ModInfo.IsGlobal() == bGlobal) {
@@ -1010,12 +1014,13 @@ void CModules::GetAvailableMods(set<CModInfo>& ssMods, bool bGlobal) {
 		}
 	}
 
-	Dir.FillByWildcard(_MODDIR_, "*.so");
+	Dir.FillByWildcard(_MODDIR_, "*" MODULE_FILE_EXT);
+
 	for (a = 0; a < Dir.size(); a++) {
 		CFile& File = *Dir[a];
 		CString sName = File.GetShortName();
 		CModInfo ModInfo;
-		sName.RightChomp(3);
+		sName.RightChomp(MODULE_FILE_EXT_LEN);
 
 		if (GetModInfo(ModInfo, sName)) {
 			if (ModInfo.IsGlobal() == bGlobal) {

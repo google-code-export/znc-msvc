@@ -21,7 +21,7 @@ class CClient;
 class CClientTimeout;
 // !Forward Declarations
 
-class CAuthBase {
+class ZNC_API CAuthBase {
 public:
 	CAuthBase(const CString& sUsername, const CString& sPassword, const CString& sRemoteIP) {
 		SetLoginInfo(sUsername, sPassword, sRemoteIP);
@@ -67,7 +67,7 @@ protected:
 	CClient*	m_pClient;
 };
 
-class CClient : public Csock {
+class ZNC_API CClient : public Csock {
 public:
 	CClient(const CString& sHostname, unsigned short uPort, int iTimeout = 60) : Csock(sHostname, uPort, iTimeout) {
 		m_pUser = NULL;

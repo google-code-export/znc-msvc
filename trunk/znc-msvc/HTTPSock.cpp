@@ -342,7 +342,7 @@ CString CHTTPSock::GetErrorPage(unsigned int uStatusId, const CString& sStatusMs
 		"<html><head>\r\n<title>" + CString(uStatusId) + " " + sStatusMsg.Escape_n(CString::EHTML) + "</title>\r\n"
 		"</head><body>\r\n<h1>" + sStatusMsg.Escape_n(CString::EHTML) + "</h1>\r\n"
 		"<p>" + sMessage.Escape_n(CString::EHTML) + "</p>\r\n"
-		"<hr>\r\n<address>" + CZNC::GetTag().Escape_n(CString::EHTML) + " at " + GetLocalIP().Escape_n(CString::EHTML) + " Port " + CString(GetLocalPort()) + "</address>\r\n"
+		"<hr>\r\n<address>" + CZNC::GetTag(false).Escape_n(CString::EHTML) + " at " + GetLocalIP().Escape_n(CString::EHTML) + " Port " + CString(GetLocalPort()) + "</address>\r\n"
 		"</body></html>\r\n";
 }
 
@@ -356,7 +356,7 @@ bool CHTTPSock::ForceLogin() {
 	}
 
 	CString sPage = GetErrorPage(401, "Unauthorized", "You need to login to view this page.");
-	AddHeader("WWW-Authenticate", "Basic realm=\"" + CZNC::GetTag() + "\"");
+	AddHeader("WWW-Authenticate", "Basic realm=\"" + CZNC::GetTag(false) + "\"");
 	PrintHeader(sPage.length(), "text/html", 401, "Unauthorized");
 	Write(sPage);
 	Close(Csock::CLT_AFTERWRITE);
@@ -390,7 +390,7 @@ bool CHTTPSock::PrintHeader(off_t uContentLength, const CString& sContentType, u
 
 	Write("HTTP/" + CString(m_bHTTP10Client ? "1.0 " : "1.1 ") + CString(uStatusId) + " " + sStatusMsg + "\r\n");
 	//Write("Date: Tue, 28 Jun 2005 20:45:36 GMT\r\n");
-	Write("Server: " + CZNC::GetTag() + "\r\n");
+	Write("Server: " + CZNC::GetTag(false) + "\r\n");
 	if (uContentLength > 0) {
 		Write("Content-Length: " + CString(uContentLength) + "\r\n");
 	}

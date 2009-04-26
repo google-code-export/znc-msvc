@@ -50,7 +50,7 @@ static const unsigned char base64_table[256] = {
 	XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX,
 };
 
-class CString : public string {
+class ZNC_API CString : public string {
 public:
 	typedef enum {
 		EASCII,
@@ -130,7 +130,7 @@ public:
 
 	static CString ToPercent(double d);
 	static CString ToByteStr(unsigned long long d);
-	static CString ToTimeStr(unsigned long s);
+	static CString ToTimeStr(time_t s);
 
 	bool ToBool() const;
 	short ToShort() const;
@@ -164,7 +164,7 @@ private:
 protected:
 };
 
-class MCString : public map<CString, CString> {
+class ZNC_API MCString : public map<CString, CString> {
 public:
 	MCString() : map<CString, CString>() {}
 	virtual ~MCString() { clear(); }

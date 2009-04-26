@@ -42,7 +42,7 @@ void CUtils::GenerateCert(FILE *pOut, const CString& sHost) {
 	X509_NAME *pName = NULL;
 	int days = 365;
 
-	u_int iSeed = time(NULL);
+	unsigned long long iSeed = time(NULL);
 	int serial = (rand_r(&iSeed) % 9999);
 
 	RSA *pRSA = RSA_generate_key(1024, 0x10001, NULL, NULL);
@@ -190,8 +190,14 @@ CString CUtils::SaltedHash(const CString& sPass, const CString& sSalt) {
 }
 
 CString CUtils::GetPass(const CString& sPrompt) {
-	PrintPrompt(sPrompt);
-	return getpass("");
+#ifdef _WIN32
+	CString sPass;
+	GetInput(sPrompt, sPass);
+	return sPass;
+#else
+ 	PrintPrompt(sPrompt);
+ 	return getpass("");
+#endif
 }
 
 bool CUtils::GetBoolInput(const CString& sPrompt, bool bDefault) {

@@ -42,22 +42,23 @@ typedef void* ModHandle;
 	CLASS(ModHandle pDLL, CUser* pUser, const CString& sModName, \
 			const CString& sModPath) \
 			: CModule(pDLL, pUser, sModName, sModPath)
+
 #define MODULEDEFS(CLASS, DESCRIPTION) \
 	extern "C" { \
 		/* First the definitions to shut up some compiler warnings */ \
-		CString ZNCModDescription(); \
-		bool ZNCModGlobal(); \
-		double ZNCModVersion(); \
-		CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
+		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription(); \
+		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
+		ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
+		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
 				const CString& sModPath); \
-		void ZNCModUnload(CModule* pMod); \
-		CString ZNCModDescription() { return DESCRIPTION; } \
-		bool ZNCModGlobal() { return false; } \
-		double ZNCModVersion() { return VERSION; } \
-		CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
+		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod); \
+		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription() { return DESCRIPTION; } \
+		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return false; } \
+		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return VERSION; } \
+		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
 				const CString& sModPath) \
 		{ return new CLASS(p, pUser, sModName, sModPath); } \
-		void ZNCModUnload(CModule* pMod) { if (pMod) { delete pMod; } } \
+		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod) { if (pMod) { delete pMod; } } \
 	}
 // !User Module Macros
 
@@ -68,19 +69,19 @@ typedef void* ModHandle;
 #define GLOBALMODULEDEFS(CLASS, DESCRIPTION) \
 	extern "C" { \
 		/* First the definitions to shut up some compiler warnings */ \
-		CString ZNCModDescription(); \
-		bool ZNCModGlobal(); \
-		double ZNCModVersion(); \
-		CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
+		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription(); \
+		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
+		ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
+		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
 				const CString& sModPath); \
-		void ZNCModUnload(CGlobalModule* pMod); \
-		CString ZNCModDescription() { return DESCRIPTION; } \
-		bool ZNCModGlobal() { return true; } \
-		double ZNCModVersion() { return VERSION; } \
-		CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
+		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod); \
+		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription() { return DESCRIPTION; } \
+		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return true; } \
+		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return VERSION; } \
+		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
 				const CString& sModPath) \
 		{ return new CLASS(p, sModName, sModPath); } \
-		void ZNCModUnload(CGlobalModule* pMod) { if (pMod) { delete pMod; } } \
+		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod) { if (pMod) { delete pMod; } } \
 	}
 // !Global Module Macros
 
@@ -95,7 +96,7 @@ class CFPTimer;
 class CSockManager;
 // !Forward Declarations
 
-class CTimer : public CCron {
+class ZNC_API CTimer : public CCron {
 public:
 	CTimer(CModule* pModule, unsigned int uInterval, unsigned int uCycles, const CString& sLabel, const CString& sDescription);
 
@@ -140,7 +141,7 @@ private:
 	FPTimer_t	m_pFBCallback;
 };
 
-class CSocket : public Csock {
+class ZNC_API CSocket : public Csock {
 public:
 	CSocket(CModule* pModule);
 	CSocket(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout = 60);
@@ -207,7 +208,7 @@ protected:
 	CString	m_sDescription;
 };
 
-class CModule {
+class ZNC_API CModule {
 public:
 	CModule(ModHandle pDLL, CUser* pUser, const CString& sModName,
 			const CString& sDataDir);
@@ -378,7 +379,7 @@ private:
 	MCString		m_mssRegistry; //!< way to save name/value pairs. Note there is no encryption involved in this
 };
 
-class CModules : public vector<CModule*> {
+class ZNC_API CModules : public vector<CModule*> {
 public:
 	CModules();
 	~CModules();
@@ -465,7 +466,7 @@ protected:
 	CClient*	m_pClient;
 };
 
-class CGlobalModule : public CModule {
+class ZNC_API CGlobalModule : public CModule {
 public:
 	CGlobalModule(ModHandle pDLL, const CString& sModName,
 			const CString &sDataDir) : CModule(pDLL, sModName, sDataDir) {}
@@ -480,7 +481,7 @@ public:
 private:
 };
 
-class CGlobalModules : public CModules {
+class ZNC_API CGlobalModules : public CModules {
 public:
 	CGlobalModules() : CModules() {}
 	~CGlobalModules() {}

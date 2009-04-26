@@ -9,13 +9,18 @@
 #ifndef _BUFFER_H
 #define _BUFFER_H
 
-#include "ZNCString.h"
+#include "main.h"
 #include <vector>
+#include <assert.h>
 
 using std::vector;
 
-class CBufLine {
+class ZNC_API CBufLine {
 public:
+#ifdef WIN_MSVC
+	CBufLine() { assert(false); }; // dummy default constructor to shut up error...
+#endif
+
 	CBufLine(const CString& sPre, const CString& sPost, bool bIncNick);
 	~CBufLine();
 	void GetLine(const CString& sTarget, CString& sRet) const;
@@ -35,7 +40,12 @@ protected:
 	bool	m_bIncNick;
 };
 
+#ifdef WIN_MSVC
+class ZNC_API CBuffer : protected vector<CBufLine> {
+// msvc can't dllexport classes with private inheritance... d'oh.
+#else
 class CBuffer : private vector<CBufLine> {
+#endif
 public:
 	CBuffer(unsigned int uLineCount = 100);
 	~CBuffer();
