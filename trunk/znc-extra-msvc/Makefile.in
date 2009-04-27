@@ -1,0 +1,60 @@
+# Support out-of-tree builds
+srcdir		:= @srcdir@
+VPATH		:= @srcdir@
+
+CXXFLAGS	:= @CXXFLAGS@
+LDFLAGS		:= @LDFLAGS@
+MODDIR		:= @MODDIR@
+DATADIR		:= @DATADIR@
+MODLINK		:= @MODLINK@
+CXX		:= @CXX@
+
+TCL_FLAGS	:= @TCL_FLAGS@
+
+FILES		:= $(basename $(wildcard $(srcdir)/*.cpp))
+# Strip away the srcdir, we want them to be created in the current dir
+FILES		:= $(shell echo $(FILES) | sed -e "s:$(srcdir)/::g")
+
+ifeq "$(TCL_FLAGS)" ""
+	FILES	:= $(shell echo $(FILES) | sed -e "s:modtcl::g")
+else
+	modtclFLAGS	:= $(TCL_FLAGS)
+	TCL_HOOK	:= modtcl_install
+endif
+
+TARGETS		:= $(addsuffix .so, $(FILES))
+CLEAN		:= *.so
+DISTCLEAN	:= Makefile config.log config.status autom4te.cache
+
+.PHONY: all install create_install_dir install_metadirs modtcl_install clean distclean
+
+all: $(TARGETS)
+
+install: all create_install_dir install_metadirs $(TCL_HOOK)
+	install -m 0755 $(TARGETS) $(DESTDIR)$(MODDIR)
+
+create_install_dir:
+	mkdir -p $(DESTDIR)$(MODDIR)
+	mkdir -p $(DESTDIR)$(DATADIR)
+
+install_metadirs: create_install_dir all
+	for a in $(srcdir)/*; do \
+		if [ ! -f $$a/Makefile ] && [ "$$a" != "$(srcdir)/autom4te.cache" ] ; then \
+			if [ -d $$a ]; then \
+				cp -Rp $$a $(DESTDIR)$(DATADIR); \
+			fi \
+		fi \
+	done
+
+modtcl_install: create_install_dir
+	mkdir -p $(DESTDIR)$(DATADIR)/modtcl/
+	install -m 0644 modtcl.tcl binds.tcl $(DESTDIR)$(DATADIR)/modtcl/
+
+%.so: %.cpp Makefile
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(MODLINK) -o $@ $< $($(basename $@)FLAGS)
+
+clean:
+	rm -rf $(CLEAN)
+
+distclean: clean
+	rm -rf $(DISTCLEAN)
