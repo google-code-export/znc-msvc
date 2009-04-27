@@ -11,7 +11,13 @@
 #include "znc.h"
 #include "Server.h"
 
+#ifndef _WIN32
 #include <syslog.h>
+#else
+#define LOG_INFO 1
+#define LOG_NOTICE 2
+#define LOG_WARNING 3
+#endif
 
 #include <fstream>
 #include <ctime>
@@ -28,7 +34,12 @@ public:
 
 	virtual bool OnLoad(const CString & sArgs, CString & sMessage) {
 		sLogFile = CZNC::Get().GetZNCPath() + "/znc.log";
-		Log("Logging started. ZNC PID[" + CString(getpid()) + "] UID/GID[" + CString(getuid()) + ":" + CString(getgid()) + "]");
+		Log("Logging started. ZNC PID[" + CString(getpid()) + "] "
+#ifndef _WIN32
+			"UID/GID[" + CString(getuid()) + ":" + CString(getgid()) + "]");
+#else
+			);
+#endif
 		return true;
 	}
 
@@ -70,9 +81,13 @@ public:
 
 	void Log(CString sLine, int iPrio = LOG_INFO) {
 		CString sTarget = GetNV("target");
+#ifndef _WIN32
 		if (sTarget == "syslog" || sTarget == "both")
 			syslog(iPrio,"%s",sLine.c_str());
 		if (sTarget == "" || sTarget == "file" || sTarget == "both") {
+#else
+		if(sTarget == "" || sTarget == "file") {
+#endif
 			time_t curtime;
 			tm* timeinfo;
 			char t[23];
@@ -104,6 +119,7 @@ public:
 			if (strcasecmp(sCommand.Token(1,true).c_str(), "file") == 0) {
 				SetNV("target", "file", true);
 				PutModule("[Status] Logging enabled to file: " + sLogFile);
+#ifndef _WIN32
 			} else if (strcasecmp(sCommand.Token(1,true).c_str(), "syslog") == 0) {
 				SetNV("target", "syslog", true);
 				PutModule("[Status] Logging enabled to syslog");
@@ -120,12 +136,23 @@ public:
 			else
 				PutModule("[Status] Logging is enabled to " +
 					   (sTarget=="syslog"?"syslog":"file: " + sLogFile));
+#else
+			} else {
+				PutModule("Unknown logging facility: [" + sCommand.Token(1,true) + "] " +
+					"the only supported option is \"file\"");
+			}
+		} else {
+			PutModule("[Status] Logging is enabled to file: " + sLogFile);
+#endif
 			PutModule("TARGET <file|syslog|both> - Change logging facility");
 		}
-
 	}
 private:
 	CString	sLogFile;
 };
 
+#ifndef _WIN32
 GLOBALMODULEDEFS(CAdminLogMod, "Log ZNC events to file and/or syslog.")
+#else
+GLOBALMODULEDEFS(CAdminLogMod, "Log ZNC events to a file.")
+#endif
