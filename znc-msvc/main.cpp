@@ -62,12 +62,12 @@ static void rehash(int sig) {
 	CUtils::PrintMessage("Caught SIGHUP");
 	CZNC::Get().SetNeedRehash(true);
 }
-#endif
 
 static void reapChilds(int sig) {
 	while (waitpid(-1, NULL, WNOHANG) > 0) {
 	}
 }
+#endif
 
 static bool isRoot() {
 #ifndef _WIN32
