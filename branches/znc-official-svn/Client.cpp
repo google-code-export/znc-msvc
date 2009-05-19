@@ -284,7 +284,10 @@ void CClient::ReadLine(const CString& sData) {
 		if (m_pUser->IsChan(sTarget)) {
 			CChan *pChan = m_pUser->FindChan(sTarget);
 
-			if (pChan && sModes.empty() && !pChan->GetModeString().empty()) {
+			// If we are on that channel and already received a
+			// /mode reply from the server, we can answer this
+			// request ourself.
+			if (pChan && pChan->IsOn() && sModes.empty() && !pChan->GetModeString().empty()) {
 				PutClient(":" + m_pUser->GetIRCServer() + " 324 " + GetNick() + " " + sTarget + " " + pChan->GetModeString());
 				if (pChan->GetCreationDate() > 0) {
 					PutClient(":" + m_pUser->GetIRCServer() + " 329 " + GetNick() + " " + sTarget + " " + CString(pChan->GetCreationDate()));
@@ -295,7 +298,7 @@ void CClient::ReadLine(const CString& sData) {
 	} else if (sCommand.Equals("QUIT")) {
 		m_pUser->UserDisconnected(this);
 
-		Close();	// Treat a client quit as a detach
+		Close(Csock::CLT_AFTERWRITE);	// Treat a client quit as a detach
 		return;		// Don't forward this msg.  We don't want the client getting us disconnected.
 	} else if (sCommand.Equals("PROTOCTL")) {
 		unsigned int i = 1;
@@ -652,7 +655,7 @@ void CClient::RefuseLogin(const CString& sReason) {
 
 	PutStatus("Bad username and/or password.");
 	PutClient(":irc.znc.in 464 " + GetNick() + " :" + sReason);
-	Close();
+	Close(Csock::CLT_AFTERWRITE);
 }
 
 void CClientAuth::AcceptedLogin(CUser& User) {
@@ -729,7 +732,7 @@ void CClient::IRCConnected(CIRCSock* pIRCSock) {
 void CClient::BouncedOff() {
 	PutStatusNotice("You are being disconnected because another user just authenticated as you.");
 	m_pIRCSock = NULL;
-	Close();
+	Close(Csock::CLT_AFTERWRITE);
 }
 
 void CClient::IRCDisconnected() {
