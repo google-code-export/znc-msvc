@@ -7,6 +7,7 @@
  */
 
 #include "User.h"
+#include <algorithm>
 
 class CPerform : public CModule {
 public:
@@ -50,12 +51,11 @@ public:
 			u_int iNum = sCommand.Token(1, true).ToUInt();
 			if (iNum > m_vPerform.size() || iNum <= 0) {
 				PutModule("Illegal # Requested");
-				return;
 			} else {
 				m_vPerform.erase(m_vPerform.begin() + iNum - 1);
 				PutModule("Command Erased.");
+				Save();
 			}
-			Save();
 		} else if (sCmdName == "list") {
 			int i = 1;
 			CString sExpanded;
@@ -67,8 +67,19 @@ public:
 					PutModule(CString(i) + ": " + *it);
 			}
 			PutModule(" -- End of List");
+		} else if (sCmdName == "swap") {
+			u_int iNumA = sCommand.Token(1).ToUInt();
+			u_int iNumB = sCommand.Token(2).ToUInt();
+			
+			if (iNumA > m_vPerform.size() || iNumA <= 0 || iNumB > m_vPerform.size() || iNumB <= 0) {
+				PutModule("Illegal # Requested");
+			} else {
+				std::iter_swap(m_vPerform.begin() + iNumA - 1, m_vPerform.begin() + iNumB - 1);
+				PutModule("Commands Swapped.");
+				Save();
+			}
 		} else {
-			PutModule("Commands: add <command>, del <nr>, list");
+			PutModule("Commands: add <command>, del <nr>, list, swap <nr> <nr>");
 		}
 	}
 
