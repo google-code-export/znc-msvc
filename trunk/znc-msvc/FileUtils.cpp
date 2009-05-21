@@ -539,7 +539,7 @@ bool CDir::MakeDir(const CString& sPath, mode_t iMode) {
 		return false;
 
 	CString sFixedPath = sPath;
-	sFixedPath.Replace("//", "\\");
+	sFixedPath.Replace("/", "\\");
 
 	int iResult = SHCreateDirectoryEx(0, sFixedPath.c_str(), NULL);
 
@@ -642,7 +642,12 @@ int CExecSock::popen2(int & iReadFD, int & iWriteFD, const CString & sCommand) {
 void CExecSock::close2(int iPid, int iReadFD, int iWriteFD) {
 	close(iReadFD);
 	close(iWriteFD);
-	// If a zombie is left behind, SIGCHLD will handle it
+	u_int iNow = time(NULL);
+	while (waitpid(iPid, NULL, WNOHANG) == 0) {
+		if ((time(NULL) - iNow) > 5)
+			break;  // giveup
+		usleep(100);
+	}
 	return;
 }
 #endif // ! _WIN32
