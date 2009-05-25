@@ -1,5 +1,5 @@
 dnl Keep the version number in sync with main.h!
-AC_INIT([znc], [0.069])
+AC_INIT([znc], [0.071])
 AC_CONFIG_SRCDIR([znc.cpp])
 AC_LANG([C++])
 
@@ -237,6 +237,8 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([znc-config])
 AC_CONFIG_FILES([znc-buildmod])
 AC_CONFIG_FILES([man/Makefile])
+AC_CONFIG_FILES([znc.pc])
+AC_CONFIG_FILES([znc-uninstalled.pc])
 if test "$MODULES" = "yes"; then
 	AC_CONFIG_FILES([modules/Makefile])
 fi
