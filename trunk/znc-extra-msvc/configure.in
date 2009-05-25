@@ -1,11 +1,11 @@
 dnl Keep the version number in sync with znc when releasing!
-AC_INIT([znc-extra], [0.068])
+AC_INIT([znc-extra], [0.070])
 AC_CONFIG_SRCDIR([antiidle.cpp])
 AC_LANG([C++])
 
 # If they called us with some --prefix, add that bindir to our search path
 # (eval because $bindir normally expands to ${exec_prefix}/bin)
-eval PATH="\${PATH}:${bindir}"
+eval PATH="${bindir}:\${PATH}"
 
 AC_ARG_WITH( [znc-config],
 	AS_HELP_STRING([--with-znc-config], [path to znc-config]),

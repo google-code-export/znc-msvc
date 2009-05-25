@@ -19,14 +19,24 @@ public:
 	virtual ~CBlockUser() {}
 
 	virtual bool OnLoad(const CString& sArgs, CString& sMessage) {
-		CString sArg = sArgs;
+		VCString vArgs;
+		VCString::iterator it;
+		MCString::iterator it2;
 
-		while (!sArg.empty()) {
-			if (!Block(sArg.Token(0))) {
-				sMessage = "Could not block [" + sArg.Token(0) + "]";
+		// Load saved settings
+		for (it2 = BeginNV(); it2 != EndNV(); it2++) {
+			// Ignore errors
+			Block(it2->first);
+		}
+
+		// Parse arguments, each argument is a user name to block
+		sArgs.Split(" ", vArgs, false);
+
+		for (it = vArgs.begin(); it != vArgs.end(); it++) {
+			if (!Block(*it)) {
+				sMessage = "Could not block [" + *it + "]";
 				return false;
 			}
-			sArg = sArg.Token(1, true);
 		}
 
 		return true;
@@ -41,11 +51,51 @@ public:
 		return CONTINUE;
 	}
 
+	void OnModCommand(const CString& sCommand) {
+		CString sCmd = sCommand.Token(0);
+
+		if (sCmd.Equals("list")) {
+			CTable Table;
+			MCString::iterator it;
+
+			Table.AddColumn("Blocked user");
+
+			for (it = BeginNV(); it != EndNV(); it++) {
+				Table.AddRow();
+				Table.SetCell("Blocked user", it->first);
+			}
+
+			if (PutModule(Table) == 0)
+				PutModule("No users blocked");
+		} else if (sCmd.Equals("block")) {
+			CString sUser = sCommand.Token(1, true);
+
+			if (m_pUser->GetUserName().Equals(sUser)) {
+				PutModule("You can't block yourself");
+				return;
+			}
+
+			if (Block(sUser))
+				PutModule("Blocked [" + sUser + "]");
+			else
+				PutModule("Could not block [" + sUser + "] (misspelled?)");
+		} else if (sCmd.Equals("unblock")) {
+			CString sUser = sCommand.Token(1, true);
+
+			if (DelNV(sUser))
+				PutModule("Unblocked [" + sUser + "]");
+			else
+				PutModule("This user is not blocked");
+		} else if (sCmd.Equals("help")) {
+			PutModule("Commands: list, block [user], unblock [user]");
+		}
+	}
+
 private:
 	bool IsBlocked(const CString& sUser) {
-		VCString::iterator it;
-		for (it = m_blockedUsers.begin(); it != m_blockedUsers.end(); it++) {
-			if (sUser.Equals(*it)) {
+		MCString::iterator it;
+		for (it = BeginNV(); it != EndNV(); it++) {
+			if (sUser.Equals(it->first)) {
 				return true;
 			}
 		}
@@ -75,11 +125,9 @@ private:
 		// ...and don't reconnect
 		pUser->SetIRCConnectEnabled(false);
 
-		m_blockedUsers.push_back(pUser->GetUserName());
+		SetNV(pUser->GetUserName(), "");
 		return true;
 	}
-
-	VCString	m_blockedUsers;
 };
 
 GLOBALMODULEDEFS(CBlockUser, "Block certain users from logging in")
