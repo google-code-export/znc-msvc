@@ -246,6 +246,8 @@ public:
 
 		PutModule("This module hit a timeout. This is a BUG!");
 
+		PutModule("Last request: " + m_sLastRequest);
+
 		PutModule("Expected replies: ");
 
 		for (size_t i = 0; m_pReplies[i].szReply != NULL; i++) {
@@ -312,6 +314,7 @@ private:
 
 		m_pDoing = it->first;
 		m_pReplies = it->second[0].reply;
+		m_sLastRequest = it->second[0].sLine;
 		PutIRC(it->second[0].sLine);
 		it->second.erase(it->second.begin());
 	}
@@ -319,6 +322,8 @@ private:
 	CClient	*m_pDoing;
 	const struct reply	*m_pReplies;
 	requestQueue	m_vsPending;
+	// This field is only used for display purpose.
+	CString		m_sLastRequest;
 };
 
 void CRouteTimeout::RunJob()

@@ -38,12 +38,8 @@ create_install_dir:
 	mkdir -p $(DESTDIR)$(DATADIR)
 
 install_metadirs: create_install_dir all
-	for a in $(srcdir)/*; do \
-		if [ ! -f $$a/Makefile ] && [ "$$a" != "$(srcdir)/autom4te.cache" ] ; then \
-			if [ -d $$a ]; then \
-				cp -Rp $$a $(DESTDIR)$(DATADIR); \
-			fi \
-		fi \
+	for a in "$(srcdir)/webadmin" ; do \
+		cp -Rp $$a $(DESTDIR)$(DATADIR); \
 	done
 
 modtcl_install: create_install_dir
