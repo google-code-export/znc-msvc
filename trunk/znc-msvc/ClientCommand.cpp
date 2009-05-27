@@ -1130,6 +1130,11 @@ void CClient::HelpUser() {
 	Table.SetCell("Arguments", "<file>");
 	Table.SetCell("Description", "Send a shell file to yourself");
 
+	Table.AddRow();
+	Table.SetCell("Command", "Uptime");
+	Table.SetCell("Arguments", "");
+	Table.SetCell("Description", "Show how long ZNC is already running");
+
 	if (!m_pUser->DenyLoadMod()) {
 		Table.AddRow();
 		Table.SetCell("Command", "LoadMod");
@@ -1199,11 +1204,6 @@ void CClient::HelpUser() {
 		Table.SetCell("Command", "Traffic");
 		Table.SetCell("Arguments", "");
 		Table.SetCell("Description", "Show basic traffic stats for all znc users");
-
-		Table.AddRow();
-		Table.SetCell("Command", "Uptime");
-		Table.SetCell("Arguments", "");
-		Table.SetCell("Description", "Show how long ZNC is already running");
 
 		Table.AddRow();
 		Table.SetCell("Command", "Broadcast");
