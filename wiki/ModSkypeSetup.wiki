@@ -13,7 +13,7 @@
   # More information on the last few steps can be found here: http://en.znc.in/wiki/ZNC (official ZNC docs/website).
   # Start Skype and log in.
   # Now, type `/msg *status loadmod modskype`
-  # `*status* should reply with `Loaded module [modskype]`.
+  # `*status* should reply with `Loaded module modskype`.
   # Skype should notify you that znc.exe wants to have access. Grant access.
   # Have someone type a message in each Skype group chat you want bridged.
   # For each new channel, `*modskype` on IRC will send you a message like `WARNING: Group chat $gibb;errish;1234 not mapped to any channel. A message has been lost.`
