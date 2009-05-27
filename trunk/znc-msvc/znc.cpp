@@ -406,18 +406,15 @@ bool CZNC::IsHostAllowed(const CString& sHostMask) const {
 }
 
 void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
+#ifndef _WIN32
 	char *home;
 
-#ifndef _WIN32
 	// If the bin was not ran from the current directory, we need to add that dir onto our cwd
 	CString::size_type uPos = sArgvPath.rfind('/');
 	if (uPos == CString::npos)
 		m_sCurPath = "./";
 	else
 		m_sCurPath = CDir::ChangeDir("./", sArgvPath.Left(uPos), "");
-#else
-	m_sCurPath = CDir::ChangeDir("./", "", "");
-#endif
 
 	// Try to set the user's home dir, default to binpath on failure
 	home = getenv("HOME");
@@ -427,7 +424,6 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 		m_sHomePath = home;
 	}
 
-#ifndef _WIN32
 	if (m_sHomePath.empty()) {
 		struct passwd* pUserInfo = getpwuid(getuid());
 
@@ -435,7 +431,6 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 			m_sHomePath = pUserInfo->pw_dir;
 		}
 	}
-#endif
 
 	if (m_sHomePath.empty()) {
 		m_sHomePath = m_sCurPath;
@@ -446,6 +441,23 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 	} else {
 		m_sZNCPath = sDataDir;
 	}
+#else
+	m_sCurPath = CDir::ChangeDir("./", "", "");
+
+	m_sHomePath = m_sCurPath;
+
+	m_sZNCPath = CDir::ChangeDir(m_sHomePath, ".znc", "");
+
+	if(!PathIsDirectory(m_sZNCPath.c_str()))
+	{
+		char strPath[MAX_PATH + 1] = {0};
+
+		if(SUCCEEDED(SHGetFolderPath(0, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath)) && PathIsDirectory(strPath))
+		{
+			m_sZNCPath = CDir::ChangeDir(strPath, "ZNC", "");
+		}
+	}
+#endif
 }
 
 CString CZNC::GetConfPath() const {
@@ -691,8 +703,12 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 				const CModInfo& Info = *it;
 				CString sName = Info.GetName();
 
-				if (CUtils::GetBoolInput("Load global module <\033[1m" + sName + "\033[22m>?", false)) {
-					vsLines.push_back("LoadModule = " + sName);
+				if (CUtils::StdoutIsTTY()) {
+					if (CUtils::GetBoolInput("Load global module <\033[1m" + sName + "\033[22m>?", false))
+						vsLines.push_back("LoadModule = " + sName);
+				} else {
+					if (CUtils::GetBoolInput("Load global module <" + sName + ">?", false))
+						vsLines.push_back("LoadModule = " + sName);
 				}
 			}
 		}
@@ -791,8 +807,12 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 					const CModInfo& Info = *it;
 					CString sName = Info.GetName();
 
-					if (CUtils::GetBoolInput("Load module <\033[1m" + sName + "\033[22m>?", false)) {
-						vsLines.push_back("\tLoadModule = " + sName);
+					if (CUtils::StdoutIsTTY()) {
+						if (CUtils::GetBoolInput("Load module <\033[1m" + sName + "\033[22m>?", false))
+							vsLines.push_back("\tLoadModule = " + sName);
+					} else {
+						if (CUtils::GetBoolInput("Load module <" + sName + ">?", false))
+							vsLines.push_back("\tLoadModule = " + sName);
 					}
 				}
 			}
@@ -1740,28 +1760,56 @@ bool CZNC::AddUser(CUser* pUser, CString& sErrorRet) {
 	return true;
 }
 
+static CZNC* g_pZNC = NULL;
 CZNC& CZNC::Get() {
-	static CZNC* pZNC = new CZNC;
-	return *pZNC;
+	if(!g_pZNC) g_pZNC = new CZNC();
+	return *g_pZNC;
+}
+void CZNC::_Reset() {
+	if(g_pZNC) delete g_pZNC;
+	g_pZNC = NULL;
 }
 
-void CZNC::UpdateTrafficStats() {
-	CSockManager* p = &m_Manager;
-	for (unsigned int a = 0; a < p->size(); a++) {
-		if ((*p)[a]->GetSockName().Left(5) == "IRC::") {
-			CIRCSock *i = (CIRCSock *)(*p)[a];
-			i->GetUser()->AddBytesRead((*p)[a]->GetBytesRead());
-			(*p)[a]->ResetBytesRead();
-			i->GetUser()->AddBytesWritten((*p)[a]->GetBytesWritten());
-			(*p)[a]->ResetBytesWritten();
-		} else if ((*p)[a]->GetSockName().Left(5) == "USR::") {
-			CClient *c = (CClient *)(*p)[a];
-			c->GetUser()->AddBytesRead((*p)[a]->GetBytesRead());
-			(*p)[a]->ResetBytesRead();
-			c->GetUser()->AddBytesWritten((*p)[a]->GetBytesWritten());
-			(*p)[a]->ResetBytesWritten();
+CZNC::TrafficStatsMap CZNC::GetTrafficStats(TrafficStatsPair &Users,
+			TrafficStatsPair &ZNC, TrafficStatsPair &Total) {
+	TrafficStatsMap ret;
+	unsigned long long uiUsers_in, uiUsers_out, uiZNC_in, uiZNC_out;
+	const map<CString, CUser*>& msUsers = CZNC::Get().GetUserMap();
+
+	uiUsers_in = uiUsers_out = 0;
+	uiZNC_in  = BytesRead();
+	uiZNC_out = BytesWritten();
+
+	for (map<CString, CUser*>::const_iterator it = msUsers.begin(); it != msUsers.end(); it++) {
+		ret[it->first] = TrafficStatsPair(it->second->BytesRead(), it->second->BytesWritten());
+		uiUsers_in  += it->second->BytesRead();
+		uiUsers_out += it->second->BytesWritten();
+	}
+
+	for (CSockManager::const_iterator it = m_Manager.begin(); it != m_Manager.end(); it++) {
+		if ((*it)->GetSockName().Left(5) == "IRC::") {
+			CIRCSock *p = (CIRCSock *) *it;
+			ret[p->GetUser()->GetUserName()].first  += p->GetBytesRead();
+			ret[p->GetUser()->GetUserName()].second += p->GetBytesWritten();
+			uiUsers_in  += p->GetBytesRead();
+			uiUsers_out += p->GetBytesWritten();
+		} else if ((*it)->GetSockName().Left(5) == "USR::") {
+			CClient *p = (CClient *) *it;
+			ret[p->GetUser()->GetUserName()].first  += p->GetBytesRead();
+			ret[p->GetUser()->GetUserName()].second += p->GetBytesWritten();
+			uiUsers_in  += p->GetBytesRead();
+			uiUsers_out += p->GetBytesWritten();
+		} else {
+			uiZNC_in  += (*it)->GetBytesRead();
+			uiZNC_out += (*it)->GetBytesWritten();
 		}
 	}
+
+	Users = TrafficStatsPair(uiUsers_in, uiUsers_out);
+	ZNC   = TrafficStatsPair(uiZNC_in, uiZNC_out);
+	Total = TrafficStatsPair(uiUsers_in + uiZNC_in, uiUsers_out + uiZNC_out);
+
+	return ret;
 }
 
 void CZNC::AuthUser(CSmartPtr<CAuthBase> AuthClass) {
