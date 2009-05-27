@@ -51,3 +51,5 @@
   * uptime
   * watch
   * webadmin
+
+Available separately: [ModSkypeSetup modskype].
