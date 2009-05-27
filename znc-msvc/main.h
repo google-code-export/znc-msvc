@@ -61,19 +61,15 @@
 #endif
 
 #ifdef _WIN32
-#if 0 // wtf, how is this supposed to work if I need the header file for NTDDI_WINXP but it also already defines NTDDI_VERSION !??
-#include <sdkddkver.h>
-#define NTDDI_VERSION NTDDI_WINXP
-#else
-#define WINVER		0x0501
-#define _WIN32_WINNT   0x0501
-#define _WIN32_WINDOWS 0x0501
-#define _WIN32_IE      0x0501
-#endif
+#define WINVER		0x0500
+#define _WIN32_WINNT   0x0500
+#define _WIN32_WINDOWS 0x0500
+#define _WIN32_IE      0x0600
 #define WIN32_LEAN_AND_MEAN
+#endif
+
 #ifdef WIN_MSVC
 #define VC_EXTRALEAN
-#endif
 #endif
 
 #include "exports.h"

@@ -483,10 +483,7 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 				PathCombine(szPathBuffer, szPathBuffer, szPathFixed);
 				sActualPath = szPathBuffer;
 
-				for(CString::size_type p = 0; p < sActualPath.size(); p++)
-				{
-					if(sActualPath[p] == '\\') sActualPath[p] = '/';
-				}
+				sActualPath.Replace("\\", "/");
 
 				if(!sActualPath.empty() && sActualPath[sActualPath.size() - 1] != '/' &&
 					!sPath.empty() && sPath[sPath.size() - 1] == '/')
@@ -529,6 +526,10 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 				break;
 		}
 	}
+
+#ifdef _WIN32
+	sRet.Replace("\\", "/");
+#endif
 
 	return (sRet.empty()) ? "/" : sRet;
 }

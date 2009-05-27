@@ -1707,7 +1707,7 @@ public:
 
 	//! Get the Select Timeout in MICROSECONDS ( 1000 == 1 millisecond )
 	u_long GetSelectTimeout() { return( m_iSelectWait ); }
-	//! Set the Select Timeout in MICROSECODS ( 1000 == 1 millisecond )
+	//! Set the Select Timeout in MICROSECONDS ( 1000 == 1 millisecond )
 	//! Setting this to 0 will cause no timeout to happen, Select() will return instantly
 	void  SetSelectTimeout( u_long iTimeout ) { m_iSelectWait = iTimeout; }
 
