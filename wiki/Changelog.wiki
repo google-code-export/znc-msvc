@@ -1,0 +1,29 @@
+#summary znc-msvc Changelog.
+#labels Featured,Phase-Support,Changelog
+
+== 2009-05-27 ==
+  * Lowered WINVER define from WinXP SP2 to Win2000 SP4 with IE6.
+  * Implemented issue 4.
+  * Updated to latest [http://znc.svn.sourceforge.net/viewvc/znc/ official SVN] (from revision 1515 to 1525)
+  * Added webadmin skins that were missing from the previous release.
+
+
+== Older Changes ==
+
+*May 21st 2009*
+    Updated to latest SVN (1515), fixed folders not being created and therefore module settings not being saved.
+
+*May 20th 2009*
+    Updated to latest SVN (1508), added fish module.
+
+*April 8th 2009*
+    Added additional modules, updated to latest SVN (1485).
+
+*March 31st 2009*
+    Fixed webadmin module and skin lists, skin change and more path-related problems.
+
+*March 29th 2009*
+    Fixed listavailmods command and OpenSSL certificate generation failure. Updated to v0.068. Fixed the rest of the modules, 38 modules from znc and znc-extra are now included in the download.
+
+*March 4th 2009*
+    Updated to latest SVN, added compatible modules from znc-extra.
