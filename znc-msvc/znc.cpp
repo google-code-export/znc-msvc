@@ -442,19 +442,39 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 		m_sZNCPath = sDataDir;
 	}
 #else
+	char strPath[MAX_PATH + 1] = {0};
+
 	m_sCurPath = CDir::ChangeDir("./", "", "");
 
+	// fallback home path = current dir.
 	m_sHomePath = m_sCurPath;
 
-	m_sZNCPath = CDir::ChangeDir(m_sHomePath, ".znc", "");
-
-	if(!PathIsDirectory(m_sZNCPath.c_str()))
+	// preferred home path = CSIDL_PERSONAL (= My Documents)
+	if(SUCCEEDED(SHGetFolderPath(0, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath)) && PathIsDirectory(strPath))
 	{
-		char strPath[MAX_PATH + 1] = {0};
+		m_sHomePath = CDir::ChangeDir(strPath, "", "");
+	}
 
-		if(SUCCEEDED(SHGetFolderPath(0, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath)) && PathIsDirectory(strPath))
+	if(!sDataDir.empty())
+	{
+		// a custom datadir overrides everything else.
+		m_sZNCPath = CDir::ChangeDir("./", sDataDir, "");
+	}
+	else
+	{
+		// .znc dir in current folder overrides default
+		// to maintain backwards compatibility.
+		m_sZNCPath = CDir::ChangeDir(m_sCurPath, ".znc", "");
+
+		if(!PathIsDirectory(m_sZNCPath.c_str()))
 		{
-			m_sZNCPath = CDir::ChangeDir(strPath, "ZNC", "");
+			*strPath = 0;
+
+			// default config location = Application Data\ZNC.
+			if(SUCCEEDED(SHGetFolderPath(0, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath)) && PathIsDirectory(strPath))
+			{
+				m_sZNCPath = CDir::ChangeDir(strPath, "ZNC", "");
+			}
 		}
 	}
 #endif
