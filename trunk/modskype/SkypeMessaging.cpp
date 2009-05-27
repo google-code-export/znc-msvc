@@ -7,27 +7,6 @@
 SkypeMessaging *SkypeMessaging::ms_theInstance = NULL;
 
 
-/**************************************************************************************/
-void HandleLastError(const TCHAR *msg = L"Error occured") {
-        DWORD errCode = GetLastError();
-        TCHAR *err;
-        if (!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                           NULL,
-                           errCode,
-                           MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
-                           (LPTSTR) &err,
-                           0,
-                           NULL))
-            return;
-
-        //TRACE("ERROR: %s: %s", msg, err);
-        static TCHAR buffer[4024];
-        _snwprintf(buffer, sizeof(buffer), L"ERROR: %s: %s\n", msg, err);
-        OutputDebugString(buffer);
-        LocalFree(err);
-}
-/**************************************************************************************/
-
 SkypeMessaging *SkypeMessaging::GetInstance()
 {
 	if(!ms_theInstance)
@@ -360,8 +339,6 @@ bool SkypeMessaging::Init_MainWindow()
 
 			return true;
 		}
-		else
-			HandleLastError();
 	}
 	return false;
 }
