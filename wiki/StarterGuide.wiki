@@ -1,6 +1,13 @@
 #summary Introduction to running znc on Windows
 #labels Featured,Phase-Deploy
 
+===System Requirements===
+
+  * Microsoft Windows 2000 with IE6 or newer (XP, 2003, Vista, 2008, 7)
+  * Current [http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2&displaylang=en Microsoft Visual C++ 2008 SP1 Redistributable Package]
+  * Network connection
+
+===First Start===
 Open a new cmd.exe instance, navigate to the folder where znc.exe resides, type `znc --makeconf`, then follow the instructions. When you're done, simply enter `znc` and hit return to start the program.
 
 Details about using modules, webadmin and so on can be found on the [http://en.znc.in/wiki/ZNC official ZNC website].
