@@ -1,55 +1,66 @@
 #summary Lists all modules that are included with the binaries download
 #labels Phase-Support
 
-  * admin
-  * adminlog
-  * antiidle
-  * autoattach
-  * autocycle
-  * autoop
-  * autoreply
-  * autovoice
-  * away
-  * awaynick
-  * blockuser
-  * block_lagchk
-  * block_motd
-  * buffextras
-  * certchecker
-  * chansaver
-  * connect_throttle
-  * control
-  * crypt
-  * ctcpflood
-  * discon_kick
-  * fail2ban
-  * fakeonline
-  * fish
-  * fixfreenode
-  * flooddetach
-  * imapauth
-  * keepnick
-  * kickrejoin
-  * lastseen
-  * listsockets
-  * log
-  * motdfile
-  * nickserv
-  * noctcp
-  * notify_connect
-  * partyline
-  * perform
-  * q
-  * raw
-  * rawlog
-  * route_replies
-  * savebuff
-  * schat
-  * send_raw
-  * simple_away
-  * stickychan
-  * uptime
-  * watch
-  * webadmin
+Colors: <font color="green">Green</font> means 'shipped with the official znc package', <font color="blue">Blue</font> means 'shipped in [http://en.znc.in/wiki/ZNC-Extra znc-extra]' and <font color="orange">Orange</font> means 'downloaded from [http://people.znc.in/~psychon/znc/modules/ ~psychon] or [http://en.znc.in/wiki/SVN crox' SVN].
 
-Available separately: [ModSkypeSetup modskype].
+  * <font color="green">admin</font>
+  * <font color="blue">adminlog</font>
+  * <font color="blue">antiidle</font>
+  * <font color="green">autoattach</font>
+  * <font color="green">autocycle</font>
+  * <font color="green">autoop</font>
+  * <font color="blue">autoreply</font>
+  * <font color="blue">autovoice</font>
+  * <font color="green">away</font>
+  * <font color="green">awaynick</font>
+  * <font color="blue">blockuser</font>
+  * <font color="orange">block_lagchk</font>
+  * <font color="orange">block_motd</font>
+  * <font color="blue">buffextras</font>
+  * <font color="orange">certchecker</font>
+  * <font color="green">chansaver</font>
+  * <font color="blue">connect_throttle</font>
+  * <font color="orange">control</font>
+  * <font color="green">crypt</font>
+  * <font color="blue">ctcpflood</font>
+  * <font color="blue">discon_kick</font>
+  * <font color="green">fail2ban</font>
+  * <font color="blue">fakeonline</font>
+  * <font color="orange">fish</font>
+  * <font color="blue">fixfreenode</font>
+  * <font color="orange">flooddetach</font>
+  * <font color="orange">highlightattach</font>
+  * <font color="green">imapauth</font>
+  * <font color="green">keepnick</font>
+  * <font color="green">kickrejoin</font>
+  * <font color="blue">lastseen</font>
+  * <font color="blue">listsockets</font>
+  * <font color="blue">log</font>
+  * <font color="blue">motdfile</font>
+  * <font color="green">nickserv</font>
+  * <font color="orange">noctcp</font>
+  * <font color="blue">notify_connect</font>
+  * <font color="green">partyline</font>
+  * <font color="green">perform</font>
+  * <font color="green">q</font>
+  * <font color="green">raw</font>
+  * <font color="orange">rawlog</font>
+  * <font color="blue">route_replies</font>
+  * <font color="green">savebuff</font>
+  * <font color="green">schat</font>
+  * <font color="blue">send_raw</font>
+  * <font color="green">simple_away</font>
+  * <font color="green">stickychan</font>
+  * <font color="orange">uptime</font>
+  * <font color="green">watch</font>
+  * <font color="green">webadmin</font>
+
+Available separately: [ModSkypeSetup modskype] (for Windows only).
+
+*Modules available, but not (yet?) for Windows:*
+  * <font color="green">email</font>
+  * <font color="green">modperl</font>
+  * <font color="green">sample</font>
+  * <font color="green">saslauth</font>
+  * <font color="green">shell</font>
+  * <font color="blue">modtcl</font>
