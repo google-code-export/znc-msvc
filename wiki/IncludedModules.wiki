@@ -17,6 +17,7 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="orange">block_lagchk</font>
   * <font color="orange">block_motd</font>
   * <font color="blue">buffextras</font>
+  * <font color="orange">certauth</font>
   * <font color="orange">certchecker</font>
   * <font color="green">chansaver</font>
   * <font color="blue">connect_throttle</font>
@@ -54,6 +55,7 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="orange">uptime</font>
   * <font color="green">watch</font>
   * <font color="green">webadmin</font>
+  * <font color="orange">watch_only_detached</font>
 
 Available separately: [ModSkypeSetup modskype] (for Windows only).
 
