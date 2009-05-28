@@ -778,7 +778,7 @@ unsigned int CClient::PutStatus(const CTable& table) {
 }
 
 void CClient::PutStatus(const CString& sLine) {
-	if(m_pUser->ModRepliesAsNotices()) {
+	if(m_pUser && m_pUser->ModRepliesAsNotices()) {
 		PutModNotice("status", sLine);
 	} else {
 		PutModule("status", sLine);
