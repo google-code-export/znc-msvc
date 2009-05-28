@@ -54,7 +54,7 @@ typedef void* ModHandle;
 		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod); \
 		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription() { return DESCRIPTION; } \
 		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return false; } \
-		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return VERSION; } \
+		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return MODVERSION; } \
 		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
 				const CString& sModPath) \
 		{ return new CLASS(p, pUser, sModName, sModPath); } \
@@ -77,7 +77,7 @@ typedef void* ModHandle;
 		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod); \
 		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription() { return DESCRIPTION; } \
 		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return true; } \
-		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return VERSION; } \
+		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return MODVERSION; } \
 		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
 				const CString& sModPath) \
 		{ return new CLASS(p, sModName, sModPath); } \
@@ -295,7 +295,7 @@ public:
 	virtual EModRet OnTimerAutoJoin(CChan& Channel);
 
 	ModHandle GetDLL();
-	static double GetCoreVersion() { return VERSION; }
+	static double GetCoreVersion() { return MODVERSION; }
 
 	virtual bool PutIRC(const CString& sLine);
 	virtual bool PutUser(const CString& sLine);

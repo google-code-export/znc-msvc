@@ -89,19 +89,11 @@ CString CZNC::GetVersion() {
 
 CString CZNC::GetTag(bool bIncludeVersion) {
 	if (!bIncludeVersion) {
-#ifndef _WIN32
 		return "ZNC - http://znc.sourceforge.net";
-#else
-		return "ZNC - http://znc.sourceforge.net (native Win32)";
-#endif
 	}
 
 	char szBuf[128];
-	snprintf(szBuf, sizeof(szBuf), "ZNC %1.3f"VERSION_EXTRA" - http://znc.sourceforge.net"
-#ifdef _WIN32
-		" (native Win32)"
-#endif
-		, VERSION);
+	snprintf(szBuf, sizeof(szBuf), "ZNC %1.3f"VERSION_EXTRA" - http://znc.sourceforge.net", VERSION);
 	// If snprintf overflows (which I doubt), we want to be on the safe side
 	szBuf[sizeof(szBuf) - 1] = '\0';
 

@@ -754,8 +754,13 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 	}
 
 	if (CModule::GetCoreVersion() != Version()) {
-		dlclose(p);
+#ifndef _WIN32
 		sRetMsg = "Version mismatch, recompile this module.";
+#else
+		sRetMsg = "Module version is '" + CString(Version(), 3) + "', but core expects '" +
+			CString(CModule::GetCoreVersion(), 3) + "'. Please re-download/re-install/re-compile the module.";
+#endif
+		dlclose(p);
 		return false;
 	}
 
