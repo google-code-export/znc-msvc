@@ -113,6 +113,13 @@ int main(int argc, char** argv) {
 #ifdef HAVE_LIBSSL
 	CRYPTO_malloc_init();
 #endif
+
+	// make sure the stuff in ZNC.dll matches this exe's version... bad crashes otherwise.
+	if(CZNC::GetCoreVersion() != MODVERSION)
+	{
+		CUtils::PrintError("The version number in ZNC.dll doesn't match. Aborting.");
+		return 1;
+	}
 #endif
 
 	int iArg, iOptIndex = -1;

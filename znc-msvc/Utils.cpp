@@ -190,14 +190,8 @@ CString CUtils::SaltedHash(const CString& sPass, const CString& sSalt) {
 }
 
 CString CUtils::GetPass(const CString& sPrompt) {
-#ifdef _WIN32
-	CString sPass;
-	GetInput(sPrompt, sPass);
-	return sPass;
-#else
  	PrintPrompt(sPrompt);
  	return getpass("");
-#endif
 }
 
 bool CUtils::GetBoolInput(const CString& sPrompt, bool bDefault) {

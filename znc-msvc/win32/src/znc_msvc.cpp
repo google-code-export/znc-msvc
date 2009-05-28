@@ -98,3 +98,69 @@ struct tm* localtime_locked(const time_t *timer)
 		return NULL;
 	}
 }
+
+/**
+ * get password from console
+ * Source: http://svn.openvpn.net/projects/openvpn/obsolete/BETA15/openvpn/io.c
+ * License: GNU GPL v2
+ * (modified to display * for input)
+ **/
+
+std::string getpass(const char *prompt)
+{
+	HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+	std::string result;
+	DWORD count;
+
+	if(in == INVALID_HANDLE_VALUE || out == INVALID_HANDLE_VALUE)
+	{
+		return NULL;
+	}
+
+	if(WriteConsole(out, prompt, strlen(prompt), &count, NULL))
+	{
+		int istty = (GetFileType(in) == FILE_TYPE_CHAR);
+		DWORD old_mode;
+		char c;
+
+		if(istty)
+		{
+			if(GetConsoleMode(in, &old_mode))
+			{
+				SetConsoleMode(in, old_mode & ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT));
+			}
+			else
+			{
+				istty = 0;
+			}
+		}
+
+		while(ReadConsole(in, &c, 1, &count, NULL) && (c != '\r') && (c != '\n'))
+		{
+			if(c == '\b')
+			{
+				if(!result.empty())
+				{
+					WriteConsole(out, "\b \b", 3, &count, NULL);
+					result.erase(result.end() - 1);
+				}
+			}
+			else
+			{
+				WriteConsole(out, "*", 1, &count, NULL);
+				result += c ;
+			}
+		}
+
+		WriteConsole(out, "\r\n", 2, &count, NULL);
+
+		if(istty)
+		{
+			SetConsoleMode(in, old_mode);
+		}
+	}
+
+	return result;
+}
+
