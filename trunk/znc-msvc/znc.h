@@ -111,6 +111,7 @@ public:
 	static CString GetVersion();
 	static CString GetTag(bool bIncludeVersion = true);
 	CString GetUptime() const;
+	static double GetCoreVersion();
 	// This returns the path to the .so and to the data dir
 	// which is where static data (webadmin skins) are saved
 	bool FindModPath(const CString& sModule, CString& sModPath,

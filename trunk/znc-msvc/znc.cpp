@@ -1934,3 +1934,9 @@ void CZNC::DisableConnectUser() {
 	m_pConnectUserTimer->Stop();
 	m_pConnectUserTimer = NULL;
 }
+
+// it is important that this method doesn't have its body in an .h file.
+double CZNC::GetCoreVersion()
+{
+	return MODVERSION;
+}
