@@ -1,6 +1,14 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support,Changelog
 
+== 2009-05-29 ==
+  * Fixed --datadir (issue 8)
+  * Fixed crash on connect (issue 10)
+  * Improved version check between ZNC.dll and linked components (issue 9 and issue 11)
+  * Fixed help output to reflect the changes to the uptime status command (patch from official SVN)
+  * Implemented issue 5 (hide passwords during --makeconf)
+  * Added certauth, watch_only_detached and highlightattach modules from http://people.znc.in/~psychon/znc/modules/ ... All credit to psychon!
+
 == 2009-05-27 ==
   * Lowered WINVER define from WinXP SP2 to Win2000 SP4 with IE6.
   * Implemented issue 4.
