@@ -6,6 +6,8 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
+
 #ifdef _MODULES
 
 #include "Modules.h"

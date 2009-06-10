@@ -9,7 +9,6 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
-#include "main.h"
 #include <assert.h>
 #include <cstdio>
 #include <fcntl.h>

@@ -9,11 +9,10 @@
 #ifndef _BUFFER_H
 #define _BUFFER_H
 
-#include "main.h"
-#include <vector>
+#include <deque>
 #include <assert.h>
 
-using std::vector;
+using std::deque;
 
 class ZNC_API CBufLine {
 public:
@@ -41,10 +40,10 @@ protected:
 };
 
 #ifdef WIN_MSVC
-class ZNC_API CBuffer : protected vector<CBufLine> {
+class ZNC_API CBuffer : protected deque<CBufLine> {
 // msvc can't dllexport classes with private inheritance... d'oh.
 #else
-class CBuffer : private vector<CBufLine> {
+class CBuffer : private deque<CBufLine> {
 #endif
 public:
 	CBuffer(unsigned int uLineCount = 100);

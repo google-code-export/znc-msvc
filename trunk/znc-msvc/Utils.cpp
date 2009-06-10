@@ -6,9 +6,9 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "Utils.h"
 #include "MD5.h"
-#include "main.h"
 #include <errno.h>
 #ifdef HAVE_LIBSSL
 #include <openssl/ssl.h>
@@ -190,8 +190,8 @@ CString CUtils::SaltedHash(const CString& sPass, const CString& sSalt) {
 }
 
 CString CUtils::GetPass(const CString& sPrompt) {
- 	PrintPrompt(sPrompt);
- 	return getpass("");
+	PrintPrompt(sPrompt);
+	return getpass("");
 }
 
 bool CUtils::GetBoolInput(const CString& sPrompt, bool bDefault) {

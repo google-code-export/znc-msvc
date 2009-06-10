@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "Buffer.h"
 
 CBufLine::CBufLine(const CString& sPre, const CString& sPost, bool bIncNick=true) {

@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "User.h"
 #include "Chan.h"
 #include "DCCSock.h"

@@ -11,7 +11,6 @@
 
 #include "Csocket.h"
 #include "Utils.h"
-#include "main.h"
 
 // Forward Declarations
 class CZNC;

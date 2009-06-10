@@ -392,6 +392,9 @@ bool CWebAdminSock::OnPageRequest(const CString& sURI, CString& sPageRet) {
 		SetDocRoot(GetSkinDir() + "/data");
 		PrintFile(sTmp);
 		return false;
+	} else if (sURI == "/favicon.ico") {
+		PrintFile("/data/favicon.ico", "image/x-icon");
+		return false;
 	} else if (sURI == "/home") {
 		m_Template["Title"] = "Main Page";
 		m_Template["Action"] = "home";
@@ -485,9 +488,6 @@ bool CWebAdminSock::OnPageRequest(const CString& sURI, CString& sPageRet) {
 		} else {
 			GetErrorPage(sPageRet, "No such username");
 		}
-	} else if (sURI == "/favicon.ico") {
-		PrintFile("/img/favicon.ico", "image/x-icon");
-		return false;
 	} else if (sURI == "/listusers") {
 		if (!IsAdmin()) {
 			return false;
@@ -1160,7 +1160,7 @@ CUser* CWebAdminSock::GetNewUser(CString& sPageRet, CUser* pUser) {
 
 CWebAdminAuth::CWebAdminAuth(CWebAdminSock* pWebAdminSock, const CString& sUsername,
 		const CString& sPassword)
-		: CAuthBase(sUsername, sPassword, pWebAdminSock->GetRemoteIP()) {
+		: CAuthBase(sUsername, sPassword, pWebAdminSock) {
 	m_pWebAdminSock = pWebAdminSock;
 }
 
