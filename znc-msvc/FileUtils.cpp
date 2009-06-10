@@ -6,7 +6,9 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "FileUtils.h"
+#include "znc.h"
 #include "Utils.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -451,7 +453,13 @@ CString CFile::GetDir() const {
 	return sDir;
 }
 
-CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString& sHomeDir) {
+CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString& sHome) {
+	CString sHomeDir(sHome);
+
+	if (sHomeDir.empty()) {
+		sHomeDir = CZNC::Get().GetHomePath();
+	}
+
 	if (sAdd == "~") {
 		return sHomeDir;
 	}
@@ -466,22 +474,20 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 
 	if(PathIsRelative(sPath.c_str()))
 	{
-		char szPathBuffer[1024];
-		char szPathFixed[1024];
-		char *localDir;
+		char szLocalPath[1024] = {0};
+		char szPathFixed[1024] = {0};
 
-		if(!_get_pgmptr(&localDir))
+		if(GetModuleFileName(NULL, szLocalPath, 1023) != 0 && szLocalPath[0])
 		{
+			PathRemoveFileSpec(szLocalPath);
+
 			strcpy_s(szPathFixed, 1024, sPath.c_str());
 			if(szPathFixed[strlen(szPathFixed) - 1] == '/') szPathFixed[strlen(szPathFixed) - 1] = 0;
 
-			strcpy_s(szPathBuffer, 1024, localDir); // don't modify the string from _get_pgmptr directly...
-			PathRemoveFileSpec(szPathBuffer);
-
-			if(PathIsDirectory(szPathBuffer))
+			if(PathIsDirectory(szLocalPath))
 			{
-				PathCombine(szPathBuffer, szPathBuffer, szPathFixed);
-				sActualPath = szPathBuffer;
+				PathCombine(szLocalPath, szLocalPath, szPathFixed);
+				sActualPath = szLocalPath;
 
 				sActualPath.Replace("\\", "/");
 
@@ -495,7 +501,7 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 	}
 #endif
 
-	CString sAddDir = sAdd;
+	CString sAddDir(sAdd);
 
 	if (sAddDir.Left(2) == "~/") {
 		sAddDir.LeftChomp();

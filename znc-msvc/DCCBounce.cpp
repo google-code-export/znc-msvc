@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "DCCBounce.h"
 #include "User.h"
 #include "znc.h"

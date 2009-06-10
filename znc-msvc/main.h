@@ -90,5 +90,23 @@
 #endif
 
 #include "ZNCString.h"
+#include "Utils.h"
+#include "Buffer.h"
+#include "Chan.h"
+#include "Client.h"
+#include "Csocket.h"
+#include "DCCBounce.h"
+#include "DCCSock.h"
+#include "FileUtils.h"
+#include "HTTPSock.h"
+#include "IRCSock.h"
+#include "MD5.h"
+#include "Modules.h"
+#include "Nick.h"
+#include "Server.h"
+#include "Template.h"
+#include "Timers.h"
+#include "User.h"
+#include "znc.h"
 
 #endif // !_MAIN_H

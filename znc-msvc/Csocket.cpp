@@ -31,6 +31,7 @@
 * $Revision: 1.99 $
 */
 
+#include "stdafx.hpp"
 #include "Csocket.h"
 #ifdef __NetBSD__
 #include <sys/param.h>

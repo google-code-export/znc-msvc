@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include <getopt.h>
 #include <sys/wait.h>
 
@@ -62,17 +62,15 @@ static void rehash(int sig) {
 	CUtils::PrintMessage("Caught SIGHUP");
 	CZNC::Get().SetNeedRehash(true);
 }
-#endif
 
 static bool isRoot() {
-#ifndef _WIN32
 	// User root? If one of these were root, we could switch the others to root, too
 	if (geteuid() == 0 || getuid() == 0)
 		return true;
-#endif
 
 	return false;
 }
+#endif
 
 #ifdef ZNC_DLL_EXPORTS
 
@@ -224,6 +222,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+#ifndef _WIN32
 	if (isRoot()) {
 		CUtils::PrintError("You are running ZNC as root! Don't do that! There are not many valid");
 		CUtils::PrintError("reasons for this and it can, in theory, cause great damage!");
@@ -237,7 +236,6 @@ int main(int argc, char** argv) {
 		sleep(30);
 	}
 
-#ifndef _WIN32
 	if (bForeground) {
 		int iPid = getpid();
 		CUtils::PrintMessage("Staying open for debugging [pid: " + CString(iPid) + "]");
@@ -316,9 +314,25 @@ int main(int argc, char** argv) {
 					strdup(argv[0]),
 					strdup("--datadir"),
 					strdup(pZNC->GetZNCPath().c_str()),
-					strdup(pZNC->GetConfigFile().c_str()),
+					NULL,
+					NULL,
+					NULL,
+					NULL,
 					NULL
 				};
+				int pos = 3;
+				if (CUtils::Debug())
+					args[pos++] = strdup("--debug");
+				else if (bForeground)
+					args[pos++] = strdup("--foreground");
+				if (!CUtils::StdoutIsTTY())
+					args[pos++] = strdup("--no-color");
+				if (bAllowRoot)
+					args[pos++] = strdup("--allow-root");
+				args[pos++] = strdup(pZNC->GetConfigFile().c_str());
+				// The above code adds 4 entries to args tops
+				// which means the array should be big enough
+
 				execvp(args[0], args);
 				CUtils::PrintError("Unable to restart znc [" + CString(strerror(errno)) + "]");
 			} /* Fall through */

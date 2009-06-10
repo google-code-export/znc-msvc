@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "Nick.h"
 #include "Chan.h"
 #include "IRCSock.h"

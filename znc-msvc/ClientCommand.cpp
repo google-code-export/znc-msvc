@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "Client.h"
 #include "Chan.h"
 #include "DCCBounce.h"

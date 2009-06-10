@@ -9,7 +9,6 @@
 #ifndef _NICK_H
 #define _NICK_H
 
-#include "main.h"
 #include <set>
 #include <vector>
 

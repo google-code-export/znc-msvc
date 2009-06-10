@@ -86,7 +86,12 @@ public:
 				pChan = new CChan(it->first, m_pUser, true);
 				if (!it->second.empty())
 					pChan->SetKey(it->second);
-				m_pUser->AddChan(pChan);
+				if (!m_pUser->AddChan(pChan)) {
+					/* AddChan() deleted that channel */
+					PutModule("Could not join [" + it->first
+							+ "] (# prefix missing?)");
+					continue;
+				}
 			}
 			if (!pChan->IsOn()) {
 				PutModule("Joining [" + pChan->GetName() + "]");
@@ -107,6 +112,19 @@ static void RunTimer(CModule * pModule, CFPTimer *pTimer)
 
 bool CStickyChan::OnLoad(const CString& sArgs, CString& sMessage)
 {
+	VCString vsChans;
+	VCString::iterator it;
+	sArgs.Split(",", vsChans, false);
+
+	for (it = vsChans.begin(); it != vsChans.end(); it++) {
+		CString sChan = it->Token(0);
+		CString sKey = it->Token(1, true);
+		SetNV(sChan, sKey);
+	}
+
+	// Since we now have these channels added, clear the argument list
+	SetArgs("");
+
 	AddTimer(RunTimer, "StickyChanTimer", 15);
 	return(true);
 }

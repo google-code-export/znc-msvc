@@ -9,7 +9,6 @@
 #ifndef _CHAN_H
 #define _CHAN_H
 
-#include "main.h"
 #include "FileUtils.h"
 #include "Nick.h"
 #include <map>
