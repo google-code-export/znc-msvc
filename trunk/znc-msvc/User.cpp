@@ -514,7 +514,7 @@ bool CUser::IsValidUserName(const CString& sUserName) {
 			return false;
 		}
 
-		*p++;
+		p++;
 	}
 
 	return true;
