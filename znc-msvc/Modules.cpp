@@ -105,14 +105,14 @@ const CString& CTimer::GetDescription() const { return m_sDescription; }
 /////////////////// !Timer ///////////////////
 
 /////////////////// Socket ///////////////////
-CSocket::CSocket(CModule* pModule) : Csock() {
+CSocket::CSocket(CModule* pModule) : CZNCSock() {
 	m_pModule = pModule;
 	m_pModule->AddSocket(this);
 	EnableReadLine();
 	SetMaxBufferThreshold(10240);
 }
 
-CSocket::CSocket(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout) : Csock(sHostname, uPort, iTimeout) {
+CSocket::CSocket(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout) : CZNCSock(sHostname, uPort, iTimeout) {
 	m_pModule = pModule;
 	m_pModule->AddSocket(this);
 	EnableReadLine();
@@ -162,7 +162,7 @@ bool CSocket::Connect(const CString& sHostname, unsigned short uPort, bool bSSL,
 		sSockName = GetSockName();
 	}
 
-	return m_pModule->GetManager()->Connect(sHostname, uPort, sSockName, uTimeout, bSSL, sVHost, (Csock*) this);
+	return m_pModule->GetManager()->Connect(sHostname, uPort, sSockName, uTimeout, bSSL, sVHost, this);
 }
 
 bool CSocket::Listen(unsigned short uPort, bool bSSL, unsigned int uTimeout) {
@@ -177,7 +177,7 @@ bool CSocket::Listen(unsigned short uPort, bool bSSL, unsigned int uTimeout) {
 		sSockName = GetSockName();
 	}
 
-	return m_pModule->GetManager()->ListenAll(uPort, sSockName, bSSL, SOMAXCONN, (Csock*) this);
+	return m_pModule->GetManager()->ListenAll(uPort, sSockName, bSSL, SOMAXCONN, this);
 }
 
 bool CSocket::PutIRC(const CString& sLine) {

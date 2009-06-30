@@ -58,9 +58,9 @@ class CAdminMod : public CModule {
 		CTable VarTable;
 		VarTable.AddColumn("Variable");
 		VarTable.AddColumn("Type");
-		const char* string = "String";
-		const char* boolean = "Boolean (true/false)";
-		const char* integer = "Integer";
+		static const char* string = "String";
+		static const char* boolean = "Boolean (true/false)";
+		static const char* integer = "Integer";
 		static const char* vars[][2] = {
 			{"Nick",             string},
 			{"Altnick",          string},
@@ -108,7 +108,16 @@ class CAdminMod : public CModule {
 	CUser* GetUser(const CString& username) {
 		if (username.Equals("$me"))
 			return m_pUser;
-		return CZNC::Get().FindUser(username);
+		CUser *pUser = CZNC::Get().FindUser(username);
+		if (!pUser) {
+			PutModule("Error: User not found: " + username);
+			return NULL;
+		}
+		if (pUser != m_pUser && !m_pUser->IsAdmin()) {
+			PutModule("Error: You need to have admin rights to modify other users!");
+			return NULL;
+		}
+		return pUser;
 	}
 
 	void Get(const CString& sLine) {
@@ -124,14 +133,8 @@ class CAdminMod : public CModule {
 		}
 
 		CUser* user = GetUser(username);
-		if (!user) {
-			PutModule("Error: User not found: " + username);
+		if (!user)
 			return;
-		}
-		if (user != m_pUser && !m_pUser->IsAdmin()) {
-			PutModule("Error: You need to have admin rights to modify other users!");
-			return;
-		}
 
 		if (var == "nick")
 			PutModule("Nick = " + user->GetNick());
@@ -169,24 +172,13 @@ class CAdminMod : public CModule {
 		CString value     = sLine.Token(3, true);
 
 		if (value.empty()) {
-			if (!username.empty()) {
-				value    = username;
-				username = m_pUser->GetUserName();;
-			} else {
-				PutModule("Usage: set <variable> [username] <value>");
-				return;
-			}
+			PutModule("Usage: set <variable> <username> <value>");
+			return;
 		}
 
 		CUser* user = GetUser(username);
-		if (!user) {
-			PutModule("Error: User not found: " + username);
+		if (!user)
 			return;
-		}
-		if (user != m_pUser && !m_pUser->IsAdmin()) {
-			PutModule("Error: You need to have admin rights to modify other users!");
-			return;
-		}
 
 		if (var == "nick") {
 			user->SetNick(value);
@@ -262,7 +254,7 @@ class CAdminMod : public CModule {
 		CString chan = sLine.Token(3, true);
 
 		if (var.empty()) {
-			PutModule("Usage: getchan <variable> [username] [chan]");
+			PutModule("Usage: getchan <variable> [username] <chan>");
 			return;
 		}
 		if (chan.empty()) {
@@ -274,14 +266,8 @@ class CAdminMod : public CModule {
 		}
 
 		CUser* user = GetUser(username);
-		if (!user) {
-			PutModule("Error: User not found: " + username);
+		if (!user)
 			return;
-		}
-		if (user != m_pUser && !m_pUser->IsAdmin()) {
-			PutModule("Error: You need to have admin rights to modify other users!");
-			return;
-		}
 
 		CChan* pChan = user->FindChan(chan);
 		if (!pChan) {
@@ -310,25 +296,13 @@ class CAdminMod : public CModule {
 		CString value     = sLine.Token(4, true);
 
 		if (value.empty()) {
-			if (!username.empty() && !chan.empty()) {
-				value    = chan;
-				chan     = username;
-				username = m_pUser->GetUserName();;
-			} else {
-				PutModule("Usage: set <variable> [username] <value>");
-				return;
-			}
+			PutModule("Usage: set <variable> <username> <value>");
+			return;
 		}
 
 		CUser* user = GetUser(username);
-		if (!user) {
-			PutModule("Error: User not found: " + username);
+		if (!user)
 			return;
-		}
-		if (user != m_pUser && !m_pUser->IsAdmin()) {
-			PutModule("Error: You need to have admin rights to modify other users!");
-			return;
-		}
 
 		CChan* pChan = user->FindChan(chan);
 		if (!pChan) {
@@ -512,24 +486,13 @@ class CAdminMod : public CModule {
 		CString server   = sLine.Token(2, true);
 
 		if (server.empty()) {
-			if (!username.empty()) {
-				server = username;
-				username = "";
-			} else {
-				PutModule("Usage: addserver [username] <server>");
-				return;
-			}
+			PutModule("Usage: addserver <username> <server>");
+			return;
 		}
 
 		CUser* user = GetUser(username);
-		if (!user) {
-			PutModule("Error: User not found: " + username);
+		if (!user)
 			return;
-		}
-		if (user != m_pUser && !m_pUser->IsAdmin()) {
-			PutModule("Error: You need to have admin rights to modify other users!");
-			return;
-		}
 
 		user->AddServer(server);
 		PutModule("Added IRC Server: " + server);

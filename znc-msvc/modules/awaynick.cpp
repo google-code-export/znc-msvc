@@ -7,6 +7,7 @@
  */
 
 // @todo handle raw 433 (nick in use)
+#include "znc.h"
 #include "IRCSock.h"
 #include "User.h"
 

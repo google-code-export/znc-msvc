@@ -11,8 +11,8 @@
 
 #define REQUIRESSL
 
-#include "User.h"
 #include "znc.h"
+#include "User.h"
 #include <sstream>
 
 using std::pair;

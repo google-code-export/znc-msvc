@@ -90,7 +90,6 @@ class CZNC;
 class CUser;
 class CNick;
 class CChan;
-class Csock;
 class CModule;
 class CFPTimer;
 class CSockManager;
@@ -141,7 +140,7 @@ private:
 	FPTimer_t	m_pFBCallback;
 };
 
-class ZNC_API CSocket : public Csock {
+class ZNC_API CSocket : public CZNCSock {
 public:
 	CSocket(CModule* pModule);
 	CSocket(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout = 60);

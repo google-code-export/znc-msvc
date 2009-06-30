@@ -28,14 +28,13 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* $Revision: 1.207 $
+* $Revision: 1.209 $
 */
 
 // note to compile with win32 need to link to winsock2, using gcc its -lws2_32
 
 #ifndef _HAS_CSOCKET_
 #define _HAS_CSOCKET_
-#include <main.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -279,7 +278,7 @@ bool InitSSL( ECompType eCompressionType = CT_NONE );
 /**
  * This does all the csocket initialized inclusing InitSSL() and win32 specific initializations, only needs to be called once
  */
-bool InitCsocket();
+bool ZNC_API InitCsocket();
 /**
  * Shutdown and release global allocated memory
  */
@@ -1820,7 +1819,13 @@ public:
 		return( iRet );
 	}
 
-private:
+protected:
+	//! this is a strict wrapper around C-api select(). Added in the event you need to do special work here
+	virtual int Select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
+	{
+		return( select( nfds, readfds, writefds, exceptfds, timeout ) );
+	}
+protected:
 	/**
 	* fills a map of socks to a message for check
 	* map is empty if none are ready, check GetErrno() for the error, if not SUCCESS Select() failed
@@ -1958,9 +1963,9 @@ private:
 
 
 		if ( bHasWriteable )
-			iSel = select(FD_SETSIZE, &rfds, &wfds, NULL, &tv);
+			iSel = Select(FD_SETSIZE, &rfds, &wfds, NULL, &tv);
 		else
-			iSel = select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
+			iSel = Select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
 		if ( iSel == 0 )
 		{
 			if ( mpeSocks.empty() )
@@ -2192,7 +2197,7 @@ private:
 typedef TSocketManager<Csock> CSocketManager;
 
 #ifndef _NO_CSOCKET_NS
-}
+};
 #endif /* _NO_CSOCKET_NS */
 
 #endif /* _HAS_CSOCKET_ */
