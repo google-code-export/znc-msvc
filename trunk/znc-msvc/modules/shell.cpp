@@ -48,7 +48,7 @@ public:
 	}
 
 	virtual ~CShellMod() {
-		vector<Csock*> vSocks = m_pManager->FindSocksByName("SHELL");
+		vector<CZNCSock*> vSocks = m_pManager->FindSocksByName("SHELL");
 
 		for (unsigned int a = 0; a < vSocks.size(); a++) {
 			m_pManager->DelSockByAddr(vSocks[a]);
@@ -155,7 +155,7 @@ public:
 	}
 
 	void RunCommand(const CString& sCommand) {
-		m_pManager->AddSock((Csock*) new CShellSock(this, m_pClient, "cd " + m_sPath + " && " + sCommand), "SHELL");
+		m_pManager->AddSock(new CShellSock(this, m_pClient, "cd " + m_sPath + " && " + sCommand), "SHELL");
 	}
 private:
 	CString	m_sPath;

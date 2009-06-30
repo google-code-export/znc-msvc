@@ -27,11 +27,6 @@ namespace
 }
 
 CZNC::CZNC() {
-	if (!InitCsocket()) {
-		CUtils::PrintError("Failed to initialize Csocket!");
-		exit(-1);
-	}
-
 #ifdef _MODULES
 	m_pModules = new CGlobalModules();
 #endif

@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "znc.h"
 #include "User.h"
 #include <algorithm>
 

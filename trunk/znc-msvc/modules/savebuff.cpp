@@ -14,6 +14,7 @@
 
 #define REQUIRESSL
 
+#include "znc.h"
 #include "Chan.h"
 #include "User.h"
 #include <sys/stat.h>

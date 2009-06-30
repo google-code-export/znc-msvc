@@ -6,12 +6,12 @@
  * by the Free Software Foundation.
  */
 
+#include "znc.h"
 #include "Chan.h"
 #include "HTTPSock.h"
 #include "Server.h"
 #include "Template.h"
 #include "User.h"
-#include "znc.h"
 #include <sstream>
 
 using std::stringstream;

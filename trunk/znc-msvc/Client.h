@@ -9,7 +9,7 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
-#include "Csocket.h"
+#include "Socket.h"
 #include "Utils.h"
 
 // Forward Declarations
@@ -67,9 +67,9 @@ protected:
 	CClient*	m_pClient;
 };
 
-class ZNC_API CClient : public Csock {
+class ZNC_API CClient : public CZNCSock {
 public:
-	CClient(const CString& sHostname, unsigned short uPort, int iTimeout = 60) : Csock(sHostname, uPort, iTimeout) {
+	CClient(const CString& sHostname, unsigned short uPort, int iTimeout = 60) : CZNCSock(sHostname, uPort, iTimeout) {
 		m_pUser = NULL;
 		m_pTimeout = NULL;
 		m_pIRCSock = NULL;

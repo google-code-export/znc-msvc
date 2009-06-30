@@ -13,6 +13,7 @@
  *
  */
 
+#include "znc.h"
 #include "Chan.h"
 #include "User.h"
 

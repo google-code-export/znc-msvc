@@ -180,6 +180,11 @@ int main(int argc, char** argv) {
 		sConfig = argv[optind];
 	}
 
+	if (!InitCsocket()) {
+		CUtils::PrintError("Failed to initialize Csocket!");
+		exit(-1);
+	}
+
 	CZNC* pZNC = &CZNC::Get();
 	pZNC->InitDirs(((argc) ? argv[0] : ""), sDataDir);
 
