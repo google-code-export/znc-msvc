@@ -1,5 +1,8 @@
 #summary znc-msvc Changelog.
-#labels Featured,Phase-Support,Changelog
+#labels Featured,Phase-Support
+
+== 2009-07-08 ==
+Updated to official SVN revision 1559, fixing IPv6 issue, adding "execute" command to peform module, bug fixes. All credits go to the ZNC team.
 
 == 2009-07-04 ==
 Updated to official SVN revision 1555, including asynchronous DNS (ZNC will not "hang" if a server name takes a long time to resolve). All credits go to the ZNC team.
