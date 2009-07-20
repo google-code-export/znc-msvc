@@ -6,9 +6,10 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
+#include "znc.h"
 #include "User.h"
 #include "IRCSock.h"
-#include "znc.h"
 
 #define MESSAGE "Your account has been disabled. Contact your administrator."
 

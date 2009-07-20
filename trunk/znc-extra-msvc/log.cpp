@@ -18,11 +18,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+#include "stdafx.hpp"
+#include "main.h"
 #include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <ctime>
-#include "main.h"
 #include "User.h"
 #include "Nick.h"
 #include "Modules.h"

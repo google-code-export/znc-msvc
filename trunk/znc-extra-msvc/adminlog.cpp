@@ -6,9 +6,10 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
+#include "znc.h"
 #include "User.h"
 #include "Modules.h"
-#include "znc.h"
 #include "Server.h"
 
 #ifndef _WIN32

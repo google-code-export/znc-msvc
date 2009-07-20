@@ -6,6 +6,8 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
+#include "znc.h"
 #include "Nick.h"
 #include "User.h"
 
