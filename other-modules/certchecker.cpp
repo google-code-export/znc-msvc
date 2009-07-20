@@ -6,10 +6,9 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "IRCSock.h"
 #include "User.h"
-
-#define REQUIRESSL
 
 class CCertCheckerMod : public CModule {
 public:

@@ -1,3 +1,4 @@
+#include "stdafx.hpp"
 #include "Modules.h"
 
 class CLagchk : public CModule {

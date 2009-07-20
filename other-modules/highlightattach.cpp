@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "Chan.h"
 #include "User.h"
 #include "Modules.h"
