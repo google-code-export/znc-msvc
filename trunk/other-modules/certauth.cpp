@@ -6,8 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#define REQUIRESSL
-
+#include "stdafx.hpp"
 #include "Modules.h"
 #include "User.h"
 #include "znc.h"

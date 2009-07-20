@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "main.h"
+#include "stdafx.hpp"
 #include "User.h"
 #include "Nick.h"
 #include "Modules.h"

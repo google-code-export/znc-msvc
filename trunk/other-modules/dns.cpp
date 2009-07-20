@@ -9,17 +9,7 @@
  * borrowed from lastseen & modified, and the rehash borrowed from ClientCommands & modified.
  */
 
-
-
-
-#include "User.h"
-#include "IRCSock.h"
-#include "znc.h"
-#include <stdio.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <netinet/in.h> 
-#include <arpa/inet.h>
+#include "stdafx.hpp"
 
 using std::map;
 
