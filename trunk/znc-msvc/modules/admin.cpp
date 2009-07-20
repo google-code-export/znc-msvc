@@ -9,7 +9,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "User.h"
 #include "Modules.h"
 #include "Chan.h"

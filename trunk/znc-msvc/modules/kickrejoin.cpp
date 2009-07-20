@@ -13,7 +13,7 @@
  *
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "Chan.h"
 #include "User.h"
 

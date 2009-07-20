@@ -9,9 +9,7 @@
  * Author: imaginos <imaginos@imaginos.net>
  */
 
-#define REQUIRESSL
-
-#include "znc.h"
+#include "stdafx.hpp"
 #include "User.h"
 #include <sys/stat.h>
 

@@ -56,4 +56,6 @@ int fsync(int fd);
 #define uid_t short
 #define gid_t short
 
+#define __PRETTY_FUNCTION__ __FUNCTION__
+
 #endif // _ZNC_WIN32_H

@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "Modules.h"
 #include "User.h"
 #include "IRCSock.h"

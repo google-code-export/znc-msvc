@@ -12,9 +12,7 @@
  * better solution then plain text.
  */
 
-#define REQUIRESSL
-
-#include "znc.h"
+#include "stdafx.hpp"
 #include "Chan.h"
 #include "User.h"
 #include <sys/stat.h>
