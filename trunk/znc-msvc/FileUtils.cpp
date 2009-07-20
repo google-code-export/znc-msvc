@@ -464,12 +464,16 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 		return sHomeDir;
 	}
 
-	CString sActualPath = sPath;
+	CString sAddDir(sAdd);
+	CString sActualPath(sPath);
 
 #ifdef _WIN32
-	if(!PathIsRelative(sAdd.c_str()))
+	sAddDir.Replace("\\", "/");
+	sActualPath.Replace("\\", "/");
+
+	if(!PathIsRelative(sAddDir.c_str()))
 	{
-		return sAdd;
+		return sAddDir;
 	}
 
 	if(PathIsRelative(sPath.c_str()))
@@ -500,8 +504,6 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 		}
 	}
 #endif
-
-	CString sAddDir(sAdd);
 
 	if (sAddDir.Left(2) == "~/") {
 		sAddDir.LeftChomp();
