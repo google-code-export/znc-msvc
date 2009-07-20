@@ -4,6 +4,7 @@
 == 2009-07-20 (<font color="red">Updating is strongly advised!</font>) ==
   * Updated to official SVN revision 1568, fixing a bug that stopped "/znc get" from working (among other stuff).
   * Added notify, qauth and dns modules from [http://en.znc.in/wiki/Category:External_Modules here].
+  * Removed uptime module since it hasn't been working (revision 56).
   * Speeded up compilation of modules by using precompiled headers.
   * Fixed crash bug introduced together with c-ares (2009-07-04). Thanks CNU for noticing!
   * Fixed security-related issue 13. Thanks to CNU again!
