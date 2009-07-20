@@ -453,6 +453,91 @@ CString CFile::GetDir() const {
 	return sDir;
 }
 
+#ifdef _WIN32
+CString CDir::ChangeDir(const CString& sPathIn, const CString& sAddIn, const CString& sHomeIn) {
+	/* this function is pretty crappy but needed to fix ZNC's strange way of handling file paths */
+	CString sResult;
+	CString sPath(sPathIn);
+	CString sAdd(sAddIn);
+	CString sHomeDir(sHomeIn);
+
+	if (sHomeDir.empty())
+	{
+		// use the default home dir, if no custom home dir has been passed in.
+		sHomeDir = CZNC::Get().GetHomePath();
+	}
+
+	// we want to use backslashes for this function's inner workings.
+	sHomeDir.Replace("/", "\\");
+	sPath.Replace("/", "\\");
+	sAdd.Replace("/", "\\");
+
+	if (sAdd == "~")
+	{
+		// if the add dir is the home dir (why?!), use that as result...
+		sResult = sHomeDir;
+	}
+	else
+	{
+		if(!PathIsRelative(sAdd.c_str()))
+		{
+			// if add already is an absolute path, use it for the result...
+			// ... however, it can still contain ./ or ../ stuff,
+			// which will be resolved later.
+			sResult = sAdd;
+		}
+		else
+		{
+			// if the first part of the path (sPath) is relative,
+			// make it absolute, starting from the znc.exe directory:
+			if(PathIsRelative(sPath.c_str()))
+			{
+				char szLocalPath[1024] = {0};
+
+				// get the full path to znc.exe and strip off "znc.exe" from the end:
+				if(GetModuleFileName(NULL, szLocalPath, 1023) != 0 && szLocalPath[0])
+				{
+					PathRemoveFileSpec(szLocalPath);
+
+					if(PathIsDirectory(szLocalPath))
+					{
+						// append the relative sPath to our znc.exe dir,
+						// thereby making it absolute.
+						char szAbsolutePathBuffer[1024] = {0};
+						PathCombine(szAbsolutePathBuffer, szLocalPath, sPath.c_str());
+
+						// PathCombine will also resolve any ./ or ../ parts in the path.
+
+						// use the now-absolute path:
+						sPath = szAbsolutePathBuffer;
+					}
+				}
+			}
+
+			// append the (relative) sAdd path to the (absolute) sPath path:
+			char szAbsoluteResultBuffer[1024] = {0};
+			PathCombine(szAbsoluteResultBuffer, sPath.c_str(), sAdd.c_str());
+
+			sResult = szAbsoluteResultBuffer;
+		}
+	}
+
+	char szResultBuffer[1024] = {0};
+	
+	// make sure no ./ or ../ stuff survives this function. never.
+	if(!sResult.empty() && PathCanonicalize(szResultBuffer, sResult.c_str()))
+	{
+		sResult = szResultBuffer;
+		sResult.Replace("\\", "/");
+
+		return sResult;
+	}
+	else
+	{
+		abort();
+		return ""; // to shut up compiler warning
+	}
+#else
 CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString& sHome) {
 	CString sHomeDir(sHome);
 
@@ -465,52 +550,13 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 	}
 
 	CString sAddDir(sAdd);
-	CString sActualPath(sPath);
-
-#ifdef _WIN32
-	sAddDir.Replace("\\", "/");
-	sActualPath.Replace("\\", "/");
-
-	if(!PathIsRelative(sAddDir.c_str()))
-	{
-		return sAddDir;
-	}
-
-	if(PathIsRelative(sPath.c_str()))
-	{
-		char szLocalPath[1024] = {0};
-		char szPathFixed[1024] = {0};
-
-		if(GetModuleFileName(NULL, szLocalPath, 1023) != 0 && szLocalPath[0])
-		{
-			PathRemoveFileSpec(szLocalPath);
-
-			strcpy_s(szPathFixed, 1024, sPath.c_str());
-			if(szPathFixed[strlen(szPathFixed) - 1] == '/') szPathFixed[strlen(szPathFixed) - 1] = 0;
-
-			if(PathIsDirectory(szLocalPath))
-			{
-				PathCombine(szLocalPath, szLocalPath, szPathFixed);
-				sActualPath = szLocalPath;
-
-				sActualPath.Replace("\\", "/");
-
-				if(!sActualPath.empty() && sActualPath[sActualPath.size() - 1] != '/' &&
-					!sPath.empty() && sPath[sPath.size() - 1] == '/')
-				{
-					sActualPath += '/';
-				}
-			}
-		}
-	}
-#endif
 
 	if (sAddDir.Left(2) == "~/") {
 		sAddDir.LeftChomp();
 		sAddDir = sHomeDir + sAddDir;
 	}
 
-	CString sRet = ((sAddDir.size()) && (sAddDir[0] == '/')) ? "" : sActualPath;
+	CString sRet = ((sAddDir.size()) && (sAddDir[0] == '/')) ? "" : sPath;
 	sAddDir += "/";
 	CString sCurDir;
 
@@ -535,11 +581,8 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 		}
 	}
 
-#ifdef _WIN32
-	sRet.Replace("\\", "/");
-#endif
-
 	return (sRet.empty()) ? "/" : sRet;
+#endif
 }
 
 bool CDir::MakeDir(const CString& sPath, mode_t iMode) {

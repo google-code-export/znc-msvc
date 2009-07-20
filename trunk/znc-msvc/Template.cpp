@@ -100,6 +100,11 @@ CString CTemplate::ExpandFile(const CString& sFilename) {
 	if (sFilename.Left(1) == "/" || sFilename.Left(2) == "./") {
 		return sFilename;
 	}
+#ifdef _WIN32
+	if(!PathIsRelative(sFilename.c_str())) {
+		return sFilename;
+	}
+#endif
 
 	CString sFile(ResolveLiteral(sFilename));
 
@@ -108,7 +113,11 @@ CString CTemplate::ExpandFile(const CString& sFilename) {
 		CString sFilePath(CDir::ChangeDir(sRoot, sFile));
 
 		if (CFile::Exists(sFilePath)) {
+#ifdef _WIN32
+			if (sRoot.empty() || PathIsSameRoot(sRoot.c_str(), sFilePath.c_str())) {
+#else
 			if (sRoot.empty() || sFilePath.Left(sRoot.length()) == sRoot) {
+#endif
 				//DEBUG("\t\tFound  [" + sFilePath + "]\n");
 				return sFilePath;
 			} else {
