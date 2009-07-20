@@ -6,12 +6,12 @@
  * by the Free Software Foundation.
  */
 
+#include "znc.h"
 #include "Chan.h"
 #include "IRCSock.h"
 #include "Modules.h"
 #include "Server.h"
 #include "User.h"
-#include "znc.h"
 
 #include <tcl.h>
 

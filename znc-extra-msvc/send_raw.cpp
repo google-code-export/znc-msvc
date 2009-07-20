@@ -6,8 +6,9 @@
  * by the Free Software Foundation.
  */
 
-#include "User.h"
+#include "stdafx.hpp"
 #include "znc.h"
+#include "User.h"
 
 class CSendRaw_Mod: public CGlobalModule {
 public:

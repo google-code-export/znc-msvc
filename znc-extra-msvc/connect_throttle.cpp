@@ -6,12 +6,13 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
+#include "znc.h"
 #include "main.h"
 #include "User.h"
 #include "Nick.h"
 #include "Modules.h"
 #include "Chan.h"
-#include "znc.h"
 
 class CConnectThrottleMod : public CGlobalModule {
 public:
