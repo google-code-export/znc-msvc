@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 
 class CFailToBanMod : public CGlobalModule {
 public:
@@ -36,6 +36,10 @@ public:
 		m_Cache.SetTTL(timeout * 60 * 1000);
 
 		return true;
+	}
+
+	virtual void OnPostRehash() {
+		m_Cache.Clear();
 	}
 
 	void Add(const CString& sHost, unsigned int count) {

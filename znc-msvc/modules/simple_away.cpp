@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "User.h"
 
 #define SIMPLE_AWAY_DEFAULT_REASON "Auto away at %s"

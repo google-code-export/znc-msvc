@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "User.h"
 
 // If you change these and it breaks, you get to keep the pieces

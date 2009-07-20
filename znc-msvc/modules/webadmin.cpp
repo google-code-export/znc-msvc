@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "Chan.h"
 #include "HTTPSock.h"
 #include "Server.h"

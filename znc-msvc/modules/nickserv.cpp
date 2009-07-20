@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "User.h"
 
 class CNickServ : public CModule
@@ -38,8 +38,11 @@ public:
 			m_sPass = sPass;
 			SetNV("Password", m_sPass);
 			PutModule("Password set");
+		} else if (sCmdName == "clear") {
+			m_sPass = "";
+			DelNV("Password");
 		} else {
-			PutModule("Commands: set <password>");
+			PutModule("Commands: set <password>, clear");
 		}
 	}
 

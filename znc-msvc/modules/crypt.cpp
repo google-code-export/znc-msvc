@@ -22,11 +22,9 @@
 //       It is strongly suggested that you enable SSL between znc and your client otherwise the encryption stops at znc and gets sent to your client in plain text.
 //
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "Chan.h"
 #include "User.h"
-
-#define REQUIRESSL	1
 
 class CCryptMod : public CModule {
 public:

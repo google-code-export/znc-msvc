@@ -15,7 +15,7 @@
 struct DNSLookup;
 #endif
 
-class CZNCSock : public Csock {
+class ZNC_API CZNCSock : public Csock {
 public:
 	CZNCSock(int timeout = 60) : Csock(timeout) {
 #ifdef HAVE_ARES
@@ -98,6 +98,8 @@ public:
 
 		return TSocketManager<CZNCSock>::Connect(C, pcSock);
 	}
+
+	unsigned int GetAnonConnectionCount(const CString &sIP) const;
 private:
 protected:
 #ifdef HAVE_ARES

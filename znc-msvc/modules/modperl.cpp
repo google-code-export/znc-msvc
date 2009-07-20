@@ -15,9 +15,9 @@
  * PERL_DESTRUCT_LEVEL is a perl env flag to force the VM to cleanup, this also stops false alarms, but within perl
  */
 
-#include "znc.h"
 #include "Chan.h"
 #include "User.h"
+#include "znc.h"
 
 // perl stuff
 #include <EXTERN.h>

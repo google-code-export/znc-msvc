@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "znc.h"
+#include "stdafx.hpp"
 #include "User.h"
 #include <algorithm>
 
@@ -68,19 +68,22 @@ public:
 					PutModule(CString(i) + ": " + *it);
 			}
 			PutModule(" -- End of List");
+		} else if (sCmdName == "execute") {
+			OnIRCConnected();
+			PutModule("perform commands sent");
 		} else if (sCmdName == "swap") {
 			u_int iNumA = sCommand.Token(1).ToUInt();
 			u_int iNumB = sCommand.Token(2).ToUInt();
-			
+
 			if (iNumA > m_vPerform.size() || iNumA <= 0 || iNumB > m_vPerform.size() || iNumB <= 0) {
 				PutModule("Illegal # Requested");
 			} else {
-				std::iter_swap(m_vPerform.begin() + iNumA - 1, m_vPerform.begin() + iNumB - 1);
+				std::iter_swap(m_vPerform.begin() + (iNumA - 1), m_vPerform.begin() + (iNumB - 1));
 				PutModule("Commands Swapped.");
 				Save();
 			}
 		} else {
-			PutModule("Commands: add <command>, del <nr>, list, swap <nr> <nr>");
+			PutModule("Commands: add <command>, del <nr>, list, execute, swap <nr> <nr>");
 		}
 	}
 
