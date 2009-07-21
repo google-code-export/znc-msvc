@@ -1,7 +1,11 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
-== 2009-07-20 (<font color="red">Updating is strongly advised!</font>) ==
+== 2009-07-21 (<font color="red">Updating is strongly advised!</font>) ==
+  * Really fixed issue 13. The previous fix was sloppy.
+  * Updated to official SVN revision 1571 (=ZNC 0.072), fixing another security issue that also affected the Linux version.
+
+== 2009-07-20 ==
   * Updated to official SVN revision 1568, fixing a bug that stopped "/znc get" from working (among other stuff).
   * Added notify, qauth and dns modules from [http://en.znc.in/wiki/Category:External_Modules here].
   * Removed uptime module since it hasn't been working (revision 56).
