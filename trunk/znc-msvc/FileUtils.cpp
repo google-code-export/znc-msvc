@@ -594,6 +594,20 @@ CString CDir::ChangeDir(const CString& sPath, const CString& sAdd, const CString
 #endif
 }
 
+CString CDir::CheckPathPrefix(const CString& sPath, const CString& sAdd, const CString& sHomeDir) {
+#ifdef _WIN32
+	const CString sPrefix = ChangeDir(sPath, "./", sHomeDir);
+	const CString sAbsolutePath = ChangeDir(sPath, sAdd, sHomeDir);
+#else
+	CString sPrefix = sPath.Replace_n("//", "/").TrimRight_n("/") + "/";
+	CString sAbsolutePath = ChangeDir(sPrefix, sAdd, sHomeDir);
+#endif
+
+	if (sAbsolutePath.Left(sPrefix.length()) != sPrefix)
+		return "";
+	return sAbsolutePath;
+}
+
 bool CDir::MakeDir(const CString& sPath, mode_t iMode) {
 #ifdef _WIN32
 	if (sPath.empty())
