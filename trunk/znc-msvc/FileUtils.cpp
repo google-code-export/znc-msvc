@@ -527,6 +527,15 @@ CString CDir::ChangeDir(const CString& sPathIn, const CString& sAddIn, const CSt
 	// make sure no ./ or ../ stuff survives this function. never.
 	if(!sResult.empty() && PathCanonicalize(szResultBuffer, sResult.c_str()))
 	{
+		if(sAdd.empty() || sAdd[sAdd.length() - 1] != '\\')
+		{
+			PathRemoveBackslash(szResultBuffer);
+		}
+		else
+		{
+			PathAddBackslash(szResultBuffer);
+		}
+
 		sResult = szResultBuffer;
 		sResult.Replace("\\", "/");
 
