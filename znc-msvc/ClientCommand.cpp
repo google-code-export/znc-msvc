@@ -400,11 +400,7 @@ void CClient::UserCommand(CString& sLine) {
 
 		sAbsolutePath = CDir::ChangeDir(m_pUser->GetDLPath(), sFile, CZNC::Get().GetHomePath());
 
-#ifdef _WIN32
-		if (!PathIsSameRoot(sAllowedPath.c_str(), sAbsolutePath.c_str())) {
-#else
 		if (sAbsolutePath.Left(sAllowedPath.length()) != sAllowedPath) {
-#endif
 			PutStatus("Illegal path.");
 			return;
 		}
@@ -422,11 +418,7 @@ void CClient::UserCommand(CString& sLine) {
 
 		sAbsolutePath = CDir::ChangeDir(m_pUser->GetDLPath(), sFile, CZNC::Get().GetHomePath());
 
-#ifdef _WIN32
-		if (!PathIsSameRoot(sAllowedPath.c_str(), sAbsolutePath.c_str())) {
-#else
 		if (sAbsolutePath.Left(sAllowedPath.length()) != sAllowedPath) {
-#endif
 			PutStatus("Illegal path.");
 			return;
 		}

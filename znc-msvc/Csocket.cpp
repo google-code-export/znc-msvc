@@ -1716,7 +1716,7 @@ u_short Csock::GetLocalPort()
 		if( !GetIPv6() )
 		{
 			struct sockaddr_in mLocalAddr;
-			socklen_t mLocalLen = sizeof( mLocalLen );
+			socklen_t mLocalLen = sizeof( mLocalAddr );
 			if ( getsockname( iSock, (struct sockaddr *) &mLocalAddr, &mLocalLen ) == 0 )
 				m_iLocalPort = ntohs( mLocalAddr.sin_port );
 		}
@@ -1724,7 +1724,7 @@ u_short Csock::GetLocalPort()
 		else
 		{
 			struct sockaddr_in6 mLocalAddr;
-			socklen_t mLocalLen = sizeof( mLocalLen );
+			socklen_t mLocalLen = sizeof( mLocalAddr );
 			if ( getsockname( iSock, (struct sockaddr *) &mLocalAddr, &mLocalLen ) == 0 )
 				m_iLocalPort = ntohs( mLocalAddr.sin6_port );
 		}
