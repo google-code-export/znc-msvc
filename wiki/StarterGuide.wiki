@@ -10,4 +10,6 @@
 ===First Start===
 Open a new cmd.exe instance, navigate to the folder where znc.exe resides, type `znc --makeconf`, then follow the instructions. When you're done, simply enter `znc` and hit return to start the program.
 
-Details about using modules, webadmin and so on can be found on the [http://en.znc.in/wiki/ZNC official ZNC website].
+==Notes==
+  * Details about using modules, webadmin and so on can be found on the [http://en.znc.in/wiki/ZNC official ZNC website].
+  * You currently have to keep the console window open. Closing it will shut down ZNC. A proper GUI to send ZNC to the system tray is in the works. You can also use [http://www.google.com/search?q=SrvAny SrvAny] to run ZNC as a service.
