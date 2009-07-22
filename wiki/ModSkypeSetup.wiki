@@ -3,8 +3,8 @@
 
 <table border="0"><tr valign="top"><td>
 == How To ==
-  # First, [http://code.google.com/p/znc-msvc/downloads/list download] the latest binaries and the latest `modskype.dll` from this page.
-  # Second, extract the binaries and move `modskype.dll` into the modules folder from the binaries download.
+  # First, [http://code.google.com/p/znc-msvc/downloads/list download] the latest binaries and the latest `modskype` from this page.
+  # Second, extract the zip files and move `modskype.dll` into the modules folder from the binaries download.
   # Make sure you have the latest [http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2&displaylang=en Microsoft Visual C++ 2008 SP1 Redistributable Package]
   # Open a command shell window (Windows+R, `cmd`) and navigate to the folder you extracted znc.exe to.
   # Type `znc --makeconf` and hit enter.
@@ -17,7 +17,7 @@
   # `*status` should reply with `Loaded module modskype`.
   # Skype should notify you that znc.exe wants to have access. Grant access.
   # Have someone type a message in each Skype group chat you want bridged.
-  # For each new channel, `*modskype` on IRC will send you a message like `WARNING: Group chat $gibb;errish;1234 not mapped to any channel. A message has been lost.`
+  # For each new channel, `*modskype` on IRC will send you a message like<br />`WARNING: Group chat $gibb;errish;1234 not mapped to any channel. A message has been lost.`
   # To map group chats, type `/msg *modskype set #your-channel $gibb;errish;1234` and replace the IRC channel name and the Skype chat room ID accordingly.
   # A confirmation message will appear: `MAPPED: chatname $gibb;errish;1234 to #your-channel!`
   # Type `/msg *status saveconfig`
