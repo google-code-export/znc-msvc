@@ -24,4 +24,6 @@
   # Disconnect your client from the bnc account. Leave Skype running. Everything should be fine now.
 
 Please note that chatting from within the Skype instance that is used for the bot may lead to unexpected results.
+
+If you have any questions or suggestions, feel free to contact flakes at #znc on EFnet!
 </td><td><a href="http://znc-msvc.googlecode.com/svn/wiki/modskype-promo.png">http://znc-msvc.googlecode.com/svn/wiki/modskype-promo-thumb.jpg</a></td></tr></table>
