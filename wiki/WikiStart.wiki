@@ -1,0 +1,13 @@
+#summary Wiki start page.
+
+=What are you looking for?=
+
+  * Help setting up ZNC on Windows: StarterGuide
+
+  * Help setting up modskype: ModSkypeSetup<br />modskype turns a ZNC account into a bot that relays messages between IRC channels and Skype chat rooms.
+
+  * News and changes for recent releases: Changelog
+  * A comprehensive list of all included modules: IncludedModules
+
+  * Help with a certain feature or module: http://www.znc.in/ or irc://irc.efnet.org/znc
+  * Something else? Let use know via IRC or the comments below.
