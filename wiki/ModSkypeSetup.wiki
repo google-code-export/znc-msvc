@@ -1,8 +1,8 @@
 #summary Describes how to set up ZNC with modskype as a "bridge bot" between IRC channels and Skype group chats.
 #labels Featured,Phase-Deploy
 
+<table border="0"><tr valign="top"><td>
 == How To ==
-
   # First, [http://code.google.com/p/znc-msvc/downloads/list download] the latest binaries and the latest `modskype.dll` from this page.
   # Second, extract the binaries and move `modskype.dll` into the modules folder from the binaries download.
   # Make sure you have the latest [http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2&displaylang=en Microsoft Visual C++ 2008 SP1 Redistributable Package]
@@ -24,3 +24,4 @@
   # Disconnect your client from the bnc account. Leave Skype running. Everything should be fine now.
 
 Please note that chatting from within the Skype instance that is used for the bot may lead to unexpected results.
+</td><td><a href="http://znc-msvc.googlecode.com/svn/wiki/modskype-promo.png">http://znc-msvc.googlecode.com/svn/wiki/modskype-promo-thumb.jpg</a></td></tr></table>
