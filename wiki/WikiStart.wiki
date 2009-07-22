@@ -7,5 +7,5 @@
   * News and changes for recent releases: [Changelog]
   * A comprehensive list of all included modules: IncludedModules
 
-  * Help with a certain feature or module: http://www.znc.in/ or <a href="irc://irc.efnet.org/znc">irc.efnet.org #znc</a>.
-  * Something else? Ask on IRC or let us know via the comment form below.
+  * Help with a certain feature or module: http://www.znc.in/ or irc.efnet.org #znc.
+  * Something else? Ask on IRC!
