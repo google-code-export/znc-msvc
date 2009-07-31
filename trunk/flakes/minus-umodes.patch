@@ -1,0 +1,25 @@
+Index: IRCSock.cpp
+===================================================================
+--- IRCSock.cpp	(revision 1582)
++++ IRCSock.cpp	(working copy)
+@@ -830,6 +830,20 @@
+ 	m_pUser->ClearMotdBuffer();
+ 
+ 	ResetChans();
++
++	// send a "reset user modes" cmd to the client.
++	// otherwise, on reconnect, it might think it still
++	// had user modes that it actually doesn't have.
++	CString sUserMode;
++	for (set<unsigned char>::const_iterator it = m_scUserModes.begin(); it != m_scUserModes.end(); it++) {
++		sUserMode += *it;
++	}
++	if (!sUserMode.empty()) {
++		const CString sNick = m_pUser->GetIRCNick().GetNick();
++		m_pUser->PutUser(":" + sNick + " MODE " + sNick + " :-" + sUserMode);
++	}
++
++	// also clear the user modes in our space:
+ 	m_scUserModes.clear();
+ }
+ 
