@@ -2,7 +2,7 @@ Index: IRCSock.cpp
 ===================================================================
 --- IRCSock.cpp	(revision 1582)
 +++ IRCSock.cpp	(working copy)
-@@ -830,6 +830,20 @@
+@@ -830,6 +830,19 @@
  	m_pUser->ClearMotdBuffer();
  
  	ResetChans();
@@ -15,8 +15,7 @@ Index: IRCSock.cpp
 +		sUserMode += *it;
 +	}
 +	if (!sUserMode.empty()) {
-+		const CString sNick = m_pUser->GetIRCNick().GetNick();
-+		m_pUser->PutUser(":" + sNick + " MODE " + sNick + " :-" + sUserMode);
++		m_pUser->PutUser(":" + m_pUser->GetIRCNick().GetNickMask() + " MODE " + m_pUser->GetIRCNick().GetNick() + " :-" + sUserMode);
 +	}
 +
 +	// also clear the user modes in our space:
