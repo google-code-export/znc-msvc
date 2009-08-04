@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2009 flakes @ EFNet
  *
+ * Compiling: LIBS="-lpcrecpp -lpcre" ./znc-buildmod infobot.cpp
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
@@ -594,7 +596,8 @@ void CInfoBotModule::SendMessage(const CString& sSendTo, const CString& sMsg)
 		sText.Replace("%CLO%", "\x03");
 		
 		// forcefully reset colors before applying our own by
-		// prepending the msg with \x03\x03.
+		// prepending \x03\x03 to the msg.
+		// also fix other double \x03s on the way.
 		
 		sText = "\x03" + sText;
 		sText.Replace("\x03\x03", "\x03");
@@ -704,6 +707,7 @@ void CInfoBotModule::OnModCommand(const CString& sCommand)
 					m_colorTwo = iColor;
 				
 				PutModule("Changed color " + sAction + " to \x03" + (iColor < 10 ? "0" + CString(iColor) : CString(iColor)) + CString(iColor) + "\x03.");
+				SaveSettings();
 			}
 			else
 			{
@@ -722,6 +726,8 @@ void CInfoBotModule::OnModCommand(const CString& sCommand)
 				m_coloredChans[sAction] = false;
 				PutModule("Deactivated color on " + sAction + ".");
 			}
+			
+			SaveSettings();
 		}
 		else
 		{
@@ -737,6 +743,8 @@ void CInfoBotModule::OnModCommand(const CString& sCommand)
 		{
 			m_triggerChars[sChan] = sParam[0];
 			PutModule("Set trigger char on " + sChan + " to '" + CString(sParam[0]) + "'.");
+			
+			SaveSettings();
 		}
 		else
 		{
@@ -793,7 +801,7 @@ void CInfoBotModule::LoadSettings()
 			pcrecpp::StringPiece input(it->second);
 			
 			string left, right;
-			pcrecpp::RE re("(\\w+) ?= ?(.+?)\n");
+			pcrecpp::RE re("(\\w+) ?= ?(.+?)\r?\n");
 			while(re.Consume(&input, &left, &right))
 			{
 				if(left == "enable")
@@ -803,6 +811,10 @@ void CInfoBotModule::LoadSettings()
 				else if(left == "colors")
 				{
 					m_coloredChans[sChanName] = (right != "0");
+				}
+				else if(left == "trigger" && !right.empty())
+				{
+					m_triggerChars[sChanName] = right[0];
 				}
 			}
 		}
