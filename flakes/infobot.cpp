@@ -19,7 +19,7 @@
 
 #include <ctype.h>
 
-#define NR_OF_TRIGGERS 5
+#define NR_OF_TRIGGERS 7
 
 using namespace pcrecpp;
 
@@ -88,13 +88,15 @@ static CString StripHTML(const CString& sFrom)
 		}
 	}
 
+	sResult = sResult.Escape_n(CString::EHTML, CString::EASCII);
+
 	sResult.Replace("\r", " ");
 	sResult.Replace("\n", " ");
 	sResult.Replace("\t", " ");
 
 	sResult.Trim();
 
-	return sResult.Escape_n(CString::EHTML, CString::EASCII);
+	return sResult;
 }
 
 
@@ -177,11 +179,12 @@ class CTriggerHTTPSock : public CSimpleHTTPSock
 {
 protected:
 	CString m_trigger, m_args, m_chan, m_nick;
-	bool m_acceptEmptyArgs;
+	bool m_acceptEmptyArgs, m_timedOut;
 
 	void Timeout()
 	{
 		m_pMod->SendMessage(m_chan, "ERROR: Sorry " + m_nick + ", I failed to contact the server.");
+		m_timedOut = true;
 
 		CSimpleHTTPSock::Timeout();
 	}
@@ -190,6 +193,7 @@ public:
 	CTriggerHTTPSock(CInfoBotModule *pModInstance) : CSimpleHTTPSock(pModInstance)
 	{
 		m_acceptEmptyArgs = true;
+		m_timedOut = false;
 	}
 
 	void SetTriggerInfo(const CString& sTrigger, const CString& sArgs, const CString& sChan, const CString& sNick)
@@ -221,7 +225,46 @@ protected:
 			return (bGetURLOnly ? sURL : sURL + " " + sTitle);
 		}
 
-		return "ERROR";
+		return "";
+	}
+
+	CString ParseCalc(const CString& sResponse)
+	{
+		RE calcRE("calc_img\\.gif.+?<h2.*?<b>(.+?)</b>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		string sTmp;
+
+		if(calcRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			return StripHTML(sTmp);
+		}
+
+		return "";
+	}
+
+	CString ParseDidYouMean(const CString& sResponse)
+	{
+		RE didyoumeanRE("Did you mean.+?spell.?>(.+?)</a", RE_Options(PCRE_CASELESS));
+		string sTmp;
+
+		if(didyoumeanRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			return StripHTML(sTmp);
+		}
+
+		return "";
+	}
+
+	CString ParseDefine(const CString& sResponse)
+	{
+		RE definitionRE("std><li>(.+?)<(?:br|/?li)", RE_Options(PCRE_CASELESS));
+		string sTmp;
+
+		if(definitionRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			return StripHTML(sTmp);
+		}
+
+		return "";
 	}
 
 public:
@@ -232,16 +275,42 @@ public:
 
 	void Request()
 	{
-		Get("www.google.com", "/search?q=" + URLEscape(m_args));
+		Get("www.google.com", "/search?safe=off&q=" + URLEscape(m_args));
 	}
 
 	void OnRequestDone(const CString& sResponse)
 	{
-		CString sFirstLink = ParseFirstResult(sResponse);
+		const CString sPrefix = "%CL1%[%CL2%Google%CL1%]%CLO% ";
+		CString sResult = ParseDefine(sResponse);
+		CString sDidYouMean = ParseDidYouMean(sResponse);
 
-		if(true)
+		if(sResult.empty())
 		{
-			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%Google%CL1%]%CLO% " + sFirstLink.Token(0) + " %CL1%[%CL2%" + sFirstLink.Token(1, true) + "%CL1%]");
+			sResult = ParseCalc(sResponse);
+
+			if(sResult.empty())
+			{
+				CString sFirstLink = ParseFirstResult(sResponse);
+
+				if(!sFirstLink.empty())
+				{
+					sResult = sFirstLink.Token(0) + " %CL1%[%CL2%" + sFirstLink.Token(1, true) + "%CL1%]";
+				}
+			}
+		}
+
+		if(sResult.empty())
+		{
+			m_pMod->SendMessage(m_chan, sPrefix + "Almighty Google didn't find anything, sorry.");
+		}
+		else
+		{
+			if(!sDidYouMean.empty())
+			{
+				m_pMod->SendMessage(m_chan, sPrefix + "Did you mean: " + sDidYouMean);
+			}
+
+			m_pMod->SendMessage(m_chan, sPrefix + sResult);
 		}
 	}
 };
@@ -456,7 +525,7 @@ public:
 
 	void Request()
 	{
-		Get("www.google.com", "/search?q=" + URLEscape(m_args + " imdb inurl:title"));
+		Get("www.google.com", "/search?safe=off&q=" + URLEscape(m_args + " imdb inurl:title"));
 	}
 
 	void OnRequestDone(const CString& sResponse)
@@ -479,6 +548,52 @@ public:
 	}
 };
 
+
+class CDefineGoogleSock : public CGoogleSock
+{
+public:
+	CDefineGoogleSock(CInfoBotModule *pModInstance) : CGoogleSock(pModInstance) {}
+
+	void Request()
+	{
+		Get("www.google.com", "/search?safe=off&q=" + URLEscape("define:" + m_args));
+	}
+
+	void OnRequestDone(const CString& sResponse)
+	{
+		const CString sResult = ParseDefine(sResponse);
+		
+		if(!sResult.empty())
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%DEFINITION%CL1%]%CLO% " + sResult + " ... www.google.com/search?q=" + URLEscape("define:" + m_args));
+		}
+		else
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% It's undefined!");
+		}
+	}
+};
+
+
+class CCalcGoogleSock : public CGoogleSock
+{
+public:
+	CCalcGoogleSock(CInfoBotModule *pModInstance) : CGoogleSock(pModInstance) {}
+
+	void OnRequestDone(const CString& sResponse)
+	{
+		const CString sResult = ParseCalc(sResponse);
+		
+		if(!sResult.empty())
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%CALC%CL1%]%CLO% " + sResult);
+		}
+		else
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% Google didn't like your calculus!");
+		}
+	}
+};
 
 /***** CInfoBotModule implementation below *****/
 
@@ -573,6 +688,14 @@ void CInfoBotModule::CheckLineForTrigger(const CString& sMessage, const CString&
 		{
 			SendMessage(sChannel, Do8Ball());
 		}
+	}
+	else if(sTrigger == "calc")
+	{
+		pTriggerSock = new CCalcGoogleSock(this);
+	}
+	else if(sTrigger == "define")
+	{
+		pTriggerSock = new CDefineGoogleSock(this);
 	}
 
 	if(pTriggerSock != NULL)
@@ -952,16 +1075,20 @@ const char* CInfoBotModule::TRIGGERS[NR_OF_TRIGGERS] = {
 	"imdb",
 	"time",
 	"uptime",
-	"8ball"
+	"8ball",
+	"define",
+	"calc"
 };
 const char* CInfoBotModule::TRIGGER_DESCRIPTIONS[NR_OF_TRIGGERS] = {
 	"Does a Google search.",
 	"Does a search on IMDB.",
 	"Shows the current time.",
 	"Shows how long ZNC has been running.",
-	"Ask the magic 8ball anything!"
+	"Ask the magic 8ball anything!",
+	"Looks up a definition",
+	"Calculates simple formulas"
 };
-const char* CInfoBotModule::TRIGGERS_STR = "google|imdb|time|uptime|8ball";
+const char* CInfoBotModule::TRIGGERS_STR = "google|imdb|time|uptime|8ball|define|calc";
 
 
 MODULEDEFS(CInfoBotModule, "Provides commands like !google, !imdb and !8ball to selected channels")
