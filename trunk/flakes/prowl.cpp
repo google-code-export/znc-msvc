@@ -43,7 +43,7 @@ public:
 
 protected:
 	static CString URLEscape(const CString& sStr) {
-		return sStr.Escape_n(CString::EURL);
+		return sStr.Escape_n(CString::EASCII, CString::EURL);
 	}
 
 	CString MakeRequest(const CString& sDescription) {
