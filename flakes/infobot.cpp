@@ -19,7 +19,7 @@
 
 #include <ctype.h>
 
-#define NR_OF_TRIGGERS 7
+#define NR_OF_TRIGGERS 8
 
 using namespace pcrecpp;
 
@@ -275,7 +275,7 @@ public:
 
 	void Request()
 	{
-		Get("www.google.com", "/search?safe=off&q=" + URLEscape(m_args));
+		Get("www.google.com", "/search?safe=off&num=1&q=" + URLEscape(m_args));
 	}
 
 	void OnRequestDone(const CString& sResponse)
@@ -525,7 +525,7 @@ public:
 
 	void Request()
 	{
-		Get("www.google.com", "/search?safe=off&q=" + URLEscape(m_args + " imdb inurl:title"));
+		Get("www.google.com", "/search?safe=off&num=1&q=" + URLEscape(m_args + " imdb inurl:title"));
 	}
 
 	void OnRequestDone(const CString& sResponse)
@@ -562,7 +562,7 @@ public:
 	void OnRequestDone(const CString& sResponse)
 	{
 		const CString sResult = ParseDefine(sResponse);
-		
+
 		if(!sResult.empty())
 		{
 			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%DEFINITION%CL1%]%CLO% " + sResult + " ... www.google.com/search?q=" + URLEscape("define:" + m_args));
@@ -583,7 +583,7 @@ public:
 	void OnRequestDone(const CString& sResponse)
 	{
 		const CString sResult = ParseCalc(sResponse);
-		
+
 		if(!sResult.empty())
 		{
 			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%CALC%CL1%]%CLO% " + sResult);
@@ -591,6 +591,153 @@ public:
 		else
 		{
 			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% Google didn't like your calculus!");
+		}
+	}
+};
+
+
+class CTvRageComSock : public CTriggerHTTPSock
+{
+protected:
+	CString m_tvRageID;
+	CString m_title, m_tagline, m_ended, m_latest, m_next, m_rating;
+
+	bool ParseResponse(const CString& sResponse)
+	{
+		string sTmp;
+
+		m_title.clear(); m_tagline.clear(); m_ended.clear();
+		m_latest.clear(); m_next.clear(); m_rating.clear();
+
+		RE titleRE("<h3.+?>(.+?)(?:\\s*\\(\\d+\\s+\\w+\\)|)\\s*</h3", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+		if(titleRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			m_title = StripHTML(sTmp);
+		}
+		else
+		{
+			return false;
+		}
+
+		RE taglineRE("</table><center><b><font size=\"2\">(.+?)</b", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+		sTmp.clear();
+		if(taglineRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			m_tagline = StripHTML(sTmp);
+		}
+
+		RE endedRE("<b>Ended:.+?<td>(\\w+\\s+\\d+,\\s+\\d{4})</td>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+		sTmp.clear();
+		if(endedRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			m_ended = StripHTML(sTmp);
+		}
+
+		if(m_ended.empty())
+		{
+			RE latestEpRE("Latest Episode:.+?/episodes/.+?>\\d+:\\s+(.+?)</span", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+			sTmp.clear();
+			if(latestEpRE.PartialMatch(sResponse.c_str(), &sTmp))
+			{
+				m_latest = StripHTML(sTmp);
+			}
+
+			RE nextEpRE("Next Episode:.+?/episodes/.+?>\\d+:\\s+(.+?)</span", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+			sTmp.clear();
+			if(nextEpRE.PartialMatch(sResponse.c_str(), &sTmp))
+			{
+				m_next = StripHTML(sTmp);
+			}
+		}
+
+		RE ratingRE(">([\\d.]{3,4}/10 \\(\\d+ Votes cast\\))<", RE_Options(PCRE_CASELESS));
+
+		sTmp.clear();
+		if(ratingRE.PartialMatch(sResponse.c_str(), &sTmp))
+		{
+			m_rating = StripHTML(sTmp);
+		}
+
+		return true;
+	}
+
+	void FormatAndSendInfo()
+	{
+		const CString sPrefix = "%CL1%[%CL2%TvRage%CL1%]%CLO% ";
+		CString sLine;
+
+		sLine = m_title + " - ";
+		if(!m_tagline.empty()) sLine += m_tagline + " - ";
+		sLine += " http://www.tvrage.com/" + m_tvRageID;
+
+		m_pMod->SendMessage(m_chan, sPrefix + sLine);
+
+		if(!m_rating.empty()) m_pMod->SendMessage(m_chan, sPrefix + "Rating: " + m_rating);
+
+		if(!m_ended.empty())
+		{
+			m_pMod->SendMessage(m_chan, sPrefix + "Show ended: " + m_ended);
+		}
+		else
+		{
+			if(!m_latest.empty()) m_pMod->SendMessage(m_chan, sPrefix + "Latest Ep.: " + m_latest);
+			if(!m_next.empty()) m_pMod->SendMessage(m_chan, sPrefix + "Next Ep.: " + m_next);
+		}
+	}
+
+public:
+	CTvRageComSock(CInfoBotModule *pModInstance, const CString& sTvRageID) : CTriggerHTTPSock(pModInstance), m_tvRageID(sTvRageID) {}
+
+	void Request()
+	{
+		Get("www.tvrage.com", "/" + m_tvRageID);
+	}
+
+	void OnRequestDone(const CString& sResponse)
+	{
+		if(ParseResponse(sResponse))
+		{
+			FormatAndSendInfo();
+		}
+		else
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% Getting show info from tvrage.com failed, sorry.");
+		}
+	}
+};
+
+
+class CTvRageGoogleSock : public CGoogleSock
+{
+public:
+	CTvRageGoogleSock(CInfoBotModule *pModInstance) : CGoogleSock(pModInstance) {}
+
+	void Request()
+	{
+		Get("www.google.com", "/search?safe=off&num=1&q=" + URLEscape(m_args + " site:tvrage.com"));
+	}
+
+	void OnRequestDone(const CString& sResponse)
+	{
+		const CString sURL = ParseFirstResult(sResponse, true);
+		string tvRageID;
+
+		RE URLCheckRE("^https?://(?:www\\.|)tvrage\\.com/((?:shows/)?[^/]+?)(?:/|$)", RE_Options(PCRE_CASELESS));
+
+		if(URLCheckRE.PartialMatch(sURL.c_str(), &tvRageID))
+		{
+			CTvRageComSock *tvRageSock = new CTvRageComSock(m_pMod, tvRageID);
+			tvRageSock->SetTriggerInfo(m_trigger, m_args, m_chan, m_nick);
+			tvRageSock->Request();
+		}
+		else
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% TV show not found, sorry.");
 		}
 	}
 };
@@ -696,6 +843,10 @@ void CInfoBotModule::CheckLineForTrigger(const CString& sMessage, const CString&
 	else if(sTrigger == "define")
 	{
 		pTriggerSock = new CDefineGoogleSock(this);
+	}
+	else if(sTrigger == "tvrage")
+	{
+		pTriggerSock = new CTvRageGoogleSock(this);
 	}
 
 	if(pTriggerSock != NULL)
@@ -1077,7 +1228,8 @@ const char* CInfoBotModule::TRIGGERS[NR_OF_TRIGGERS] = {
 	"uptime",
 	"8ball",
 	"define",
-	"calc"
+	"calc",
+	"tvrage"
 };
 const char* CInfoBotModule::TRIGGER_DESCRIPTIONS[NR_OF_TRIGGERS] = {
 	"Does a Google search.",
@@ -1085,10 +1237,11 @@ const char* CInfoBotModule::TRIGGER_DESCRIPTIONS[NR_OF_TRIGGERS] = {
 	"Shows the current time.",
 	"Shows how long ZNC has been running.",
 	"Ask the magic 8ball anything!",
-	"Looks up a definition",
-	"Calculates simple formulas"
+	"Looks up a definition.",
+	"Calculates simple formulas, using Google.",
+	"Looks up a show on tvrage.com."
 };
-const char* CInfoBotModule::TRIGGERS_STR = "google|imdb|time|uptime|8ball|define|calc";
+const char* CInfoBotModule::TRIGGERS_STR = "google|imdb|time|uptime|8ball|define|calc|tvrage";
 
 
 MODULEDEFS(CInfoBotModule, "Provides commands like !google, !imdb and !8ball to selected channels")
