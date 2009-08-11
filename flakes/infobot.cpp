@@ -19,7 +19,7 @@
 
 #include <ctype.h>
 
-#define NR_OF_TRIGGERS 8
+#define NR_OF_TRIGGERS 11
 
 using namespace pcrecpp;
 
@@ -742,6 +742,128 @@ public:
 	}
 };
 
+
+class CWeatherSock : public CTriggerHTTPSock
+{
+protected:
+	VCString m_lines;
+
+	bool ParseResponse(const CString& sResponse)
+	{
+		// parsing XML via regex is a bad idea since it easily breaks!
+
+		m_lines.clear();
+
+		if(true)
+		{
+			StringPiece input(sResponse);
+			string sTmpTitle, sTmpText;
+			RE forecastRE("<forecastday>.*?<title>(.+?)</title>.*?<fcttext>(.+?)</fcttext>.*?</forecastday>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+			while(forecastRE.FindAndConsume(&input, &sTmpTitle, &sTmpText))
+			{
+				m_lines.push_back(StripHTML(sTmpTitle) + ": " + StripHTML(sTmpText));
+
+				if(m_lines.size() >= 3) break;
+			}
+		}
+
+		if(m_lines.size() == 0)
+		{
+			// fallback.
+
+			StringPiece input(sResponse);
+			int iHighF, iHighC, iLowF, iLowC;
+			string sTmpWeekday, sTmpConditions;
+			RE forecastRE("<forecastday>.*?<weekday>(.+?)</weekday>.*?"
+				"<high>.*?<fahrenheit>(\\d+)</fahrenheit>.*?<celsius>(\\d+)</celsius>.*?</high>.*?"
+				"<low>.*?<fahrenheit>(\\d+)</fahrenheit>.*?<celsius>(\\d+)</celsius>.*?</low>.*?<conditions>(.+?)</conditions>.*?</forecastday>",
+				RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+
+			while(forecastRE.FindAndConsume(&input, &sTmpWeekday, &iHighF, &iHighC, &iLowF, &iLowC, &sTmpConditions))
+			{
+				m_lines.push_back(StripHTML(sTmpWeekday) + ": " + StripHTML(sTmpConditions) + ", " +
+					CString(iLowF) + "°F to " + CString(iHighF) + "°F (" + CString(iLowC) + "°C to " + CString(iHighC) + "°C)");
+
+				if(m_lines.size() >= 2) break;
+			}
+		}
+
+		return (m_lines.size() > 0);
+	}
+
+	void FormatAndSendInfo()
+	{
+		const CString sPrefix = "%CL1%[%CL2%WEATHER%CL1%]%CLO% ";
+
+		for(VCString::const_iterator it = m_lines.begin(); it != m_lines.end(); it++)
+		{
+			CString sTmp = *it;
+
+			if((it + 1) == m_lines.end())
+			{
+				sTmp += " %CL1%[%CL2%www.wunderground.com%CL1%]";
+			}
+
+			m_pMod->SendMessage(m_chan, sPrefix + sTmp);
+		}
+	}
+
+public:
+	CWeatherSock(CInfoBotModule *pModInstance) : CTriggerHTTPSock(pModInstance) {}
+
+	void Request()
+	{
+		Get("api.wunderground.com", "/auto/wui/geo/ForecastXML/index.xml?query=" + URLEscape(m_args));
+	}
+
+	void OnRequestDone(const CString& sResponse)
+	{
+		if(ParseResponse(sResponse))
+		{
+			FormatAndSendInfo();
+		}
+		else
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% Getting weather info from wunderground.com failed, sorry.");
+		}
+	}
+};
+
+
+class CWetterSock : public CTriggerHTTPSock
+{
+public:
+	CWetterSock(CInfoBotModule *pModInstance) : CTriggerHTTPSock(pModInstance) {}
+
+	void Request()
+	{
+		Get("www.donnerwetter.de", "/region/suchort.mv?search=" + URLEscape(m_args));
+	}
+
+	void OnRequestDone(const CString& sResponse)
+	{
+		RE sWetterRE("middleblue\"><strong><em>(.+?)</em></strong></span>.*?<strong>(\\w+, \\d{1,2}\\.\\d{1,2}\\.\\d{4})<.+?<tr><td>(.+?)</td></tr></table>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		string sTmpCity, sTmpDay, sTmpForecast;
+
+		if(sWetterRE.PartialMatch(sResponse.c_str(), &sTmpCity, &sTmpDay, &sTmpForecast))
+		{
+			const CString sPrefix = "%CL1%[%CL2%WETTER%CL1%]%CLO% ";
+
+			m_pMod->SendMessage(m_chan, sPrefix + StripHTML(sTmpCity) + ": " + StripHTML(sTmpDay) + ": " + StripHTML(sTmpForecast));
+		}
+		else if(RE("Es\\s+wurden\\s+folgende\\s+Orte\\s+gefunden").PartialMatch(sResponse.c_str()))
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% Es wurden mehrere Orte gefunden. Bitte die PLZ verwenden!");
+		}
+		else
+		{
+			m_pMod->SendMessage(m_chan, "%CL1%[%CL2%ERROR%CL1%]%CLO% Getting weather info from www.donnerwetter.de failed, sorry.");
+		}
+	}
+};
+
+
 /***** CInfoBotModule implementation below *****/
 
 
@@ -847,6 +969,28 @@ void CInfoBotModule::CheckLineForTrigger(const CString& sMessage, const CString&
 	else if(sTrigger == "tvrage")
 	{
 		pTriggerSock = new CTvRageGoogleSock(this);
+	}
+	else if(sTrigger == "weather")
+	{
+		pTriggerSock = new CWeatherSock(this);
+	}
+	else if(sTrigger == "wetter")
+	{
+		pTriggerSock = new CWetterSock(this);
+	}
+	else if(sTrigger == "help")
+	{
+		CString sCmds = "%CL1%[%CL2%HELP%CL1%]%CLO% ";
+
+		for(VCString::const_iterator itt = m_enabledCmds[sChannel].begin(); itt != m_enabledCmds[sChannel].end(); itt++)
+		{
+			if(*itt != "help")
+			{
+				sCmds += TriggerChar(sChannel) + *itt + " ";
+			}
+		}
+
+		SendMessage(sChannel, sCmds);
 	}
 
 	if(pTriggerSock != NULL)
@@ -1175,7 +1319,7 @@ void CInfoBotModule::LoadSettings()
 
 CInfoBotModule::EModRet CInfoBotModule::OnChanMsg(CNick& Nick, CChan& Channel, CString& sMessage)
 {
-	CheckLineForTrigger(sMessage, Channel.GetName(), Nick.GetNick());
+	CheckLineForTrigger(sMessage, Channel.GetName().AsLower(), Nick.GetNick());
 	return CONTINUE;
 }
 
@@ -1183,7 +1327,7 @@ CInfoBotModule::EModRet CInfoBotModule::OnUserMsg(CString& sTarget, CString& sMe
 {
 	if(!sTarget.empty() && !isalnum(sTarget[0]))
 	{
-		CheckLineForTrigger(sMessage, sTarget, m_pUser->GetIRCNick().GetNick());
+		CheckLineForTrigger(sMessage, sTarget.AsLower(), m_pUser->GetIRCNick().GetNick());
 	}
 	return CONTINUE;
 }
@@ -1229,7 +1373,10 @@ const char* CInfoBotModule::TRIGGERS[NR_OF_TRIGGERS] = {
 	"8ball",
 	"define",
 	"calc",
-	"tvrage"
+	"tvrage",
+	"weather",
+	"wetter",
+	"help"
 };
 const char* CInfoBotModule::TRIGGER_DESCRIPTIONS[NR_OF_TRIGGERS] = {
 	"Does a Google search.",
@@ -1239,9 +1386,12 @@ const char* CInfoBotModule::TRIGGER_DESCRIPTIONS[NR_OF_TRIGGERS] = {
 	"Ask the magic 8ball anything!",
 	"Looks up a definition.",
 	"Calculates simple formulas, using Google.",
-	"Looks up a show on tvrage.com."
+	"Looks up a show on tvrage.com.",
+	"Shows weather info (US/international)",
+	"Shows weather info (Germany)",
+	"Shows the available triggers"
 };
-const char* CInfoBotModule::TRIGGERS_STR = "google|imdb|time|uptime|8ball|define|calc|tvrage";
+const char* CInfoBotModule::TRIGGERS_STR = "google|imdb|time|uptime|8ball|define|calc|tvrage|weather|wetter|help";
 
 
-MODULEDEFS(CInfoBotModule, "Provides commands like !google, !imdb and !8ball to selected channels")
+MODULEDEFS(CInfoBotModule, "Provides commands like !google, !imdb, !weather and !8ball to selected channels")
