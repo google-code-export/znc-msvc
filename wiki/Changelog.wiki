@@ -1,6 +1,11 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2009-08-11 ==
+  * Updated to official SVN revision 1597, fixing quite some things. Props to the ZNC team!
+  * Removed "control" module, since send_raw does exactly the same thing.
+  * Added blockserver and clientpart modules from ~psychon. Thanks!
+
 == 2009-07-21 (<font color="red">Updating is strongly advised!</font>) ==
   * Really fixed issue 13. The previous fix was sloppy.
   * Updated to official SVN revision 1571 (=ZNC 0.072), fixing another security issue that also affected the Linux version.
