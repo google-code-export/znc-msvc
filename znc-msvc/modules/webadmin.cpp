@@ -253,14 +253,13 @@ CString CWebAdminSock::GetAvailSkinsDir() {
 
 CString CWebAdminSock::GetSkinDir() {
 	CString sAvailSkins = GetAvailSkinsDir();
-	CString sSkinDir = sAvailSkins + GetModule()->GetSkinName() + "/";
-	CString sDir = CDir::ChangeDir("./", sSkinDir, "/");
+	CString sSkinDir = GetModule()->GetSkinName() + "/";
+	CString sDir = CDir::CheckPathPrefix(sAvailSkins, sSkinDir, "/");
 
-	// Via ChangeDir() we check if someone tries to use e.g. a skin name
+	// Via CheckPrefix() we check if someone tries to use e.g. a skin name
 	// with embed .. or such evilness.
-	if (sDir.Left(sAvailSkins.length()) == sAvailSkins
-			&& CFile::IsDir(sSkinDir)) {
-		return sSkinDir;
+	if (!sDir.empty() && CFile::IsDir(sDir)) {
+		return sDir + "/";
 	}
 
 	return m_pModule->GetModDataDir() + "/skins/default/";
