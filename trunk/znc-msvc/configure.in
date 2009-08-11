@@ -1,5 +1,5 @@
 dnl Keep the version number in sync with main.h!
-AC_INIT([znc], [0.072])
+AC_INIT([znc], [0.075])
 AC_CONFIG_SRCDIR([znc.cpp])
 AC_LANG([C++])
 
@@ -7,6 +7,7 @@ AC_LANG([C++])
 CXXFLAGS="$CXXFLAGS "
 AC_PROG_CXX
 AC_CANONICAL_HOST
+AC_SYS_LARGEFILE
 
 appendLib () {
 	if test "$LIBS" != ""; then
@@ -233,8 +234,6 @@ if test "$MODULES" = "yes"; then
 	appendCXX "-D_DATADIR_=\\\"${DATADIR}\\\""
 fi
 
-VERSION=AC_PACKAGE_VERSION
-
 AC_SUBST([CXXFLAGS])
 AC_SUBST([CPPFLAGS])
 AC_SUBST([MODFLAGS])
@@ -249,7 +248,6 @@ AC_SUBST([PERL])
 AC_SUBST([SASL])
 AC_SUBST([MODDIR])
 AC_SUBST([DATADIR])
-AC_SUBST([VERSION])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([znc-config])
 AC_CONFIG_FILES([znc-buildmod])

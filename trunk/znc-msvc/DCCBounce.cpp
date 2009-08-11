@@ -33,6 +33,8 @@ CDCCBounce::CDCCBounce(CUser* pUser, unsigned long uLongIP, unsigned short uPort
 	if (bIsChat) {
 		EnableReadLine();
 	}
+
+	m_pUser->AddDCCBounce(this);
 }
 
 CDCCBounce::CDCCBounce(const CString& sHostname, unsigned short uPort, CUser* pUser,
@@ -51,6 +53,8 @@ CDCCBounce::CDCCBounce(const CString& sHostname, unsigned short uPort, CUser* pU
 	if (bIsChat) {
 		EnableReadLine();
 	}
+
+	m_pUser->AddDCCBounce(this);
 }
 
 CDCCBounce::~CDCCBounce() {
@@ -58,10 +62,11 @@ CDCCBounce::~CDCCBounce() {
 		m_pPeer->Shutdown();
 		m_pPeer = NULL;
 	}
-	if (m_pUser) {
-		m_pUser->AddBytesRead(GetBytesRead());
-		m_pUser->AddBytesWritten(GetBytesWritten());
-	}
+
+	m_pUser->AddBytesRead(GetBytesRead());
+	m_pUser->AddBytesWritten(GetBytesWritten());
+
+	m_pUser->DelDCCBounce(this);
 }
 
 void CDCCBounce::ReadLine(const CString& sData) {

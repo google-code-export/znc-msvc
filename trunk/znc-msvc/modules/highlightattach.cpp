@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+#include "znc.h"
 #include "Chan.h"
 #include "User.h"
 #include "Modules.h"
@@ -17,22 +18,27 @@ public:
 
 	~CNickHighlightAttach() {
 	}
-	
+
 	void CheckAttach(const CString& sMessage, CChan& Channel)
 	{
 		if(m_pUser && Channel.IsDetached()) {
-			if(sMessage.AsLower().find(m_pUser->GetNick().AsLower()) != CString::npos) {
+			if(sMessage.AsLower().find(m_pUser->GetCurNick().AsLower()) != CString::npos) {
 				Channel.JoinUser();
 			}
 		}
 	}
-	
+
 	EModRet OnChanNotice(CNick& Nick, CChan& Channel, CString& sMessage) {
 		CheckAttach(sMessage, Channel);
 		return CONTINUE;
 	}
 
 	EModRet OnChanMsg(CNick& Nick, CChan& Channel, CString& sMessage) {
+		CheckAttach(sMessage, Channel);
+		return CONTINUE;
+	}
+
+	EModRet OnChanAction(CNick& Nick, CChan& Channel, CString& sMessage) {
 		CheckAttach(sMessage, Channel);
 		return CONTINUE;
 	}

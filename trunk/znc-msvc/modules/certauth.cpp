@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+
 #include "Modules.h"
 #include "User.h"
 #include "znc.h"
