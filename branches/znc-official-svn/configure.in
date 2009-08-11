@@ -1,5 +1,5 @@
 dnl Keep the version number in sync with main.h!
-AC_INIT([znc], [0.071])
+AC_INIT([znc], [0.075])
 AC_CONFIG_SRCDIR([znc.cpp])
 AC_LANG([C++])
 
@@ -7,6 +7,7 @@ AC_LANG([C++])
 CXXFLAGS="$CXXFLAGS "
 AC_PROG_CXX
 AC_CANONICAL_HOST
+AC_SYS_LARGEFILE
 
 appendLib () {
 	if test "$LIBS" != ""; then
@@ -120,9 +121,11 @@ if test "x$ARES" = "xyes"; then
 	PKG_PROG_PKG_CONFIG()
 	if test -z "$PKG_CONFIG"
 	then
-		AC_MSG_ERROR([pkg-config not found. Try --disable-c-ares.])
+		AC_MSG_ERROR([pkg-config not found. Try --disable-c-ares.
+Disabling c-ares may result in a slight performance decrease but will not have any other side-effects])
 	fi
-	PKG_CHECK_MODULES([c_ares], [libcares],, AC_MSG_ERROR([c-ares not found. Try --disable-c-ares.]))
+	PKG_CHECK_MODULES([c_ares], [libcares],, AC_MSG_ERROR([c-ares not found. Try --disable-c-ares.
+Disabling c-ares may result in a slight performance decrease but will not have any other side-effects]))
 	appendCXX $c_ares_CFLAGS -DHAVE_ARES
 	appendLib $c_ares_LIBS
 fi
@@ -231,8 +234,6 @@ if test "$MODULES" = "yes"; then
 	appendCXX "-D_DATADIR_=\\\"${DATADIR}\\\""
 fi
 
-VERSION=AC_PACKAGE_VERSION
-
 AC_SUBST([CXXFLAGS])
 AC_SUBST([CPPFLAGS])
 AC_SUBST([MODFLAGS])
@@ -247,7 +248,6 @@ AC_SUBST([PERL])
 AC_SUBST([SASL])
 AC_SUBST([MODDIR])
 AC_SUBST([DATADIR])
-AC_SUBST([VERSION])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([znc-config])
 AC_CONFIG_FILES([znc-buildmod])

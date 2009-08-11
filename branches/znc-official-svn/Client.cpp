@@ -421,9 +421,14 @@ void CClient::ReadLine(const CString& sData) {
 								return;
 							}
 
-							CString sLocalFile = sPath + "/" + sFile;
+							CString sAbsolutePath = CDir::CheckPathPrefix(sPath, sFile);
 
-							m_pUser->GetFile(GetNick(), CUtils::GetIP(uLongIP), uPort, sLocalFile, uFileSize);
+							if (sAbsolutePath.empty()) {
+								PutStatus("Illegal path.");
+								return;
+							}
+
+							m_pUser->GetFile(GetNick(), CUtils::GetIP(uLongIP), uPort, sAbsolutePath, uFileSize);
 						} else {
 							MODULECALL(OnDCCUserSend(CString(m_pUser->GetStatusPrefix() + sTarget), uLongIP, uPort, sFile, uFileSize), m_pUser, this, return);
 						}
@@ -517,7 +522,6 @@ void CClient::ReadLine(const CString& sData) {
 
 		if (sTarget.TrimPrefix(m_pUser->GetStatusPrefix())) {
 			if (sTarget.Equals("status")) {
-				MODULECALL(OnStatusCommand(sMsg), m_pUser, this, return);
 				UserCommand(sMsg);
 			} else {
 #ifdef _MODULES

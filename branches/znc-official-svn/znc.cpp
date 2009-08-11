@@ -27,7 +27,7 @@ namespace
 
 CZNC::CZNC() {
 	if (!InitCsocket()) {
-		CUtils::PrintError("Failed to initialize Csocket!");
+		CUtils::PrintError("Could not initialize Csocket!");
 		exit(-1);
 	}
 
@@ -36,6 +36,7 @@ CZNC::CZNC() {
 #endif
 	m_pISpoofLockFile = NULL;
 	m_uiConnectDelay = 30;
+	m_uiAnonIPLimit = 10;
 	SetISpoofFormat(""); // Set ISpoofFormat to default
 	m_uBytesRead = 0;
 	m_uBytesWritten = 0;
@@ -193,7 +194,9 @@ bool CZNC::HandleUserDeletion()
 #endif
 		m_msUsers.erase(pUser->GetUserName());
 
-		CIRCSock* pIRCSock = pUser->GetIRCSock();
+		// Don't use pUser->GetIRCSock(), as that only returns something if the
+		// CIRCSock is already connected, not when it's still connecting!
+		CIRCSock* pIRCSock = (CIRCSock*) m_Manager.FindSockByName("IRC::" + pUser->GetUserName());
 
 		if (pIRCSock) {
 			m_Manager.DelSockByAddr(pIRCSock);
@@ -397,6 +400,14 @@ bool CZNC::IsHostAllowed(const CString& sHostMask) const {
 	return false;
 }
 
+bool CZNC::AllowConnectionFrom(const CString& sIP) const {
+	if (m_uiAnonIPLimit == 0)
+		return true;
+	if (GetManager().GetAnonConnectionCount(sIP) >= m_uiAnonIPLimit)
+		return false;
+	return true;
+}
+
 void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 	char *home;
 
@@ -502,6 +513,8 @@ bool CZNC::WriteConfig() {
 	if (!m_LockFile.TryExLock()) {
 		return false;
 	}
+
+	m_LockFile.Write("AnonIPLimit  = " + CString(m_uiAnonIPLimit) + "\n");
 
 	for (size_t l = 0; l < m_vpListeners.size(); l++) {
 		CListener* pListener = m_vpListeners[l];
@@ -1488,6 +1501,9 @@ bool CZNC::DoRehash(CString& sError)
 					continue;
 				} else if (sName.Equals("ConnectDelay")) {
 					m_uiConnectDelay = sValue.ToUInt();
+					continue;
+				} else if (sName.Equals("AnonIPLimit")) {
+					m_uiAnonIPLimit = sValue.ToUInt();
 					continue;
 				}
 			}

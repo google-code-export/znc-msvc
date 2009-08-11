@@ -48,7 +48,7 @@ CSockManager::CSockManager() : TSocketManager<CZNCSock>() {
 	int i = ares_init(&GetAres());
 	if (i != ARES_SUCCESS) {
 		CUtils::PrintError("Could not initialize c-ares: " + CString(ares_strerror(i)));
-		exit(0);
+		exit(-1);
 	}
 	DEBUG("Successfully initialized c-ares");
 #endif
@@ -64,6 +64,14 @@ CSockManager::~CSockManager() {
 int CSockManager::Select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
 {
 	int ret;
+	fd_set tmp;
+
+	// Csocket sometimes can use NULL for writefds and c-ares doesn't like NULLs here
+	if (writefds == NULL)
+	{
+		writefds = &tmp;
+		FD_ZERO(writefds);
+	}
 
 	// We assume that nfds is already the max. number of sockets allowed by
 	// the OS, so we don't need to update it here.
@@ -191,3 +199,20 @@ int CZNCSock::GetAddrInfo(const CS_STRING &sHostname, CSSockAddr &csSockAddr) {
 	return 0;
 }
 #endif
+
+unsigned int CSockManager::GetAnonConnectionCount(const CString &sIP) const {
+	const_iterator it;
+	unsigned int ret = 0;
+
+	for (it = begin(); it != end(); it++) {
+		CZNCSock *pSock = *it;
+		// Logged in CClients have "USR::<username>" as their sockname
+		if (pSock->GetRemoteIP() == sIP && pSock->GetSockName().Left(5) != "USR::") {
+			ret++;
+		}
+	}
+
+	DEBUG("There are [" << ret << "] clients from [" << sIP << "]");
+
+	return ret;
+}

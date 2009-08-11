@@ -15,7 +15,7 @@
 #include "User.h"
 #include "znc.h"
 
-void CClient::UserCommand(const CString& sLine) {
+void CClient::UserCommand(CString& sLine) {
 	if (!m_pUser) {
 		return;
 	}
@@ -23,6 +23,8 @@ void CClient::UserCommand(const CString& sLine) {
 	if (sLine.empty()) {
 		return;
 	}
+
+	MODULECALL(OnStatusCommand(sLine), m_pUser, this, return);
 
 	CString sCommand = sLine.Token(0);
 
@@ -395,9 +397,9 @@ void CClient::UserCommand(const CString& sLine) {
 			return;
 		}
 
-		sAbsolutePath = CDir::ChangeDir(m_pUser->GetDLPath(), sFile, CZNC::Get().GetHomePath());
+		sAbsolutePath = CDir::CheckPathPrefix(sAllowedPath, sFile);
 
-		if (sAbsolutePath.Left(sAllowedPath.length()) != sAllowedPath) {
+		if (sAbsolutePath.empty()) {
 			PutStatus("Illegal path.");
 			return;
 		}
@@ -413,9 +415,9 @@ void CClient::UserCommand(const CString& sLine) {
 			return;
 		}
 
-		sAbsolutePath = CDir::ChangeDir(m_pUser->GetDLPath(), sFile, CZNC::Get().GetHomePath());
+		sAbsolutePath = CDir::CheckPathPrefix(sAllowedPath, sFile);
 
-		if (sAbsolutePath.Left(sAllowedPath.length()) != sAllowedPath) {
+		if (sAbsolutePath.empty()) {
 			PutStatus("Illegal path.");
 			return;
 		}
@@ -633,8 +635,9 @@ void CClient::UserCommand(const CString& sLine) {
 
 #ifdef _MODULES
 		CModInfo ModInfo;
-		if (!CZNC::Get().GetModules().GetModInfo(ModInfo, sMod)) {
-			PutStatus("Unable to find modinfo [" + sMod + "]");
+		CString sRetMsg;
+		if (!CZNC::Get().GetModules().GetModInfo(ModInfo, sMod, sRetMsg)) {
+			PutStatus("Unable to find modinfo [" + sMod + "] [" + sRetMsg + "]");
 			return;
 		}
 
@@ -673,30 +676,19 @@ void CClient::UserCommand(const CString& sLine) {
 			return;
 		}
 #ifdef _MODULES
-		CModInfo ModInfo;
-		if (!CZNC::Get().GetModules().GetModInfo(ModInfo, sMod)) {
-			PutStatus("Unable to find modinfo for [" + sMod + "]");
-			return;
-		}
-
-		bool bGlobal = ModInfo.IsGlobal();
-
-		if (bGlobal && !m_pUser->IsAdmin()) {
-			PutStatus("Unable to unload global module [" + sMod + "] Access Denied.");
-			return;
-		}
-
 		if (sMod.empty()) {
 			PutStatus("Usage: UnloadMod <module>");
 			return;
 		}
 
 		CString sModRet;
+		bool b;
 
-		if (bGlobal) {
-			CZNC::Get().GetModules().UnloadModule(sMod, sModRet);
-		} else {
-			m_pUser->GetModules().UnloadModule(sMod, sModRet);
+		// First, try to unload the user module
+		b = m_pUser->GetModules().UnloadModule(sMod, sModRet);
+		if (!b && m_pUser->IsAdmin()) {
+			// If that failed and the user is an admin, try to unload a global module
+			b = CZNC::Get().GetModules().UnloadModule(sMod, sModRet);
 		}
 
 		PutStatus(sModRet);
@@ -717,8 +709,9 @@ void CClient::UserCommand(const CString& sLine) {
 		}
 #ifdef _MODULES
 		CModInfo ModInfo;
-		if (!CZNC::Get().GetModules().GetModInfo(ModInfo, sMod)) {
-			PutStatus("Unable to find modinfo for [" + sMod + "]");
+		CString sRetMsg;
+		if (!CZNC::Get().GetModules().GetModInfo(ModInfo, sMod, sRetMsg)) {
+			PutStatus("Unable to find modinfo for [" + sMod + "] [" + sRetMsg + "]");
 			return;
 		}
 

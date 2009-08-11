@@ -27,6 +27,8 @@ class CIRCSock;
 class CJoinTimer;
 class CMiscTimer;
 class CServer;
+class CDCCBounce;
+class CDCCSock;
 
 class CUser {
 public:
@@ -71,13 +73,16 @@ public:
 
 	// Buffers
 	void AddRawBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_RawBuffer.AddLine(sPre, sPost, bIncNick); }
-	void AddMotdBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_MotdBuffer.AddLine(sPre, sPost, bIncNick); }
-	void AddQueryBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_QueryBuffer.AddLine(sPre, sPost, bIncNick); }
 	void UpdateRawBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_RawBuffer.UpdateLine(sPre, sPost, bIncNick); }
-	void UpdateMotdBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_MotdBuffer.UpdateLine(sPre, sPost, bIncNick); }
-	void UpdateQueryBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_QueryBuffer.UpdateLine(sPre, sPost, bIncNick); }
+	void UpdateExactRawBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_RawBuffer.UpdateExactLine(sPre, sPost, bIncNick); }
 	void ClearRawBuffer() { m_RawBuffer.Clear(); }
+
+	void AddMotdBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_MotdBuffer.AddLine(sPre, sPost, bIncNick); }
+	void UpdateMotdBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_MotdBuffer.UpdateLine(sPre, sPost, bIncNick); }
 	void ClearMotdBuffer() { m_MotdBuffer.Clear(); }
+
+	void AddQueryBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_QueryBuffer.AddLine(sPre, sPost, bIncNick); }
+	void UpdateQueryBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_QueryBuffer.UpdateLine(sPre, sPost, bIncNick); }
 	void ClearQueryBuffer() { m_QueryBuffer.Clear(); }
 	// !Buffers
 
@@ -96,6 +101,11 @@ public:
 	void IRCConnected(CIRCSock* pIRCSock);
 	void IRCDisconnected();
 	void CheckIRCConnect();
+
+	void AddDCCBounce(CDCCBounce* p) { m_sDCCBounces.insert(p); }
+	void DelDCCBounce(CDCCBounce* p) { m_sDCCBounces.erase(p); }
+	void AddDCCSock(CDCCSock* p) { m_sDCCSocks.insert(p); }
+	void DelDCCSock(CDCCSock* p) { m_sDCCSocks.erase(p); }
 
 	CString ExpandString(const CString& sStr) const;
 	CString& ExpandString(const CString& sStr, CString& sRet) const;
@@ -246,6 +256,8 @@ protected:
 	vector<CServer*>	m_vServers;
 	vector<CChan*>		m_vChans;
 	vector<CClient*>	m_vClients;
+	set<CDCCBounce*>	m_sDCCBounces;
+	set<CDCCSock*>		m_sDCCSocks;
 	set<CString>		m_ssAllowedHosts;
 	unsigned int		m_uServerIdx;
 	unsigned int		m_uBufferCount;

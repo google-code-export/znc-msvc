@@ -85,6 +85,8 @@ public:
 		SetMaxBufferThreshold(1024);
 
 		StartLoginTimeout();
+
+		SetNick("unknown-nick");
 	}
 
 	virtual ~CClient();
@@ -99,7 +101,7 @@ public:
 	bool HasNamesx() const { return m_bNamesx; }
 	bool HasUHNames() const { return m_bUHNames; }
 
-	void UserCommand(const CString& sCommand);
+	void UserCommand(CString& sCommand);
 	void StatusCTCP(const CString& sCommand);
 	void IRCConnected(CIRCSock* pIRCSock);
 	void IRCDisconnected();
