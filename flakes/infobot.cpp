@@ -112,7 +112,7 @@ protected:
 	void Get(const CString& sHost, const CString& sPath, unsigned short iPort = 80, bool bSSL = false)
 	{
 		m_request = "GET " + sPath + " HTTP/1.0\r\n";
-		m_request += "Host: " + sHost + "\r\n";
+		m_request += "Host: " + sHost + ((iPort == 80 && !bSSL) || (iPort == 443 && bSSL) ? CString("") : ":" + CString(iPort)) + "\r\n";
 		m_request += "User-Agent: Mozilla/5.0 (" + CZNC::GetTag() + ")\r\n";
 		m_request += "Connection: close\r\n";
 		m_request += "\r\n";
@@ -1245,7 +1245,7 @@ void CInfoBotModule::OnModCommand(const CString& sCommand)
 	}
 	else
 	{
-		PutModule("Unknown command!");
+		PutModule("Unknown command! Try HELP.");
 	}
 }
 
