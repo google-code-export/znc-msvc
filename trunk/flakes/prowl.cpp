@@ -69,13 +69,16 @@ protected:
 
 	void SendNotification(const CString& sMessage)
 	{
-		CSocket *p = new CSocket(this);
-		p->Connect(m_host, 443, true); // connect to host at port 443 using SSL
-		p->Write(MakeRequest(sMessage));
-		p->Close(Csock::CLT_AFTERWRITE); // discard the response...
-		AddSocket(p);
+		if(!m_apiKey.empty())
+		{
+			CSocket *p = new CSocket(this);
+			p->Connect(m_host, 443, true); // connect to host at port 443 using SSL
+			p->Write(MakeRequest(sMessage));
+			p->Close(Csock::CLT_AFTERWRITE); // discard the response...
+			AddSocket(p);
 
-		m_notificationsSent++;
+			m_notificationsSent++;
+		}
 	}
 
 	void CheckHighlight(const CString& sNick, const CString& sChannel, const CString& sMessage)
