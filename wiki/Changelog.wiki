@@ -1,6 +1,12 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2009-08-25 ==
+  * Updated to official SVN revision 1597, fixing some things and speeding up /znc listavailmods. Props to the ZNC team!
+  * Removed dns module
+  * Added prowl and fix_lagchk modules, thanks flakes.
+  * First release with native x64 binaries!
+
 == 2009-08-11 ==
   * Updated to official SVN revision 1597, fixing quite some things. Props to the ZNC team!
   * Removed "control" module, since send_raw does exactly the same thing.
