@@ -1,7 +1,7 @@
 #summary Lists all modules that are included with the binaries download
 #labels Phase-Support
 
-Colors: <font color="green">Green</font> means 'shipped with the official znc package', <font color="blue">Blue</font> means 'shipped in [http://en.znc.in/wiki/ZNC-Extra znc-extra]' and <font color="orange">Orange</font> means 'downloaded from [http://people.znc.in/~psychon/znc/modules/ ~psychon] or [http://en.znc.in/wiki/SVN crox' SVN].
+Colors: <font color="green">Green</font> means 'shipped with the official znc package', <font color="blue">Blue</font> means 'shipped in [http://en.znc.in/wiki/ZNC-Extra znc-extra]' and <font color="orange">Orange</font> means 'downloaded from [http://people.znc.in/~psychon/znc/modules/ ~psychon] or [http://en.znc.in/wiki/SVN crox' SVN] or somewhere else.
 
   * <font color="green">admin</font>
   * <font color="blue">adminlog</font>
@@ -16,19 +16,20 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="blue">blockuser</font>
   * <font color="orange">block_lagchk</font>
   * <font color="orange">block_motd</font>
+  * <font color="orange">blockuser</font>
   * <font color="blue">buffextras</font>
   * <font color="orange">certauth</font>
   * <font color="orange">certchecker</font>
   * <font color="green">chansaver</font>
+  * <font color="orange">clientpart</font>
   * <font color="blue">connect_throttle</font>
-  * <font color="orange">control</font>
   * <font color="green">crypt</font>
   * <font color="blue">ctcpflood</font>
   * <font color="blue">discon_kick</font>
-  * <font color="orange">dns</font>
   * <font color="green">fail2ban</font>
   * <font color="blue">fakeonline</font>
   * <font color="orange">fish</font>
+  * <font color="orange">fix_lagchk</font>
   * <font color="blue">fixfreenode</font>
   * <font color="orange">flooddetach</font>
   * <font color="orange">highlightattach</font>
@@ -45,6 +46,7 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="blue">notify_connect</font>
   * <font color="green">partyline</font>
   * <font color="green">perform</font>
+  * <font color="orange">prowl</font>
   * <font color="green">q</font>
   * <font color="orange">qauth</font>
   * <font color="green">raw</font>
