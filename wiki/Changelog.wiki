@@ -6,6 +6,7 @@
   * Removed dns module
   * Added prowl and fix_lagchk modules, thanks flakes.
   * First release with native x64 binaries!
+  * Fixed issue 14 (log module).
 
 == 2009-08-11 ==
   * Updated to official SVN revision 1597, fixing quite some things. Props to the ZNC team!
