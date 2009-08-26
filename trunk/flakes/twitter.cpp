@@ -98,7 +98,7 @@ public:
 
 	CTwitterFeed *GetFeedById(int id);
 	time_t InterpretRFC3339Time(const CString& sRFC3339);
-	static CString FormatTweetTime(time_t iTime);
+	static CString FormatTweetTime(time_t iTime, bool bAllowFuture = false);
 	void QueueMessage(const CString& sTarget, time_t iTime, const CString& sMessage);
 
 	bool OnLoad(const CString& sArgsi, CString& sMessage);
@@ -306,7 +306,7 @@ protected:
 			if(uPos != CString::npos)
 			{
 				VCString vHeadersTemp;
-				MCString mHeaders;
+				map<const CString, CString> mHeaders;
 				
 				CString(m_buffer.substr(0, uPos)).Split("\n", vHeadersTemp, false, "", "", false, true);
 
@@ -360,7 +360,7 @@ protected:
 		}
 	}
 
-	virtual void OnRequestDone(unsigned int uResponseCode, const MCString& mHeaders, const CString& sResponse) = 0;
+	virtual void OnRequestDone(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse) = 0;
 	virtual void OnRequestError(int iErrorCode) = 0;
 };
 
@@ -1132,7 +1132,7 @@ public:
 		DoRequest("POST", mParams);
 	}
 
-	void OnRequestDone(unsigned int uResponseCode, const MCString& mHeaders, const CString& sResponse)
+	void OnRequestDone(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse)
 	{
 		CTwitterModule *pMod = reinterpret_cast<CTwitterModule*>(m_pMod);
 
@@ -1222,7 +1222,7 @@ public:
 		DoRequest("POST", mParams);
 	}
 
-	void OnRequestDone(unsigned int uResponseCode, const MCString& mHeaders, const CString& sResponse)
+	void OnRequestDone(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse)
 	{
 		CTwitterModule *pMod = reinterpret_cast<CTwitterModule*>(m_pMod);
 
@@ -1263,7 +1263,7 @@ public:
 		DoRequest("GET", mParams);
 	}
 
-	void OnRequestDone(unsigned int uResponseCode, const MCString& mHeaders, const CString& sResponse)
+	void OnRequestDone(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse)
 	{
 		CTwitterModule *pMod = reinterpret_cast<CTwitterModule*>(m_pMod);
 
@@ -1312,6 +1312,69 @@ public:
 			{
 				pMod->PutModule("Last Tweet: " + xStatus->GetChildText("text") + " [" + xStatus->GetChildText("created_at") + "]");
 			}
+		}
+		else if(uResponseCode == 401)
+		{
+			pMod->EraseSession(true);
+		}
+		else
+		{
+			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
+			pMod->PutModule(sResponse.Replace_n("\r", "").Replace_n("\n", ""));
+		}
+	}
+};
+
+
+/************************************************************************/
+/* USER INFO REQUEST                                                    */
+/************************************************************************/
+
+class CTRRateLimit : public CTwitterHTTPSock
+{
+public:
+	CTRRateLimit(CTwitterModule *pModInstance) : CTwitterHTTPSock(pModInstance, "account/rate_limit_status.xml")
+	{
+	}
+
+	void Request()
+	{
+		MCString mParams;
+		DoRequest("GET", mParams);
+	}
+
+	void OnRequestDone(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse)
+	{
+		CTwitterModule *pMod = reinterpret_cast<CTwitterModule*>(m_pMod);
+
+		if(uResponseCode == 200)
+		{
+			PXMLTag xHash;
+
+			try
+			{
+				xHash = CXMLParser::ParseString(sResponse);
+			}
+			catch(CXMLException e)
+			{
+				pMod->PutModule("ERROR: " + m_method + " (xml) " + e.GetMessage());
+				return;
+			}
+
+			CTable infoTable;
+
+			infoTable.AddColumn("What");
+			infoTable.AddColumn("Value");
+
+			infoTable.AddRow();
+			infoTable.SetCell("What", "Remaining Hits");
+			infoTable.SetCell("Value", xHash->GetChildText("remaining-hits") + " / " + xHash->GetChildText("hourly-limit"));
+
+			infoTable.AddRow();
+			infoTable.SetCell("What", "Reset Time");
+			infoTable.SetCell("Value", CTwitterModule::FormatTweetTime(strtoull(xHash->GetChildText("reset-time-in-seconds").c_str(), NULL, 10), true));
+
+			pMod->PutModule(infoTable);
 		}
 		else if(uResponseCode == 401)
 		{
@@ -1396,7 +1459,7 @@ public:
 		DoRequest("GET", mParams);
 	}
 
-	void OnRequestDone(unsigned int uResponseCode, const MCString& mHeaders, const CString& sResponse)
+	void OnRequestDone(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse)
 	{
 		CTwitterModule *pMod = reinterpret_cast<CTwitterModule*>(m_pMod);
 
@@ -1467,6 +1530,17 @@ public:
 		else if(uResponseCode == 401 && m_needsAuth)
 		{
 			pMod->EraseSession(true);
+		}
+		else if(uResponseCode == 503 && m_feedType == TWFT_SEARCH)
+		{
+			CTwitterFeed *fFeed = pMod->GetFeedById(m_feedId);
+
+			if(fFeed)
+			{
+				// The Retry-After header's value is the number of seconds your
+				// application should wait before submitting another query.
+				fFeed->m_lastUpdate = time(NULL) + atoi(mHeaders["Retry-After"].c_str());
+			}
 		}
 		else
 		{
@@ -1643,6 +1717,7 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 		if(sCmd != "CHANGE")
 		{
 			m_feeds.erase(it);
+			SaveSettings();
 			PutModule("Feed deleted.");
 			return;
 		}
@@ -1706,6 +1781,20 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 			PutModule("Getting status...");
 
 			CTRUserInfo *pReq = new CTRUserInfo(this);
+			pReq->Request();
+		}
+		else
+		{
+			PutModule("Not logged in. Use the LOGIN command.");
+		}
+	}
+	else if(sCmd == "RATELIMIT")
+	{
+		if(m_hasAccessToken)
+		{
+			PutModule("Getting status...");
+
+			CTRRateLimit *pReq = new CTRRateLimit(this);
 			pReq->Request();
 		}
 		else
@@ -1947,7 +2036,7 @@ void CTwitterModule::TimerAction()
 
 	for(vector<CTwitterFeed>::iterator it = m_feeds.begin(); it != m_feeds.end(); it++)
 	{
-		bool bRateLimited = (it->m_type == TWFT_SEARCH || it->m_type == TWFT_USER);
+		bool bRateLimited = (it->m_type != TWFT_SEARCH);
 
 		if(it->m_type == TWFT_SEARCH || it->m_type == TWFT_USER)
 		{
@@ -1957,11 +2046,12 @@ void CTwitterModule::TimerAction()
 			}
 		}
 
-		if((!bRateLimited && it->m_lastUpdate <= time(NULL) - 45) ||
-			(bRateLimited && m_lastRateLimitedCall < time(NULL) - 30 && it->m_lastUpdate <= time(NULL) - 60))
+		if(it->m_lastUpdate <= time(NULL) - 60 && (!bRateLimited || m_lastRateLimitedCall < time(NULL) - 30))
 		{
 			CTRFeed *req = new CTRFeed(this, it->m_type, it->m_id);
 			req->Request(it->m_lastId == 0, it->m_lastId, it->m_payload);
+
+			DEBUG("REQUESTING " + CString(it->m_id) + " [RL = " + CString(bRateLimited) + "]");
 
 			it->m_lastUpdate = time(NULL);
 
@@ -2007,28 +2097,28 @@ time_t CTwitterModule::InterpretRFC3339Time(const CString& sRFC3339)
 	return 0;
 }
 
-CString CTwitterModule::FormatTweetTime(time_t iTime)
+CString CTwitterModule::FormatTweetTime(time_t iTime, bool bAllowFuture)
 {
 	CString sTime = "error";
 	time_t iDelta = time(NULL) - iTime;
 
-	if(iDelta < 0)
+	if(iDelta < 0 && !bAllowFuture)
 	{
 		sTime = "from the future!";
 	}
-	else if(iDelta < 60)
+	else if(iDelta < 60 && iDelta > 0)
 	{
 		sTime = "less than one minute ago";
 	}
-	else if(iDelta < 120)
+	else if(iDelta < 120 && iDelta > 0)
 	{
 		sTime = "one minute ago";
 	}
-	else if(iDelta <= 600)
+	else if(iDelta <= 600 && iDelta > 0)
 	{
 		sTime = CString(iDelta / 60) + " minutes ago";
 	}
-	else if(iDelta <= 86400)
+	else if(iDelta <= 86400 && iDelta > 0)
 	{
 		sTime = CString::ToTimeStr(iDelta);
 	}
