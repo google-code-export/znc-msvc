@@ -18,6 +18,7 @@
 #include <deque>
 #include <exception>
 #include <algorithm>
+#include <limits>
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -56,6 +57,28 @@ struct CTwitterFeed
 	time_t m_lastUpdate;
 };
 
+struct CFontStyle
+{
+	CFontStyle() { bUnderline = bBold = false; iForeClr = iBackClr = -1; }
+	bool bUnderline, bBold;
+	int iForeClr, iBackClr;
+
+	CString GetStartCode() const
+	{
+		return CString(bBold ? "\x02" : "") +
+			CString(bUnderline ? "\x1F" : "") +
+			(iForeClr > -1 ? "\x03" + CString(iForeClr < 10 && iBackClr == -1 ? "0" : "") + CString(iForeClr)
+				+ (iBackClr > -1 ? "," + CString(iBackClr < 10 ? "0" : "") + CString(iBackClr) : "") : "");
+	}
+
+	CString GetEndCode() const
+	{
+		return CString(bBold ? "\x02" : "") +
+			CString(bUnderline ? "\x1F" : "") +
+			CString(iForeClr > -1 ? "\x03" : "");
+	}
+};
+
 /************************************************************************/
 /*  MODULE HEADER / DECLARATION                                         */
 /************************************************************************/
@@ -75,6 +98,7 @@ private:
 	vector<pair<time_t, CString> > m_msgQueue;
 	time_t m_msgQueueLastSent;
 	time_t m_lastRateLimitedCall;
+	map<const CString, CFontStyle> m_styles;
 
 	void SaveSettings();
 	void LoadSettings();
@@ -85,6 +109,12 @@ public:
 		m_userId = 0;
 		m_nextFeedId = 1;
 		m_msgQueueLastSent = m_lastRateLimitedCall = 0;
+		m_styles["user"] = CFontStyle();
+		m_styles["@user"] = CFontStyle();
+		m_styles["hashtag"] = CFontStyle();
+		m_styles["link"] = CFontStyle();
+		m_styles["timestamp"] = CFontStyle();
+		m_styles["text"] = CFontStyle();
 	}
 
 	const CString& GetToken() { return m_token; }
@@ -197,7 +227,7 @@ public:
 		{
 			unsigned long long uTmp = CString(srHost.substr(uPos + 1)).ToULongLong();
 
-			if(uTmp > 0 && uTmp <= USHRT_MAX)
+			if(uTmp > 0 && uTmp <= numeric_limits<unsigned short>::max())
 			{
 				urPort = (unsigned short)uTmp;
 				srHost = srHost.substr(0, uPos);
@@ -684,7 +714,7 @@ static CString Utf8Xml_Decode(const CString& sString)
 				{
 					const unsigned long long lle = strtoull(sEntity.c_str() + (bHex ? 2 : 1), NULL, (bHex ? 16 : 10));
 
-					if(lle > 0 && lle <= USHRT_MAX)
+					if(lle > 0 && lle <= numeric_limits<unsigned short>::max())
 					{
 						swStr += (wchar_t)lle;
 						bIgnore = false;
@@ -803,8 +833,8 @@ protected:
 	{
 		CString::size_type pos = sTagContents.find(" ");
 		bool bInName = true, bWaitingForVal = false, bInVal = false;
-		char cQuote;
-		CString::size_type valStartPos;
+		char cQuote = 0;
+		CString::size_type valStartPos = 0;
 		CString sName;
 
 		while(pos != CString::npos && pos < sTagContents.size())
@@ -1531,6 +1561,30 @@ public:
 		{
 			pMod->EraseSession(true);
 		}
+		else if(uResponseCode == 400)
+		{
+			PXMLTag xHash;
+
+			try
+			{
+				xHash = CXMLParser::ParseString(sResponse);
+			}
+			catch(CXMLException e)
+			{
+				pMod->PutModule("ERROR: " + m_method + " (xml/error) " + e.GetMessage());
+				return;
+			}
+
+			pMod->PutModule("ERROR: Feed " + CString(m_feedId) + " returned an error: " + xHash->GetChildText("error"));
+			pMod->PutModule("Disabling updates on this feed for 15 minutes.");
+
+			CTwitterFeed *fFeed = pMod->GetFeedById(m_feedId);
+
+			if(fFeed)
+			{
+				fFeed->m_lastUpdate = time(NULL) + 60 * 15;
+			}
+		}
 		else if(uResponseCode == 503 && m_feedType == TWFT_SEARCH)
 		{
 			CTwitterFeed *fFeed = pMod->GetFeedById(m_feedId);
@@ -1611,8 +1665,12 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 		CmdTable.SetCell("Description", "Lists all active feeds.");
 
 		CmdTable.AddRow();
-		CmdTable.SetCell("Command", "CHANGE <id> (prefix|target|query) <new val>");
-		CmdTable.SetCell("Description", "Changes a feed's settings, <id> is the number from the WATCH list. query only applies to searches.");
+		CmdTable.SetCell("Command", "CHANGE <id> (prefix|target|query|colors) <new val>");
+		CmdTable.SetCell("Description", "Changes a feed's settings, <id> is the number from the WATCH list. Colors = (on|off). Query only applies to searches.");
+
+		CmdTable.AddRow();
+		CmdTable.SetCell("Command", "STYLE (user|@user|hashtag|link|timestamp|text) ([bold] [underline] [fore[,back]]|off)");
+		CmdTable.SetCell("Description", "Sets color and text style. Example: 'STYLE hashtag underline 4' would make all #hashtags red & underlined.");
 
 		CmdTable.AddRow();
 		CmdTable.SetCell("Command", "DELETE <id>");
@@ -1648,7 +1706,7 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 				tbl.SetCell("ID", CString(it->m_id));
 				tbl.SetCell("Type", feedTypeNames[it->m_type]);
 				tbl.SetCell("Param", it->m_payload.empty() ? "-" : it->m_payload);
-				tbl.SetCell("Target", it->m_target.empty() ? CZNC::Get().GetStatusPrefix() + m_sModName : it->m_target);
+				tbl.SetCell("Target", it->m_target.empty() ? CString(CZNC::Get().GetStatusPrefix() + m_sModName) : it->m_target);
 				tbl.SetCell("Prefix", it->m_prefix);
 				tbl.SetCell("Updated", (it->m_lastUpdate == 0 ? CString("never") : FormatTweetTime(it->m_lastUpdate)));
 			}
@@ -1746,6 +1804,47 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 		}
 
 		SaveSettings();
+	}
+	else if(sCmd == "STYLE")
+	{
+		const CString sWhat = sCommand.Token(1).AsLower();
+		bool bChangedSth = false;
+
+		map<const CString, CFontStyle>::iterator it = m_styles.find(sWhat);
+
+		if(it != m_styles.end())
+		{
+			it->second = CFontStyle();
+
+			for(size_t p = 2; p < 5; p++)
+			{
+				const CString sStyle = sCommand.Token(p);
+				int l_fore = -1, l_back = -1;
+
+				if(sStyle == "bold")
+					{ it->second.bBold = true; bChangedSth = true; }
+				else if(sStyle == "underline" || sStyle == "underlined")
+					{ it->second.bUnderline = true;  bChangedSth = true; }
+				else if(sscanf(sStyle.c_str(), "%i,%i", &l_fore, &l_back) == 2 ||
+					sscanf(sStyle.c_str(), "%i", &l_fore) == 1)
+				{
+					it->second.iForeClr = (l_fore > 15 ? 15 : l_fore);
+					it->second.iBackClr = (l_back > 15 ? 15 : l_back);
+					bChangedSth = true;
+				}
+				else if(sStyle == "off")
+					bChangedSth = true;
+			}
+		}
+
+		if(!bChangedSth)
+		{
+			PutModule("Command not understood. Have a look at HELP.");
+		}
+		else
+		{
+			SaveSettings();
+		}
 	}
 	else if(sCmd == "TWEET")
 	{
@@ -1907,7 +2006,6 @@ void CTwitterModule::SaveSettings()
 	}
 
 	CString sFeeds = "<feeds>";
-
 	for(vector<CTwitterFeed>::const_iterator it = m_feeds.begin(); it != m_feeds.end(); it++)
 	{
 		sFeeds += "<feed type=\"" + CString(it->m_type) + "\">";
@@ -1918,10 +2016,25 @@ void CTwitterModule::SaveSettings()
 
 		sFeeds += "</feed>";
 	}
-
 	sFeeds += "</feeds>";
 
-	SetNV("feeds", sFeeds, true);
+	SetNV("feeds", sFeeds, false);
+
+	CString sStyles = "<styles>";
+	for(map<const CString, CFontStyle>::const_iterator it = m_styles.begin(); it != m_styles.end(); it++)
+	{
+		sStyles += "<style name=\"" + Utf8Xml_Encode(it->first) + "\">";
+
+		sStyles += "<bold>" + CString(it->second.bBold ? 1 : 0) + "</bold>";
+		sStyles += "<underline>" + CString(it->second.bUnderline ? 1 : 0) + "</underline>";
+		sStyles += "<forecolor>" + CString(it->second.iForeClr) + "</forecolor>";
+		sStyles += "<backcolor>" + CString(it->second.iBackClr) + "</backcolor>";
+
+		sStyles += "</style>";
+	}
+	sStyles += "</styles>";
+
+	SetNV("styles", sFeeds, true);
 }
 
 
@@ -1973,6 +2086,39 @@ void CTwitterModule::LoadSettings()
 				fNew.m_target = xFeed->GetChildText("target");
 
 				m_feeds.push_back(fNew);
+			}
+		}
+	}
+
+	PXMLTag xStyles;
+
+	try
+	{
+		xStyles = CXMLParser::ParseString(GetNV("styles"));
+	}
+	catch (CXMLException ex)
+	{
+		PutModule("Warning: Couldn't read styles from disk.");
+	}
+
+	if(xStyles)
+	{
+		for(vector<PXMLTag>::const_iterator it = xStyles->BeginChildren(); it != xStyles->EndChildren(); it++)
+		{
+			const PXMLTag& xStyle = *it;
+			map<const CString, CFontStyle>::iterator found = m_styles.find((*it)->GetAttribute("name"));
+
+			if(found != m_styles.end())
+			{
+				found->second.bBold = (xStyle->GetChildText("bold") == "1");
+				found->second.bUnderline = (xStyle->GetChildText("underline") == "1");
+				found->second.iBackClr = xStyle->GetChildText("backcolor").ToInt();
+				found->second.iForeClr = xStyle->GetChildText("forecolor").ToInt();
+
+				if(found->second.iBackClr > 15) found->second.iBackClr = 15;
+				if(found->second.iForeClr > 15) found->second.iForeClr = 15;
+				if(found->second.iBackClr < -1) found->second.iBackClr = -1;
+				if(found->second.iForeClr < -1) found->second.iForeClr = -1;
 			}
 		}
 	}
@@ -2062,7 +2208,8 @@ void CTwitterModule::TimerAction()
 
 time_t CTwitterModule::InterpretRFC3339Time(const CString& sRFC3339)
 {
-	unsigned int year, mon, day, hour, min, tz_sign = '+', tz_h = 0, tz_m = 0;
+	unsigned int year, mon, day, hour, min, tz_h = 0, tz_m = 0;
+	char tz_sign = '+';
 	float sec;
 
 	if(sscanf(sRFC3339.c_str(), "%u-%u-%uT%u:%u:%f%c%u:%u",
