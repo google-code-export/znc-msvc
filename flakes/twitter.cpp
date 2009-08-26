@@ -74,6 +74,7 @@ private:
 	vector<CTwitterFeed> m_feeds;
 	vector<pair<time_t, CString> > m_msgQueue;
 	time_t m_msgQueueLastSent;
+	time_t m_lastRateLimitedCall;
 
 	void SaveSettings();
 	void LoadSettings();
@@ -83,7 +84,7 @@ public:
 		m_waitingForPIN = m_hasAccessToken = false;
 		m_userId = 0;
 		m_nextFeedId = 1;
-		m_msgQueueLastSent = 0;
+		m_msgQueueLastSent = m_lastRateLimitedCall = 0;
 	}
 
 	const CString& GetToken() { return m_token; }
@@ -1499,6 +1500,10 @@ protected:
 /*       CTwitterModule implementation                                  */
 /************************************************************************/
 
+static bool _feedQueueSortByID(const CTwitterFeed& a, const CTwitterFeed& b)
+{
+	return (a.m_id < b.m_id);
+}
 
 void CTwitterModule::OnModCommand(const CString& sCommand)
 {
@@ -1545,11 +1550,11 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 
 		PutModule(CmdTable);
 	}
-	else if(sCmd == "WATCH")
+	else if(sCmd == "WATCH" || sCmd == "SHOW")
 	{
 		const CString sSubCmd = sCommand.Token(1, false).AsLower();
 
-		if(sSubCmd.empty() && m_feeds.size() > 0)
+		if((sSubCmd.empty() || sCmd == "SHOW") && m_feeds.size() > 0)
 		{
 			CTable tbl;
 			static char* feedTypeNames[_TWFT_MAX] = { "", "Timeline", "Mentions", "User", "Search" };
@@ -1559,6 +1564,9 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 			tbl.AddColumn("Param");
 			tbl.AddColumn("Target");
 			tbl.AddColumn("Prefix");
+			tbl.AddColumn("Updated");
+
+			sort(m_feeds.begin(), m_feeds.end(), _feedQueueSortByID);
 
 			for(vector<CTwitterFeed>::const_iterator it = m_feeds.begin(); it != m_feeds.end(); it++)
 			{
@@ -1568,11 +1576,12 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 				tbl.SetCell("Param", it->m_payload.empty() ? "-" : it->m_payload);
 				tbl.SetCell("Target", it->m_target.empty() ? CZNC::Get().GetStatusPrefix() + m_sModName : it->m_target);
 				tbl.SetCell("Prefix", it->m_prefix);
+				tbl.SetCell("Updated", (it->m_lastUpdate == 0 ? CString("never") : FormatTweetTime(it->m_lastUpdate)));
 			}
 
 			PutModule(tbl);
 		}
-		else if(sSubCmd.empty())
+		else if(sSubCmd.empty() || sCmd == "SHOW")
 		{
 			PutModule("ERROR: No watches/feeds set up.");
 		}
@@ -1896,7 +1905,7 @@ CTwitterFeed *CTwitterModule::GetFeedById(int id)
 	return NULL;
 }
 
-static bool _feedQueueSort(const CTwitterFeed& a, const CTwitterFeed& b)
+static bool _feedQueueSortByLastUpdate(const CTwitterFeed& a, const CTwitterFeed& b)
 {
 	return (a.m_lastUpdate < b.m_lastUpdate);
 }
@@ -1928,8 +1937,7 @@ void CTwitterModule::TimerAction()
 	}
 
 	// look at updates...
-	sort(m_feeds.begin(), m_feeds.end(), _feedQueueSort);
-	bool bCalledRateLimited = false;
+	sort(m_feeds.begin(), m_feeds.end(), _feedQueueSortByLastUpdate);
 
 	// this rate limiting thing here is not very smart.
 	// we essentially have a limit of 150 calls per hour per IP/account.
@@ -1950,14 +1958,14 @@ void CTwitterModule::TimerAction()
 		}
 
 		if((!bRateLimited && it->m_lastUpdate <= time(NULL) - 45) ||
-			(bRateLimited && !bCalledRateLimited &&  it->m_lastUpdate <= time(NULL) - 60))
+			(bRateLimited && m_lastRateLimitedCall < time(NULL) - 30 && it->m_lastUpdate <= time(NULL) - 60))
 		{
 			CTRFeed *req = new CTRFeed(this, it->m_type, it->m_id);
 			req->Request(it->m_lastId == 0, it->m_lastId, it->m_payload);
 
 			it->m_lastUpdate = time(NULL);
 
-			if(bRateLimited) bCalledRateLimited = true;
+			if(bRateLimited) m_lastRateLimitedCall = time(NULL);
 		}
 	}
 }
