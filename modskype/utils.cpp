@@ -1,7 +1,7 @@
 #include <string>
 #include <windows.h>
 
-#define ISDIGIT(c) (c > 0 && c < 255 && isdigit(c))
+#define ISDIGIT(C) (C >= '0' && C <= '9')
 
 std::string stripIRCColorCodes(const std::string& a_str)
 {
@@ -141,7 +141,6 @@ bool IsStrValidUTF8(const std::string& a_strInQuestion)
 	return true;
 }
 
-
 std::string WideToStr(const std::wstring a_wideStr, unsigned int a_targetCodePage)
 {
 	int l_size = WideCharToMultiByte(a_targetCodePage, 0, a_wideStr.c_str(), -1, NULL, NULL, NULL, NULL);
@@ -161,7 +160,6 @@ std::string WideToStr(const std::wstring a_wideStr, unsigned int a_targetCodePag
 
 	return "";
 }
-
 
 std::wstring StrToWide(const std::string a_str, unsigned int a_originCodePage)
 {
@@ -183,77 +181,22 @@ std::wstring StrToWide(const std::string a_str, unsigned int a_originCodePage)
 	return L"";
 }
 
-
 std::string WideToUtf8(const std::wstring& a_wideStr)
 {
-#ifdef WIN32
 	return WideToStr(a_wideStr, CP_UTF8);
-#else
-	size_t l_bufSize = wcstombs(NULL, a_wideStr.c_str(), 0);
-
-	if(l_bufSize > 0)
-	{
-		char *l_buf = new char[l_bufSize + 2];
-		size_t l_converted = wcstombs(l_buf, a_wideStr.c_str(), l_bufSize + 1);
-		if(l_converted > 0)
-		{
-			l_buf[l_converted] = '\0';
-			string l_result(l_buf);
-			delete l_buf;
-			return l_result;
-		}
-		else
-			delete l_buf;
-	}
-
-	return "";
-#endif
 }
-
 
 std::string AnsiToUtf8(const std::string& a_ansiStr)
 {
-#ifdef WIN32
 	return WideToStr(StrToWide(a_ansiStr, CP_ACP), CP_UTF8);
-#else
-
-#endif
 }
-
 
 std::string Utf8ToAnsi(const std::string& a_utfStr)
 {
-#ifdef WIN32
 	return WideToStr(StrToWide(a_utfStr, CP_UTF8), CP_ACP);
-#else
-
-#endif
 }
-
 
 std::wstring Utf8ToWide(const std::string& a_utfStr)
 {
-#ifdef WIN32
 	return StrToWide(a_utfStr, CP_UTF8);
-#else
-	size_t l_bufSize = mbstowcs(NULL, a_utfStr.c_str(), 0);
-
-	if(l_bufSize > 0)
-	{
-		wchar_t *l_buf = new wchar_t[l_bufSize + 2];
-		size_t l_converted = mbstowcs(l_buf, a_utfStr.c_str(), l_bufSize + 1);
-		if(l_converted > 0)
-		{
-			l_buf[l_converted] = L'\0';
-			wstring l_result(l_buf);
-			delete l_buf;
-			return l_result;
-		}
-		else
-			delete l_buf;
-	}
-
-	return L"";
-#endif
 }
-
