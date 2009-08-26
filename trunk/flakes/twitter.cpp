@@ -47,7 +47,7 @@ enum ETwitterFeedType
 
 struct CTwitterFeed
 {
-	CTwitterFeed(ETwitterFeedType type) { m_type = type; m_lastUpdate = 0; m_lastId = 0; m_id = 0; }
+	CTwitterFeed(ETwitterFeedType type) { m_type = type; m_lastUpdate = 0; m_lastId = 0; m_id = 0; m_colors = true; }
 	ETwitterFeedType m_type;
 	int m_id;
 	CString m_payload;
@@ -55,6 +55,7 @@ struct CTwitterFeed
 	CString m_prefix;
 	uint64_t m_lastId;
 	time_t m_lastUpdate;
+	bool m_colors;
 };
 
 struct CFontStyle
@@ -129,7 +130,7 @@ public:
 	CTwitterFeed *GetFeedById(int id);
 	time_t InterpretRFC3339Time(const CString& sRFC3339);
 	static CString FormatTweetTime(time_t iTime, bool bAllowFuture = false);
-	void QueueMessage(const CString& sTarget, time_t iTime, const CString& sMessage);
+	void QueueMessage(CTwitterFeed *fFeed, time_t iTime, const CString& sMessage);
 
 	bool OnLoad(const CString& sArgsi, CString& sMessage);
 	void OnModCommand(const CString& sCommand);
@@ -1547,9 +1548,7 @@ public:
 								break;
 							}
 
-							pMod->QueueMessage(fFeed->m_target, iTime,
-								(fFeed->m_prefix.empty() ? "" : fFeed->m_prefix + " ") +
-								sText + " [" + CTwitterModule::FormatTweetTime(iTime) + "]");
+							pMod->QueueMessage(fFeed, iTime, sText);
 						}
 					}
 				}
@@ -1673,6 +1672,10 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 		CmdTable.SetCell("Description", "Sets color and text style. Example: 'STYLE hashtag underline 4' would make all #hashtags red & underlined.");
 
 		CmdTable.AddRow();
+		CmdTable.SetCell("Command", "STYLE");
+		CmdTable.SetCell("Description", "Shows active styles.");
+
+		CmdTable.AddRow();
 		CmdTable.SetCell("Command", "DELETE <id>");
 		CmdTable.SetCell("Description", "Deletes the feed with the number <id> from the WATCH list.");
 
@@ -1689,7 +1692,7 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 		if((sSubCmd.empty() || sCmd == "SHOW") && m_feeds.size() > 0)
 		{
 			CTable tbl;
-			static char* feedTypeNames[_TWFT_MAX] = { "", "Timeline", "Mentions", "User", "Search" };
+			static const char* feedTypeNames[_TWFT_MAX] = { "", "Timeline", "Mentions", "User", "Search" };
 
 			tbl.AddColumn("ID");
 			tbl.AddColumn("Type");
@@ -1793,6 +1796,11 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 			it->m_target = sNew;
 			PutModule("Sending feed messages to " + (it->m_target.empty() ? CZNC::Get().GetStatusPrefix() + m_sModName : it->m_target) + " from now on.");
 		}
+		else if(sWhat == "colors" || sWhat == "color")
+		{
+			it->m_colors = (sNew == "1" || sNew == "true" || sNew == "on");
+			PutModule("Colors are now '" + CString(it->m_colors ? "on" : "off") + "'.");
+		}
 		else if(sWhat == "query" && it->m_type == TWFT_SEARCH && !sNew.empty())
 		{
 			it->m_payload = sNew;
@@ -1809,6 +1817,21 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 	{
 		const CString sWhat = sCommand.Token(1).AsLower();
 		bool bChangedSth = false;
+
+		if(sWhat.empty())
+		{
+			CString sMsg = "Active styles: ";
+
+			for(map<const CString, CFontStyle>::iterator it = m_styles.begin(); it != m_styles.end(); it++)
+			{
+				sMsg += it->second.GetStartCode() + it->first + it->second.GetEndCode() + " / ";
+			}
+
+			sMsg.erase(sMsg.size() - 3);
+
+			PutModule(sMsg);
+			return;
+		}
 
 		map<const CString, CFontStyle>::iterator it = m_styles.find(sWhat);
 
@@ -1843,6 +1866,7 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 		}
 		else
 		{
+			PutModule("Changed style for " + it->second.GetStartCode() + sWhat);
 			SaveSettings();
 		}
 	}
@@ -2034,7 +2058,7 @@ void CTwitterModule::SaveSettings()
 	}
 	sStyles += "</styles>";
 
-	SetNV("styles", sFeeds, true);
+	SetNV("styles", sStyles, true);
 }
 
 
@@ -2288,9 +2312,61 @@ static bool _msgQueueSort(const pair<time_t, CString>& a, const pair<time_t, CSt
 	return (a.first < b.first);
 }
 
-void CTwitterModule::QueueMessage(const CString& sTarget, time_t iTime, const CString& sMessage)
+void CTwitterModule::QueueMessage(CTwitterFeed *fFeed, time_t iTime, const CString& sMessage)
 {
-	m_msgQueue.push_back(pair<time_t, CString>(iTime, "PRIVMSG " + sTarget + " :" +  sMessage));
+	if(fFeed->m_colors)
+	{
+		CString sColoredMessage;
+		VCString sTokens;
+
+		sColoredMessage = "\x03\x03"; // reset colors
+		if(!fFeed->m_prefix.empty()) sColoredMessage += fFeed->m_prefix + " ";
+
+		sMessage.Split(" ", sTokens, false, "", "", false, true);
+
+		CString sStyle;
+
+		for(VCString::const_iterator it = sTokens.begin(); it != sTokens.end(); it++)
+		{
+			const CString sOldStyle(sStyle);
+
+			if(it == sTokens.begin())
+				sStyle = "user";
+			else if(!it->empty() && (*it)[0] == '#')
+				sStyle = "hashtag";
+			else if(!it->empty() && (*it)[0] == '@')
+				sStyle = "@user";
+			else if(it->Left(7) == "http://" || it->Left(8) == "https://")
+				sStyle = "link";
+			else
+				sStyle = "text";
+
+			if(sStyle != sOldStyle)
+			{
+				if(!sOldStyle.empty())
+				{
+					sColoredMessage += m_styles[sOldStyle].GetEndCode();
+				}
+				sColoredMessage += m_styles[sStyle].GetStartCode();
+			}
+
+			sColoredMessage += *it + " ";
+		}
+
+		if(!sStyle.empty())
+		{
+			sColoredMessage += m_styles[sStyle].GetEndCode();
+		}
+
+		sColoredMessage += m_styles["timestamp"].GetStartCode() + "[" + FormatTweetTime(iTime) + "]";
+
+		m_msgQueue.push_back(pair<time_t, CString>(iTime, "PRIVMSG " + fFeed->m_target + " :" +  sColoredMessage));
+	}
+	else
+	{
+		m_msgQueue.push_back(pair<time_t, CString>(iTime, "PRIVMSG " + fFeed->m_target + " :" +  sMessage));
+	}
+
 	sort(m_msgQueue.begin(), m_msgQueue.end(), _msgQueueSort);
 }
 
