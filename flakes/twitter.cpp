@@ -2320,7 +2320,7 @@ void CTwitterModule::QueueMessage(CTwitterFeed *fFeed, time_t iTime, const CStri
 		VCString sTokens;
 
 		sColoredMessage = "\x03\x03"; // reset colors
-		if(!fFeed->m_prefix.empty()) sColoredMessage += fFeed->m_prefix + " ";
+		if(!fFeed->m_prefix.empty()) sColoredMessage += fFeed->m_prefix;
 
 		sMessage.Split(" ", sTokens, false, "", "", false, true);
 
@@ -2347,10 +2347,14 @@ void CTwitterModule::QueueMessage(CTwitterFeed *fFeed, time_t iTime, const CStri
 				{
 					sColoredMessage += m_styles[sOldStyle].GetEndCode();
 				}
+				sColoredMessage += " ";
 				sColoredMessage += m_styles[sStyle].GetStartCode();
+				sColoredMessage += *it;
 			}
-
-			sColoredMessage += *it + " ";
+			else
+			{
+				sColoredMessage += " " + *it;
+			}
 		}
 
 		if(!sStyle.empty())
@@ -2358,7 +2362,7 @@ void CTwitterModule::QueueMessage(CTwitterFeed *fFeed, time_t iTime, const CStri
 			sColoredMessage += m_styles[sStyle].GetEndCode();
 		}
 
-		sColoredMessage += m_styles["timestamp"].GetStartCode() + "[" + FormatTweetTime(iTime) + "]";
+		sColoredMessage += " " + m_styles["timestamp"].GetStartCode() + "[" + FormatTweetTime(iTime) + "]";
 
 		m_msgQueue.push_back(pair<time_t, CString>(iTime, "PRIVMSG " + fFeed->m_target + " :" +  sColoredMessage));
 	}
