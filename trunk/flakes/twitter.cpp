@@ -2187,6 +2187,7 @@ void CTwitterModule::TimerAction()
 		{
 			iMsgsSent++;
 			PutIRC(it->second);
+			if(m_pUser) m_pUser->PutUser(":" + m_pUser->GetIRCNick().GetNickMask() + " " + it->second);
 			m_msgQueueLastSent = time(NULL);
 		}
 		else
