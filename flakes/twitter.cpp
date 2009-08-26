@@ -97,6 +97,7 @@ public:
 
 	CTwitterFeed *GetFeedById(int id);
 	time_t InterpretRFC3339Time(const CString& sRFC3339);
+	static CString FormatTweetTime(time_t iTime);
 	void QueueMessage(const CString& sTarget, time_t iTime, const CString& sMessage);
 
 	bool OnLoad(const CString& sArgsi, CString& sMessage);
@@ -569,7 +570,7 @@ static wstring Utf8ToWide(const string& sString)
 		if(b <= bMax)
 			*b = 0;
 		else
-			*(b - 1) = 0;
+			*bMax = 0;
 
 		wstring sResult(szBuf);
 		delete[] szBuf;
@@ -658,7 +659,7 @@ static CString Utf8Xml_Decode(const CString& sString)
 		}
 		else
 		{
-			swStr += Utf8ToWide(sString.substr(pPrev, p - pPrev - 1));
+			swStr += Utf8ToWide(sString.substr(pPrev, p - pPrev));
 		}
 
 		bool bIgnore = true;
@@ -699,7 +700,7 @@ static CString Utf8Xml_Decode(const CString& sString)
 
 		if(!bIgnore)
 		{
-			pPrev = pEnd;
+			pPrev = pEnd + 1;
 		}
 
 		p = sString.find('&', pEnd);
@@ -707,6 +708,14 @@ static CString Utf8Xml_Decode(const CString& sString)
 	} while(true);
 
 	return WideToUtf8(swStr);
+}
+
+static CString Utf8Xml_NamedEntityDecode(const CString& sString)
+{
+	return sString.Replace_n("&quot;", "\"")
+		.Replace_n("&gt;", ">")
+		.Replace_n("&lt;", "<")
+		.Replace_n("&amp;", "&");
 }
 
 
@@ -1326,12 +1335,14 @@ protected:
 	bool m_initial;
 	bool m_countSupported;
 	int m_feedId;
+	ETwitterFeedType m_feedType;
 public:
 	CTRFeed(CTwitterModule *pModInstance, ETwitterFeedType type, int iFeedId) : CTwitterHTTPSock(pModInstance, "")
 	{
 		m_countSupported = true;
 		m_initial = false;
 		m_feedId = iFeedId;
+		m_feedType = type;
 
 		if(type == TWFT_MENTIONS)
 		{
@@ -1355,7 +1366,7 @@ public:
 		}
 	}
 
-	void Request(bool bInitial, uint64_t iSinceId)
+	void Request(bool bInitial, uint64_t iSinceId, const CString& sPayload)
 	{
 		MCString mParams;
 
@@ -1369,6 +1380,16 @@ public:
 		if(m_initial && m_countSupported)
 		{
 			mParams["count"] = "1";
+		}
+
+		if(m_feedType == TWFT_SEARCH)
+		{
+			mParams["q"] = sPayload;
+			mParams["show_user"] = "true";
+		}
+		else if(m_feedType == TWFT_USER)
+		{
+			mParams["screen_name"] = sPayload;
 		}
 
 		DoRequest("GET", mParams);
@@ -1408,13 +1429,15 @@ public:
 
 				if(xTag->GetName() == "entry")
 				{
-					const CString sText = xTag->GetChildText("title");
+					const CString sText = Utf8Xml_NamedEntityDecode(xTag->GetChildText("title")); // fix twitter bug.
 					CString sIdTmp = xTag->GetChildText("id");
 
-					CString::size_type uPos = sIdTmp.find("statuses/");
+					CString::size_type uPos = sIdTmp.find("statuses/"), uPosAdd = 9;
+					if(uPos == CString::npos) { uPos = sIdTmp.rfind(':'); uPosAdd = 1; } // for search
+
 					if(uPos != CString::npos)
 					{
-						sIdTmp.erase(0, uPos + 9);
+						sIdTmp.erase(0, uPos + uPosAdd);
 						uint64_t uId = sIdTmp.ToULongLong();
 						time_t iTime = pMod->InterpretRFC3339Time(xTag->GetChildText("published"));
 
@@ -1429,8 +1452,10 @@ public:
 							{
 								break;
 							}
-							
 
+							pMod->QueueMessage(fFeed->m_target, iTime,
+								(fFeed->m_prefix.empty() ? "" : fFeed->m_prefix + " ") +
+								sText + " [" + CTwitterModule::FormatTweetTime(iTime) + "]");
 						}
 					}
 				}
@@ -1881,8 +1906,10 @@ void CTwitterModule::TimerAction()
 	int iMsgsSent = 0;
 	bool bAllowBunch = (m_msgQueueLastSent < time(NULL) - 10);
 
-	for(vector<pair<time_t, CString> >::iterator it = m_msgQueue.begin(); it != m_msgQueue.end(); it++)
+	while(!m_msgQueue.empty())
 	{
+		vector<pair<time_t, CString> >::iterator it = m_msgQueue.begin();
+
 		if(it->second.substr(0, 10) == "PRIVMSG  :")
 		{
 			// message to *twitter, no rate limiting required.
@@ -1896,6 +1923,8 @@ void CTwitterModule::TimerAction()
 		}
 		else
 			break;
+		
+		m_msgQueue.erase(it);
 	}
 
 	// look at updates...
@@ -1908,15 +1937,25 @@ void CTwitterModule::TimerAction()
 	// every sixty seconds...
 	// read: http://apiwiki.twitter.com/Rate-limiting
 
-	for(vector<CTwitterFeed>::const_iterator it = m_feeds.begin(); it != m_feeds.end(); it++)
+	for(vector<CTwitterFeed>::iterator it = m_feeds.begin(); it != m_feeds.end(); it++)
 	{
 		bool bRateLimited = (it->m_type == TWFT_SEARCH || it->m_type == TWFT_USER);
+
+		if(it->m_type == TWFT_SEARCH || it->m_type == TWFT_USER)
+		{
+			if(it->m_payload.empty())
+			{
+				continue;
+			}
+		}
 
 		if((!bRateLimited && it->m_lastUpdate <= time(NULL) - 45) ||
 			(bRateLimited && !bCalledRateLimited &&  it->m_lastUpdate <= time(NULL) - 60))
 		{
-			//CTRFeed *req = new CTRFeed(this, it->m_type, it->m_id);
-			//req->Request(it->m_lastUpdate == 0, it->m_lastId);
+			CTRFeed *req = new CTRFeed(this, it->m_type, it->m_id);
+			req->Request(it->m_lastId == 0, it->m_lastId, it->m_payload);
+
+			it->m_lastUpdate = time(NULL);
 
 			if(bRateLimited) bCalledRateLimited = true;
 		}
@@ -1958,6 +1997,45 @@ time_t CTwitterModule::InterpretRFC3339Time(const CString& sRFC3339)
 	}
 
 	return 0;
+}
+
+CString CTwitterModule::FormatTweetTime(time_t iTime)
+{
+	CString sTime = "error";
+	time_t iDelta = time(NULL) - iTime;
+
+	if(iDelta < 0)
+	{
+		sTime = "from the future!";
+	}
+	else if(iDelta < 60)
+	{
+		sTime = "less than one minute ago";
+	}
+	else if(iDelta < 120)
+	{
+		sTime = "one minute ago";
+	}
+	else if(iDelta <= 600)
+	{
+		sTime = CString(iDelta / 60) + " minutes ago";
+	}
+	else if(iDelta <= 86400)
+	{
+		sTime = CString::ToTimeStr(iDelta);
+	}
+	else
+	{
+		char szTimeBuf[500];
+		tm *ptm = localtime(&iTime);
+
+		if(strftime(&szTimeBuf[0], 499, "%a, %m %B %H:%M:%S", ptm) > 0)
+		{
+			sTime = szTimeBuf;
+		}
+	}
+
+	return sTime;
 }
 
 static bool _msgQueueSort(const pair<time_t, CString>& a, const pair<time_t, CString>& b)
