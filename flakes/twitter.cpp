@@ -1524,8 +1524,9 @@ public:
 
 				if(xTag->GetName() == "entry")
 				{
-					const CString sText = Utf8Xml_NamedEntityDecode(xTag->GetChildText("title")); // fix twitter bug.
 					CString sIdTmp = xTag->GetChildText("id");
+					CString sText = Utf8Xml_NamedEntityDecode(xTag->GetChildText("title")); // fix twitter bug.
+					sText = sText.Replace_n("\r", "").Replace_n("\n", " ");
 
 					CString::size_type uPos = sIdTmp.find("statuses/"), uPosAdd = 9;
 					if(uPos == CString::npos) { uPos = sIdTmp.rfind(':'); uPosAdd = 1; } // for search
