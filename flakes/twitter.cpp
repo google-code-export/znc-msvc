@@ -1128,6 +1128,26 @@ protected:
 		}
 	}
 
+	void HandleCommonHTTPErrors(unsigned int uResponseCode, map<const CString, CString>& mHeaders, const CString& sResponse, bool bLogOutOn401)
+	{
+		CTwitterModule *pMod = reinterpret_cast<CTwitterModule*>(m_pMod);
+
+		if(uResponseCode == 401 && bLogOutOn401)
+		{
+			pMod->EraseSession(true);
+		}
+		else
+		{
+			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
+
+			if(sResponse.Left(5) == "<?xml")
+			{
+				CString sInfo = sResponse.Replace_n("\r", "").Replace_n("\n", "");
+				pMod->PutModule(sInfo.Left(400) + "...");
+			}
+		}
+	}
+
 	virtual void OnRequestError(int iErrorCode)
 	{
 		m_pMod->PutModule("ERROR: " + m_method + " failed (" + CString(iErrorCode) + ")");
@@ -1223,9 +1243,7 @@ public:
 			}
 		}
 		else
-		{
-			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
-		}
+			HandleCommonHTTPErrors(uResponseCode, mHeaders, sResponse, false);
 	}
 };
 
@@ -1261,15 +1279,8 @@ public:
 		{
 			pMod->PutModule("Tweet sent!");
 		}
-		else if(uResponseCode == 401)
-		{
-			pMod->EraseSession(true);
-		}
 		else
-		{
-			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
-			pMod->PutModule(sResponse.Replace_n("\r", "").Replace_n("\n", ""));
-		}
+			HandleCommonHTTPErrors(uResponseCode, mHeaders, sResponse, true);
 	}
 };
 
@@ -1344,15 +1355,8 @@ public:
 				pMod->PutModule("Last Tweet: " + xStatus->GetChildText("text") + " [" + xStatus->GetChildText("created_at") + "]");
 			}
 		}
-		else if(uResponseCode == 401)
-		{
-			pMod->EraseSession(true);
-		}
 		else
-		{
-			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
-			pMod->PutModule(sResponse.Replace_n("\r", "").Replace_n("\n", ""));
-		}
+			HandleCommonHTTPErrors(uResponseCode, mHeaders, sResponse, true);
 	}
 };
 
@@ -1407,15 +1411,8 @@ public:
 
 			pMod->PutModule(infoTable);
 		}
-		else if(uResponseCode == 401)
-		{
-			pMod->EraseSession(true);
-		}
 		else
-		{
-			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
-			pMod->PutModule(sResponse.Replace_n("\r", "").Replace_n("\n", ""));
-		}
+			HandleCommonHTTPErrors(uResponseCode, mHeaders, sResponse, true);
 	}
 };
 
@@ -1557,10 +1554,6 @@ public:
 
 			fFeed->m_lastUpdate = time(NULL);
 		}
-		else if(uResponseCode == 401 && m_needsAuth)
-		{
-			pMod->EraseSession(true);
-		}
 		else if(uResponseCode == 400)
 		{
 			PXMLTag xHash;
@@ -1596,11 +1589,20 @@ public:
 				fFeed->m_lastUpdate = time(NULL) + atoi(mHeaders["Retry-After"].c_str());
 			}
 		}
-		else
+		else if(uResponseCode == 502) // "twitter is over capacity"
 		{
-			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
-			pMod->PutModule(sResponse.Replace_n("\r", "").Replace_n("\n", ""));
+			CTwitterFeed *fFeed = pMod->GetFeedById(m_feedId);
+
+			// cut them servers some slack:
+			if(fFeed)
+			{
+				fFeed->m_lastUpdate = time(NULL) + 5 * 60;
+			}
 		}
+		else if(m_needsAuth)
+			HandleCommonHTTPErrors(uResponseCode, mHeaders, sResponse, true);
+		else
+			HandleCommonHTTPErrors(uResponseCode, mHeaders, sResponse, false);
 	}
 };
 
@@ -2348,8 +2350,8 @@ void CTwitterModule::QueueMessage(CTwitterFeed *fFeed, time_t iTime, const CStri
 				if(!sOldStyle.empty())
 				{
 					sColoredMessage += m_styles[sOldStyle].GetEndCode();
+					sColoredMessage += " ";
 				}
-				sColoredMessage += " ";
 				sColoredMessage += m_styles[sStyle].GetStartCode();
 				sColoredMessage += *it;
 			}
