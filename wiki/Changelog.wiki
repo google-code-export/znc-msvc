@@ -1,6 +1,9 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2009-08-31 ==
+  * Exactly the same files as the previous release, just moved the `modules/skins` folder to its proper location, `modules/webadmin/skins`.
+
 == 2009-08-25 ==
   * Updated to official SVN revision 1613, fixing some things and speeding up /znc listavailmods. Props to the ZNC team!
   * Removed dns module
