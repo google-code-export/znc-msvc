@@ -25,13 +25,19 @@ DATADIR  := @DATADIR@
 LIBZNC   := @LIBZNC@
 LIBZNCDIR:= @LIBZNCDIR@
 
+TCL_FLAGS:= @TCL_FLAGS@
+
 ifneq "$(LIBZNC)" ""
 LDFLAGS += -L.. -lznc -Wl,-rpath,$(LIBZNCDIR)
 endif
 
-FILES    := $(basename $(wildcard $(srcdir)/*.cpp))
-# Strip away the srcdir, we want them to be created in the current dir
-FILES    := $(shell echo $(FILES) | sed -e "s:$(srcdir)/::g")
+FILES    := $(notdir $(wildcard $(srcdir)/*.cpp))
+# If extra is enabled
+ifeq "@EXTRA@" "yes"
+FILES    += $(addprefix extra/, $(notdir $(wildcard $(srcdir)/extra/*.cpp)))
+endif
+
+FILES    := $(basename $(FILES))
 
 ifeq "@NOSSL@" "1"
 FILES    := $(foreach file, $(FILES), \
@@ -56,15 +62,23 @@ FILES    := $(shell echo $(FILES) | sed -e "s/saslauth//")
 endif
 saslauthFLAGS := -lsasl2
 
+ifeq "$(TCL_FLAGS)" ""
+FILES       := $(shell echo $(FILES) | sed -e "s:extra/modtcl::g")
+else
+TCLHOOK     := modtcl_install
+endif
+modtclFLAGS := $(TCL_FLAGS)
+
+
 TARGETS  := $(addsuffix .so, $(FILES))
 
-CLEAN    := *.so
+CLEAN    := *.so extra/*.so
 
 .PHONY: all clean install modperl_install
 
 all: $(TARGETS)
 
-install: all create_install_dir install_metadirs $(PERLHOOK)
+install: all create_install_dir install_metadirs $(PERLHOOK) $(TCLHOOK)
 	install -m 0755 $(TARGETS) $(DESTDIR)$(MODDIR)
 
 create_install_dir:
@@ -85,12 +99,17 @@ clean:
 
 %.so: %.cpp Makefile
 	@mkdir -p .depend
-	$(CXX) $(MODFLAGS) $(LDFLAGS) $(MODLINK) -o $@ $< $($(basename $@)FLAGS) -MMD -MF .depend/$@.dep
+	@mkdir -p extra
+	$(CXX) $(MODFLAGS) $(LDFLAGS) $(MODLINK) -o $@ $< $($(notdir $(basename $@))FLAGS) -MMD -MF .depend/$(notdir $@).dep
 
 modperl_install: create_install_dir
 	for i in $(srcdir)/*.pm; do \
 		install -m 0644 $$i $(DESTDIR)$(MODDIR); \
 	done
+
+modtcl_install:
+	mkdir -p $(DESTDIR)$(DATADIR)/modtcl/
+	install -m 0644 $(srcdir)/extra/modtcl.tcl $(srcdir)/extra/binds.tcl $(DESTDIR)$(DATADIR)/modtcl/
 
 uninstall:
 	# Yes, we are lazy, just remove everything in there
@@ -100,3 +119,4 @@ uninstall:
 	rmdir $(DESTDIR)$(DATADIR)
 
 -include $(wildcard .depend/*.dep)
+-include $(wildcard .depend/extra/*.dep)

@@ -57,13 +57,13 @@ proc decrypt {key string} {return [bdecrypt $key $string]}
 proc channels {} {return [GetChans]}
 proc chanlist {channel {flags ""}} {
 	set ret ""
-	foreach u [GetChannelUsers $channel] {lappend ret [lindex $u 0]}
+	foreach u [GetChannelUsers [string trim $channel "{}"]] {lappend ret [lindex $u 0]}
 	return $ret
 }
-proc getchanmode channel {return [GetChannelModes $channel]}
+proc getchanmode channel {return [GetChannelModes [string trim $channel "{}"]]}
 proc getchanhost {nick {channel ""}} {
 	# TODO: to have full info here we need to use /who #chan when we join
-	if {$channel == ""} {set channel [channels]}
+	if {$channel == ""} {set channel [join [channels]]}
 	foreach c $channel {
 		foreach u [GetChannelUsers $c] {
 			if {[string match $nick [lindex $u 0]]} {
@@ -103,8 +103,8 @@ proc ModuleLoaded modname {
 # rewrite all timers to use the after command
 proc utimer {seconds tcl-command} {after [expr $seconds * 1000] ${tcl-command}}
 proc timer {minutes tcl-command} {after [expr $minutes * 60 * 1000] ${tcl-command}}
-proc utimers {} {foreach a [after info] {lappend t "0 [lindex [after info $a] 0] $a"}; return $t}
-proc timers {} {foreach a [after info] {lappend t "0 [lindex [after info $a] 0] $a"}; return $t}
+proc utimers {} {set t {}; foreach a [after info] {lappend t "0 [lindex [after info $a] 0] $a"}; return $t}
+proc timers {} {set t {}; foreach a [after info] {lappend t "0 [lindex [after info $a] 0] $a"}; return $t}
 proc killtimer id {return [after cancel $id]}
 proc killutimer id {return [after cancel $id]}
 

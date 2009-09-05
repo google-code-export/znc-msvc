@@ -704,25 +704,41 @@ CChan* CUser::FindChan(const CString& sName) const {
 }
 
 void CUser::JoinChans() {
+	// Avoid divsion by zero, it's bad!
+	if (m_vChans.size() == 0)
+		return;
+
+	// We start at a random offset into the channel list so that if your
+	// first 3 channels are invite-only and you got MaxJoins == 3, ZNC will
+	// still be able to join the rest of your channels.
+	unsigned int start = rand() % m_vChans.size();
 	unsigned int uJoins = m_uMaxJoins;
 	for (unsigned int a = 0; a < m_vChans.size(); a++) {
-		CChan* pChan = m_vChans[a];
+		unsigned int idx = (start + a) % m_vChans.size();
+		CChan* pChan = m_vChans[idx];
 		if (!pChan->IsOn() && !pChan->IsDisabled()) {
-			if (JoinTries() != 0 && pChan->GetJoinTries() >= JoinTries()) {
-				PutStatus("The channel " + pChan->GetName() + " could not be joined, disabling it.");
-				pChan->Disable();
-			} else {
-				pChan->IncJoinTries();
-				MODULECALL(OnTimerAutoJoin(*pChan), this, NULL, continue);
+			if (!JoinChan(pChan))
+				continue;
 
-				PutIRC("JOIN " + pChan->GetName() + " " + pChan->GetKey());
-
-				// Limit the number of joins
-				if (uJoins != 0 && --uJoins == 0)
-					return;
-			}
+			// Limit the number of joins
+			if (uJoins != 0 && --uJoins == 0)
+				return;
 		}
 	}
+}
+
+bool CUser::JoinChan(CChan* pChan) {
+	if (JoinTries() != 0 && pChan->GetJoinTries() >= JoinTries()) {
+		PutStatus("The channel " + pChan->GetName() + " could not be joined, disabling it.");
+		pChan->Disable();
+	} else {
+		pChan->IncJoinTries();
+		MODULECALL(OnTimerAutoJoin(*pChan), this, NULL, return false);
+
+		PutIRC("JOIN " + pChan->GetName() + " " + pChan->GetKey());
+		return true;
+	}
+	return false;
 }
 
 CServer* CUser::FindServer(const CString& sName) const {

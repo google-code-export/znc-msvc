@@ -34,6 +34,8 @@ static const struct {
 	{"NAMES", {
 		{"353", false},
 		{"366", true},
+		// No such nick/channel
+		{"401", true},
 		{NULL, true},
 	}},
 	{"LUSERS", {
@@ -43,8 +45,9 @@ static const struct {
 		{"254", false},
 		{"255", false},
 		{"265", false},
-		{"266", false},
-		{"250", true},
+		{"266", true},
+		// We don't handle 250 here since some IRCds don't sent it
+		//{"250", true},
 		{NULL, true}
 	}},
 	{"WHOIS", {
@@ -58,8 +61,6 @@ static const struct {
 		{"401", true},
 		// No such server
 		{"402", true},
-		// Not enough params
-		{"461", true},
 		{NULL, true}
 	}},
 	{"PING", {
@@ -82,8 +83,6 @@ static const struct {
 	}},
 	{"ISON", {
 		{"303", true},
-		// Not enough parameters
-		{"461", true},
 		{NULL, true}
 	}},
 	{"LINKS", {
@@ -199,6 +198,19 @@ public:
 
 		if (!m_pReplies)
 			return CONTINUE;
+
+		// Is this a "not enough arguments" error?
+		if (sCmd == "461") {
+			// :server 461 nick WHO :Not enough parameters
+			CString sOrigCmd = sLine.Token(3);
+
+			if (m_sLastRequest.Token(0).Equals(sOrigCmd)) {
+				// This is the reply to the last request
+				if (RouteReply(sLine, true))
+					return HALTCORE;
+				return CONTINUE;
+			}
+		}
 
 		while (m_pReplies[i].szReply != NULL) {
 			if (m_pReplies[i].szReply == sCmd) {

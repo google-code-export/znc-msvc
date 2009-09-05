@@ -19,19 +19,14 @@ public:
 
 	virtual ~CLastSeenMod() {}
 
-	virtual bool OnLoad(const CString& sArgs, CString& sErrorMsg)
+	time_t GetTime(CUser *pUser)
 	{
-		const map<CString, CUser*>& mUsers = CZNC::Get().GetUserMap();
-		map<CString, CUser*>::const_iterator it;
+		return GetNV(pUser->GetUserName()).ToULong();
+	}
 
-		for (it = mUsers.begin(); it != mUsers.end(); it++) {
-			if (it->second->GetClients().size())
-				m_mLastSeen[it->first] = time(NULL);
-			else
-				m_mLastSeen[it->first] = 0;
-		}
-
-		return true;
+	void SetTime(CUser *pUser)
+	{
+		SetNV(pUser->GetUserName(), CString(time(NULL)));
 	}
 
 	virtual void OnModCommand(const CString& sLine)
@@ -45,20 +40,24 @@ public:
 
 		if (sCommand == "show") {
 			char buf[1024];
-			map<CString, time_t>::iterator it;
+			const map<CString, CUser*>& mUsers = CZNC::Get().GetUserMap();
+			map<CString, CUser*>::const_iterator it;
 			CTable Table;
 
 			Table.AddColumn("User");
 			Table.AddColumn("Last Seen");
 
-			for (it = m_mLastSeen.begin(); it != m_mLastSeen.end(); it++) {
+			for (it = mUsers.begin(); it != mUsers.end(); it++) {
+				CUser *pUser = it->second;
+				time_t last = GetTime(pUser);
+
 				Table.AddRow();
 				Table.SetCell("User", it->first);
 
-				if (!it->second)
+				if (last == 0)
 					Table.SetCell("Last Seen", "never");
 				else {
-					strftime(buf, sizeof(buf), "%c", localtime(&it->second));
+					strftime(buf, sizeof(buf), "%c", localtime(&last));
 					Table.SetCell("Last Seen", buf);
 				}
 			}
@@ -71,22 +70,15 @@ public:
 
 	virtual void OnClientLogin()
 	{
-		const CString& sName = GetUser()->GetUserName();
-
-		m_mLastSeen[sName] = time(NULL);
+		SetTime(GetUser());
 	}
 
 	virtual void OnClientDisconnect()
 	{
-		const CString& sName = GetUser()->GetUserName();
-
-		m_mLastSeen[sName] = time(NULL);
+		SetTime(GetUser());
 	}
 
-protected:
-
 private:
-	map<CString, time_t>	m_mLastSeen;
 };
 
 GLOBALMODULEDEFS(CLastSeenMod, "Collects data about when a user last logged in")
