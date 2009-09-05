@@ -27,8 +27,8 @@ void CTemplateOptions::Parse(const CString& sLine) {
 	}
 }
 
-CTemplate* CTemplateLoopContext::GetRow(unsigned int uIndex) {
-	unsigned int uSize = m_pvRows->size();
+CTemplate* CTemplateLoopContext::GetRow(size_t uIndex) {
+	size_t uSize = m_pvRows->size();
 
 	if (uIndex < uSize) {
 		if (m_bReverse) {
@@ -273,7 +273,7 @@ bool CTemplate::Print(const CString& sFileName, ostream& oOut) {
 		uLineNum++;
 		CString::size_type iPos = 0;
 		uCurPos = uFilePos;
-		unsigned int uLineSize = sLine.size();
+		size_t uLineSize = sLine.size();
 		bool bBroke = false;
 
 		while (1) {

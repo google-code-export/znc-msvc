@@ -209,7 +209,7 @@ void CClient::UserCommand(CString& sLine) {
 		CString sMessage = sLine.Token(1, true);
 
 		if (sMessage.empty()) {
-			sMessage = "ZNC is being shutdown NOW!!";
+			sMessage = "ZNC is being shutdown NOW!";
 		}
 
 		CZNC::Get().Broadcast(sMessage);
@@ -218,7 +218,7 @@ void CClient::UserCommand(CString& sLine) {
 		CString sMessage = sLine.Token(1, true);
 
 		if (sMessage.empty()) {
-			sMessage = "ZNC is being restarted NOW!!";
+			sMessage = "ZNC is being restarted NOW!";
 		}
 
 		CZNC::Get().Broadcast(sMessage);

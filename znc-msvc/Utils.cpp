@@ -31,6 +31,8 @@ bool CUtils::debug =
 #else
 		false;
 #endif
+outputHook CUtils::outputHook = NULL;
+void* CUtils::outputHookUserData = NULL;
 
 CUtils::CUtils() {}
 CUtils::~CUtils() {}
@@ -278,78 +280,126 @@ bool CUtils::GetInput(const CString& sPrompt, CString& sRet, const CString& sDef
 }
 
 void CUtils::PrintError(const CString& sMessage) {
-	if (stdoutIsTTY)
-		fprintf(stdout, "\033[1m\033[34m[\033[31m ** \033[34m]\033[39m\033[22m %s\n", sMessage.c_str());
+	if(!OutputHooked())
+	{
+		if (stdoutIsTTY)
+			fprintf(stdout, "\033[1m\033[34m[\033[31m ** \033[34m]\033[39m\033[22m %s\n", sMessage.c_str());
+		else
+			fprintf(stdout, "%s\n", sMessage.c_str());
+		fflush(stdout);
+	}
 	else
+	{
+		HookedOutput(2, sMessage);
+	}
+}
+
+void CUtils::PrintDebug(const CString& sMessage) {
+	if(!OutputHooked())
+	{
 		fprintf(stdout, "%s\n", sMessage.c_str());
-	fflush(stdout);
+		fflush(stdout);
+	}
+	else
+	{
+		HookedOutput(1, sMessage);
+	}
 }
 
 void CUtils::PrintPrompt(const CString& sMessage) {
-	if (stdoutIsTTY)
-		fprintf(stdout, "\033[1m\033[34m[\033[33m ?? \033[34m]\033[39m\033[22m %s: ", sMessage.c_str());
+	if(!OutputHooked())
+	{
+		if (stdoutIsTTY)
+			fprintf(stdout, "\033[1m\033[34m[\033[33m ?? \033[34m]\033[39m\033[22m %s: ", sMessage.c_str());
+		else
+			fprintf(stdout, "[ ?? ] %s: ", sMessage.c_str());
+		fflush(stdout);
+	}
 	else
-		fprintf(stdout, "[ ?? ] %s: ", sMessage.c_str());
-	fflush(stdout);
+	{
+		// this should never be called, since the hooked output probably can't return anything from a prompt.
+		HookedOutput(-1, sMessage);
+	}
 }
 
 void CUtils::PrintMessage(const CString& sMessage, bool bStrong) {
-	if (stdoutIsTTY) {
-		if (bStrong)
-			fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m \033[1m%s\033[22m\n",
-					sMessage.c_str());
-		else
-			fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m %s\n",
-					sMessage.c_str());
-	} else
-		fprintf(stdout, "%s\n", sMessage.c_str());
+	if(!OutputHooked())
+	{
+		if (stdoutIsTTY) {
+			if (bStrong)
+				fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m \033[1m%s\033[22m\n",
+						sMessage.c_str());
+			else
+				fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m %s\n",
+						sMessage.c_str());
+		} else
+			fprintf(stdout, "%s\n", sMessage.c_str());
 
-	fflush(stdout);
+		fflush(stdout);
+	}
+	else
+	{
+		HookedOutput((bStrong ? 6 : 5), sMessage);
+	}
 }
 
 void CUtils::PrintAction(const CString& sMessage) {
-	if (stdoutIsTTY)
-		fprintf(stdout, "\033[1m\033[34m[\033[32m    \033[34m]\033[39m\033[22m %s... ", sMessage.c_str());
+	if(!OutputHooked())
+	{
+		if (stdoutIsTTY)
+			fprintf(stdout, "\033[1m\033[34m[\033[32m    \033[34m]\033[39m\033[22m %s... ", sMessage.c_str());
+		else
+			fprintf(stdout, "%s... ", sMessage.c_str());
+		fflush(stdout);
+	}
 	else
-		fprintf(stdout, "%s... ", sMessage.c_str());
-	fflush(stdout);
+	{
+		HookedOutput(5, sMessage + "...");
+	}
 }
 
 void CUtils::PrintStatus(bool bSuccess, const CString& sMessage) {
-	if (stdoutIsTTY) {
-		if (!sMessage.empty()) {
-			if (bSuccess) {
-				fprintf(stdout, "%s", sMessage.c_str());
-			} else {
-				fprintf(stdout, "\033[1m\033[34m[\033[31m %s \033[34m]"
-						"\033[39m\033[22m", sMessage.c_str());
-			}
-		}
-
-		fprintf(stdout, "\r");
-
-		if (bSuccess) {
-			fprintf(stdout, "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m\n");
-		} else {
-			fprintf(stdout, "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m\n");
-		}
-	} else {
-		if (bSuccess) {
-			fprintf(stdout, "%s\n", sMessage.c_str());
-		} else {
+	if(!OutputHooked())
+	{
+		if (stdoutIsTTY) {
 			if (!sMessage.empty()) {
-				fprintf(stdout, "[ %s ]", sMessage.c_str());
+				if (bSuccess) {
+					fprintf(stdout, "%s", sMessage.c_str());
+				} else {
+					fprintf(stdout, "\033[1m\033[34m[\033[31m %s \033[34m]"
+							"\033[39m\033[22m", sMessage.c_str());
+				}
 			}
 
-			fprintf(stdout, "\n");
-		}
-	}
+			fprintf(stdout, "\r");
 
-	fflush(stdout);
+			if (bSuccess) {
+				fprintf(stdout, "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m\n");
+			} else {
+				fprintf(stdout, "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m\n");
+			}
+		} else {
+			if (bSuccess) {
+				fprintf(stdout, "%s\n", sMessage.c_str());
+			} else {
+				if (!sMessage.empty()) {
+					fprintf(stdout, "[ %s ]", sMessage.c_str());
+				}
+
+				fprintf(stdout, "\n");
+			}
+		}
+
+		fflush(stdout);
+	}
+	else
+	{
+		HookedOutput((bSuccess ? 10 : 11), sMessage);
+	}
 }
 
 bool CTable::AddColumn(const CString& sName) {
-	for (unsigned int a = 0; a < m_vsHeaders.size(); a++) {
+	for (size_t a = 0; a < m_vsHeaders.size(); a++) {
 		if (m_vsHeaders[a].Equals(sName)) {
 			return false;
 		}
@@ -361,14 +411,14 @@ bool CTable::AddColumn(const CString& sName) {
 	return true;
 }
 
-unsigned int CTable::AddRow() {
+size_t CTable::AddRow() {
 	// Add a vector with enough space for each column
 	push_back(vector<CString>(m_vsHeaders.size()));
 	return size() -1;
 }
 
-bool CTable::SetCell(const CString& sColumn, const CString& sValue, unsigned int uRowIdx) {
-	if (uRowIdx == (unsigned int) ~0) {
+bool CTable::SetCell(const CString& sColumn, const CString& sValue, size_t uRowIdx) {
+	if (uRowIdx == (size_t) ~0) {
 		if (!size()) {
 			return false;
 		}
@@ -384,7 +434,7 @@ bool CTable::SetCell(const CString& sColumn, const CString& sValue, unsigned int
 	return true;
 }
 
-bool CTable::GetLine(unsigned int uIdx, CString& sLine) const {
+bool CTable::GetLine(size_t uIdx, CString& sLine) const {
 	stringstream ssRet;
 
 	if (!size()) {
@@ -475,13 +525,13 @@ unsigned int CTable::GetColumnIndex(const CString& sName) const {
 	return 0;
 }
 
-unsigned int CTable::GetColumnWidth(unsigned int uIdx) const {
+size_t CTable::GetColumnWidth(size_t uIdx) const {
 	if (uIdx >= m_vsHeaders.size()) {
 		return 0;
 	}
 
 	const CString& sColName = m_vsHeaders[uIdx];
-	map<CString, unsigned int>::const_iterator it = m_msuWidths.find(sColName);
+	map<CString, size_t>::const_iterator it = m_msuWidths.find(sColName);
 
 	if (it == m_msuWidths.end()) {
 		// AddColumn() and SetCell() should make sure that we get a value :/
@@ -514,7 +564,7 @@ CBlowfish::~CBlowfish() {
 }
 
 //! output must be freed
-unsigned char *CBlowfish::MD5(const unsigned char *input, u_int ilen) {
+unsigned char *CBlowfish::MD5(const unsigned char *input, size_t ilen) {
 	unsigned char *output = (unsigned char *)malloc(MD5_DIGEST_LENGTH);
 	::MD5(input, ilen, output);
 	return output;
@@ -539,12 +589,12 @@ CString CBlowfish::MD5(const CString & sInput, bool bHexEncode) {
 }
 
 //! output must be the same size as input
-void CBlowfish::Crypt(unsigned char *input, unsigned char *output, u_int ibytes) {
+void CBlowfish::Crypt(unsigned char *input, unsigned char *output, size_t ibytes) {
 	BF_cfb64_encrypt(input, output, ibytes, &m_bkey, m_ivec, &m_num, m_iEncrypt);
 }
 
 //! must free result
-unsigned char * CBlowfish::Crypt(unsigned char *input, u_int ibytes) {
+unsigned char * CBlowfish::Crypt(unsigned char *input, size_t ibytes) {
 	unsigned char *buff = (unsigned char *)malloc(ibytes);
 	Crypt(input, buff, ibytes);
 	return buff;

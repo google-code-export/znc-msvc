@@ -15,6 +15,7 @@
 #include "Utils.h"
 #include <set>
 #include <vector>
+#include <stack>
 
 using std::vector;
 using std::set;
@@ -462,10 +463,20 @@ public:
 	bool ReloadModule(const CString& sModule, const CString& sArgs, CUser* pUser, CString& sRetMsg);
 
 	bool GetModInfo(CModInfo& ModInfo, const CString& sModule, CString &sRetMsg);
+	bool GetModPathInfo(CModInfo& ModInfo, const CString& sModule, const CString& sModPath, CString &sRetMsg);
 	void GetAvailableMods(set<CModInfo>& ssMods, bool bGlobal = false);
 
+	// This returns the path to the .so and to the data dir
+	// which is where static data (webadmin skins) are saved
+	static bool FindModPath(const CString& sModule, CString& sModPath,
+			CString& sDataPath);
+	// Return a list of <module dir, data dir> pairs for directories in
+	// which modules can be found.
+	typedef std::stack<std::pair<CString, CString> > ModDirList;
+	static ModDirList GetModDirs();
+
 private:
-	ModHandle OpenModule(const CString& sModule, CString& sModPath, CString& sDataPath,
+	ModHandle OpenModule(const CString& sModule, const CString& sModPath,
 			bool &bVersionMismatch, bool &bIsGlobal, CString& sDesc, CString& sRetMsg);
 
 protected:

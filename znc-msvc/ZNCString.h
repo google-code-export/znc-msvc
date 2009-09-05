@@ -83,9 +83,9 @@ public:
 	~CString() {}
 
 	inline unsigned char* strnchr(const unsigned char* src, unsigned char c, unsigned int iMaxBytes, unsigned char* pFill = NULL, unsigned int* piCount = NULL) const;
-	int CaseCmp(const CString& s, unsigned long uLen = CString::npos) const;
-	int StrCmp(const CString& s, unsigned long uLen = CString::npos) const;
-	bool Equals(const CString& s, bool bCaseSensitive = false, unsigned long uLen = CString::npos) const;
+	int CaseCmp(const CString& s, size_t uLen = CString::npos) const;
+	int StrCmp(const CString& s, size_t uLen = CString::npos) const;
+	bool Equals(const CString& s, bool bCaseSensitive = false, size_t uLen = CString::npos) const;
 	static bool WildCmp(const CString& sWild, const CString& sString);
 	bool WildCmp(const CString& sWild) const;
 
@@ -103,34 +103,34 @@ public:
 	static unsigned int Replace(CString& sStr, const CString& sReplace, const CString& sWith, const CString& sLeft = "", const CString& sRight = "", bool bRemoveDelims = false);
 	CString Replace_n(const CString& sReplace, const CString& sWith, const CString& sLeft = "", const CString& sRight = "", bool bRemoveDelims = false) const;
 	unsigned int Replace(const CString& sReplace, const CString& sWith, const CString& sLeft = "", const CString& sRight = "", bool bRemoveDelims = false);
-	CString Ellipsize(unsigned int uLen) const;
-	CString Left(unsigned int uCount) const;
-	CString Right(unsigned int uCount) const;
+	CString Ellipsize(size_t uLen) const;
+	CString Left(size_t uCount) const;
+	CString Right(size_t uCount) const;
 
 	CString FirstLine() const { return Token(0, false, "\n"); }
 	CString Token(unsigned int uPos, bool bRest = false, const CString& sSep = " ", bool bAllowEmpty = false, const CString& sLeft = "", const CString& sRight = "", bool bTrimQuotes = true) const;
 
-	unsigned int URLSplit(MCString& msRet) const;
-	unsigned int OptionSplit(MCString& msRet, bool bUpperKeys = false) const;
-	unsigned int QuoteSplit(VCString& vsRet) const;
+	size_t URLSplit(MCString& msRet) const;
+	size_t OptionSplit(MCString& msRet, bool bUpperKeys = false) const;
+	size_t QuoteSplit(VCString& vsRet) const;
 
-	unsigned int Split(const CString& sDelim, VCString& vsRet, bool bAllowEmpty = true,
+	size_t Split(const CString& sDelim, VCString& vsRet, bool bAllowEmpty = true,
 					   const CString& sLeft = "", const CString& sRight = "", bool bTrimQuotes = true,
 					   bool bTrimWhiteSpace = false) const;
 
-	unsigned int Split(const CString& sDelim, SCString& ssRet, bool bAllowEmpty = true,
+	size_t Split(const CString& sDelim, SCString& ssRet, bool bAllowEmpty = true,
 					   const CString& sLeft = "", const CString& sRight = "", bool bTrimQuotes = true,
 					   bool bTrimWhiteSpace = false) const;
 
-	static CString RandomString(unsigned int uLength);
+	static CString RandomString(size_t uLength);
 
 	CString MD5() const;
-	unsigned long Base64Decode(CString& sRet) const;
-	unsigned long Base64Decode();
+	size_t Base64Decode(CString& sRet) const;
+	size_t Base64Decode();
 	CString Base64Decode_n() const;
-	bool Base64Encode(CString& sRet, unsigned int uWrap = 0) const;
-	bool Base64Encode(unsigned int uWrap = 0);
-	CString Base64Encode_n(unsigned int uWrap = 0) const;
+	bool Base64Encode(CString& sRet, size_t uWrap = 0) const;
+	bool Base64Encode(size_t uWrap = 0);
+	CString Base64Encode_n(size_t uWrap = 0) const;
 
 #ifdef HAVE_LIBSSL
 	CString Encrypt_n(const CString& sPass, const CString& sIvec = "");
@@ -167,10 +167,10 @@ public:
 	CString TrimPrefix_n(const CString& sPrefix) const;
 	CString TrimSuffix_n(const CString& sSuffix) const;
 
-	bool LeftChomp(unsigned int uLen = 1);
-	bool RightChomp(unsigned int uLen = 1);
-	CString LeftChomp_n(unsigned int uLen = 1) const;
-	CString RightChomp_n(unsigned int uLen = 1) const;
+	bool LeftChomp(size_t uLen = 1);
+	bool RightChomp(size_t uLen = 1);
+	CString LeftChomp_n(size_t uLen = 1) const;
+	CString RightChomp_n(size_t uLen = 1) const;
 
 private:
 protected:

@@ -49,12 +49,12 @@ void CNick::Parse(const CString& sNickMask) {
 	}
 }
 
-unsigned int CNick::GetCommonChans(vector<CChan*>& vRetChans, CUser* pUser) const {
+size_t CNick::GetCommonChans(vector<CChan*>& vRetChans, CUser* pUser) const {
 	vRetChans.clear();
 
 	const vector<CChan*>& vChans = pUser->GetChans();
 
-	for (unsigned int a = 0; a < vChans.size(); a++) {
+	for (size_t a = 0; a < vChans.size(); a++) {
 		CChan* pChan = vChans[a];
 		const map<CString,CNick*>& msNicks = pChan->GetNicks();
 

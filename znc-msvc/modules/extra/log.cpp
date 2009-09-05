@@ -1,32 +1,14 @@
 /*
- * CNU's Logging Module
+ * Copyright (C) 2008-2009  See the AUTHORS file for details.
  * Copyright (C) 2006-2007, CNU <bshalm@broadpark.no> (http://cnu.dieplz.net/znc)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the
- * Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
  */
 
 #include "stdafx.hpp"
-#include "main.h"
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-#include <ctime>
 #include "User.h"
-#include "Nick.h"
-#include "Modules.h"
 #include "Chan.h"
 #include "Server.h"
 
@@ -34,7 +16,9 @@ class CLogMod: public CModule {
 public:
 	MODCONSTRUCTOR(CLogMod) {}
 
-	void PutLog(const CString& sLine, const CString& sWindow = "Status");
+	void PutLog(const CString& sLine, const CString& sWindow = "status");
+	void PutLog(const CString& sLine, const CChan& Channel);
+	void PutLog(const CString& sLine, const CNick& Nick);
 	CString GetServer();
 
 	virtual void OnIRCConnected();
@@ -67,10 +51,10 @@ public:
 
 void CLogMod::PutLog(const CString& sLine, const CString& sWindow /*= "Status"*/)
 {
-	std::ofstream ofLog;
-	std::stringstream ssPath;
+	CString sPath;
 	time_t curtime;
 	tm* timeinfo;
+	char buffer[1024];
 
 	time(&curtime);
 	// Don't forget the user's timezone offset (which is in hours and we want seconds)
@@ -78,35 +62,54 @@ void CLogMod::PutLog(const CString& sLine, const CString& sWindow /*= "Status"*/
 	timeinfo = localtime(&curtime);
 
 	/* Generate file name: ~/.znc/users/<user>/moddata/log/WINDOW_YYYYMMDD.log  */
-	ssPath.fill('0');
-	ssPath << GetSavePath() << "/" << sWindow << "_"
-	   << std::setw(4) << (timeinfo->tm_year + 1900)
-	   << std::setw(2) << (timeinfo->tm_mon + 1)
-	   << std::setw(2) << (timeinfo->tm_mday)
-	   << ".log";
+	CString sWindowFixed(sWindow);
+	sWindowFixed = sWindowFixed.Replace_n("/", "_");
+	sWindowFixed = sWindowFixed.Replace_n("\\", "_");
+	sWindowFixed = sWindowFixed.Replace_n(":", "_");
+	sWindowFixed = sWindowFixed.Replace_n("*", "_");
+	sWindowFixed = sWindowFixed.Replace_n("?", "_");
+	sWindowFixed = sWindowFixed.Replace_n("\"", "_");
+	sWindowFixed = sWindowFixed.Replace_n("<", "_");
+	sWindowFixed = sWindowFixed.Replace_n(">", "_");
+	sWindowFixed = sWindowFixed.Replace_n("|", "_");
 
-	ofLog.open(ssPath.str().c_str(), std::ofstream::app);
+	sPath = GetSavePath() + "/" + sWindowFixed + "_";
+	snprintf(buffer, sizeof(buffer), "%04d%02d%02d.log", timeinfo->tm_year + 1900,
+			timeinfo->tm_mon + 1, timeinfo->tm_mday);
+	sPath += buffer;
 
-	if (ofLog.good())
+	CFile LogFile(sPath);
+	if (LogFile.Open(O_WRONLY | O_APPEND | O_CREAT))
 	{
-		/* Write line: [HH:MM:SS] MSG */
-		ofLog.fill('0');
-		ofLog << "[" << std::setw(2) << timeinfo->tm_hour
-			  << ":" << std::setw(2) << timeinfo->tm_min
-			  << ":" << std::setw(2) << timeinfo->tm_sec
-			  << "] " << sLine << endl;
-	}
+		snprintf(buffer, sizeof(buffer), "[%02d:%02d:%02d] ",
+				timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+
+		LogFile.Write(buffer + sLine + "\n");
+	} else
+		DEBUG("Could not open log file [" << sPath << "]: " << strerror(errno));
+}
+
+void CLogMod::PutLog(const CString& sLine, const CChan& Channel)
+{
+	PutLog(sLine, Channel.GetName());
+}
+
+void CLogMod::PutLog(const CString& sLine, const CNick& Nick)
+{
+	PutLog(sLine, Nick.GetNick());
 }
 
 CString CLogMod::GetServer()
 {
 	CServer* pServer = m_pUser->GetCurrentServer();
+	CString sSSL;
 
 	if (!pServer)
 		return "(no server)";
 
-	//! @todo pServer->IsSSL()
-	return pServer->GetName() + ":" + CString(pServer->GetPort());
+	if (pServer->IsSSL())
+		sSSL = "+";
+	return pServer->GetName() + ":" + sSSL + CString(pServer->GetPort());
 }
 
 void CLogMod::OnIRCConnected()
@@ -127,39 +130,39 @@ CModule::EModRet CLogMod::OnBroadcast(CString& sMessage)
 
 void CLogMod::OnRawMode(const CNick& OpNick, CChan& Channel, const CString& sModes, const CString& sArgs)
 {
-	PutLog("*** " + OpNick.GetNick() + " sets mode: " + sModes + " " + sArgs, Channel.GetName());
+	PutLog("*** " + OpNick.GetNick() + " sets mode: " + sModes + " " + sArgs, Channel);
 }
 
 void CLogMod::OnKick(const CNick& OpNick, const CString& sKickedNick, CChan& Channel, const CString& sMessage)
 {
-	PutLog("*** " + sKickedNick + " was kicked by " + OpNick.GetNick() + " (" + sMessage + ")", Channel.GetName());
+	PutLog("*** " + sKickedNick + " was kicked by " + OpNick.GetNick() + " (" + sMessage + ")", Channel);
 }
 
 void CLogMod::OnQuit(const CNick& Nick, const CString& sMessage, const vector<CChan*>& vChans)
 {
 	for (std::vector<CChan*>::const_iterator pChan = vChans.begin(); pChan != vChans.end(); ++pChan)
-		PutLog("*** Quits: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ") (" + sMessage + ")", (*pChan)->GetName());
+		PutLog("*** Quits: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ") (" + sMessage + ")", **pChan);
 }
 
 void CLogMod::OnJoin(const CNick& Nick, CChan& Channel)
 {
-	PutLog("*** Joins: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ")", Channel.GetName());
+	PutLog("*** Joins: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ")", Channel);
 }
 
 void CLogMod::OnPart(const CNick& Nick, CChan& Channel)
 {
-	PutLog("*** Parts: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ")", Channel.GetName());
+	PutLog("*** Parts: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ")", Channel);
 }
 
 void CLogMod::OnNick(const CNick& OldNick, const CString& sNewNick, const vector<CChan*>& vChans)
 {
 	for (std::vector<CChan*>::const_iterator pChan = vChans.begin(); pChan != vChans.end(); ++pChan)
-		PutLog("*** " + OldNick.GetNick() + " is now known as " + sNewNick, (*pChan)->GetName());
+		PutLog("*** " + OldNick.GetNick() + " is now known as " + sNewNick, **pChan);
 }
 
 CModule::EModRet CLogMod::OnTopic(CNick& Nick, CChan& Channel, CString& sTopic)
 {
-	PutLog("*** " + Nick.GetNick() + " changes topic to '" + sTopic + "'", Channel.GetName());
+	PutLog("*** " + Nick.GetNick() + " changes topic to '" + sTopic + "'", Channel);
 	return CONTINUE;
 }
 
@@ -172,13 +175,13 @@ CModule::EModRet CLogMod::OnUserNotice(CString& sTarget, CString& sMessage)
 
 CModule::EModRet CLogMod::OnPrivNotice(CNick& Nick, CString& sMessage)
 {
-	PutLog("-" + Nick.GetNick() + "- " + sMessage, Nick.GetNick());
+	PutLog("-" + Nick.GetNick() + "- " + sMessage, Nick);
 	return CONTINUE;
 }
 
 CModule::EModRet CLogMod::OnChanNotice(CNick& Nick, CChan& Channel, CString& sMessage)
 {
-	PutLog("-" + Nick.GetNick() + "- " + sMessage, Channel.GetName());
+	PutLog("-" + Nick.GetNick() + "- " + sMessage, Channel);
 	return CONTINUE;
 }
 
@@ -191,13 +194,13 @@ CModule::EModRet CLogMod::OnUserAction(CString& sTarget, CString& sMessage)
 
 CModule::EModRet CLogMod::OnPrivAction(CNick& Nick, CString& sMessage)
 {
-	PutLog("* " + Nick.GetNick() + " " + sMessage, Nick.GetNick());
+	PutLog("* " + Nick.GetNick() + " " + sMessage, Nick);
 	return CONTINUE;
 }
 
 CModule::EModRet CLogMod::OnChanAction(CNick& Nick, CChan& Channel, CString& sMessage)
 {
-	PutLog("* " + Nick.GetNick() + " " + sMessage, Channel.GetName());
+	PutLog("* " + Nick.GetNick() + " " + sMessage, Channel);
 	return CONTINUE;
 }
 
@@ -210,14 +213,14 @@ CModule::EModRet CLogMod::OnUserMsg(CString& sTarget, CString& sMessage)
 
 CModule::EModRet CLogMod::OnPrivMsg(CNick& Nick, CString& sMessage)
 {
-	PutLog("<" + Nick.GetNick() + "> " + sMessage, Nick.GetNick());
+	PutLog("<" + Nick.GetNick() + "> " + sMessage, Nick);
 	return CONTINUE;
 }
 
 CModule::EModRet CLogMod::OnChanMsg(CNick& Nick, CChan& Channel, CString& sMessage)
 {
-	PutLog("<" + Nick.GetNick() + "> " + sMessage, Channel.GetName());
+	PutLog("<" + Nick.GetNick() + "> " + sMessage, Channel);
 	return CONTINUE;
 }
 
-MODULEDEFS(CLogMod, "CNU's IRC Logging Module")
+MODULEDEFS(CLogMod, "Write IRC logs")

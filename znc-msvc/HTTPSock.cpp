@@ -284,7 +284,7 @@ CString CHTTPSock::GetParam(const CString& sName, const CString& sFilter) const 
 	return sRet;
 }
 
-unsigned int CHTTPSock::GetParamValues(const CString& sName, set<CString>& ssRet, const CString& sFilter) const {
+size_t CHTTPSock::GetParamValues(const CString& sName, set<CString>& ssRet, const CString& sFilter) const {
 	ssRet.clear();
 
 	map<CString, VCString>::const_iterator it = m_msvsParams.find(sName);
@@ -303,7 +303,7 @@ unsigned int CHTTPSock::GetParamValues(const CString& sName, set<CString>& ssRet
 	return ssRet.size();
 }
 
-unsigned int CHTTPSock::GetParamValues(const CString& sName, VCString& vsRet, const CString& sFilter) const {
+size_t CHTTPSock::GetParamValues(const CString& sName, VCString& vsRet, const CString& sFilter) const {
 	vsRet.clear();
 
 	map<CString, VCString>::const_iterator it = m_msvsParams.find(sName);

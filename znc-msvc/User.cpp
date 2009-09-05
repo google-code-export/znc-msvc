@@ -706,25 +706,41 @@ CChan* CUser::FindChan(const CString& sName) const {
 }
 
 void CUser::JoinChans() {
+	// Avoid divsion by zero, it's bad!
+	if (m_vChans.size() == 0)
+		return;
+
+	// We start at a random offset into the channel list so that if your
+	// first 3 channels are invite-only and you got MaxJoins == 3, ZNC will
+	// still be able to join the rest of your channels.
+	unsigned int start = (m_vChans.size() ? rand() % m_vChans.size() : 0);
 	unsigned int uJoins = m_uMaxJoins;
 	for (unsigned int a = 0; a < m_vChans.size(); a++) {
-		CChan* pChan = m_vChans[a];
+		unsigned int idx = (start + a) % m_vChans.size();
+		CChan* pChan = m_vChans[idx];
 		if (!pChan->IsOn() && !pChan->IsDisabled()) {
-			if (JoinTries() != 0 && pChan->GetJoinTries() >= JoinTries()) {
-				PutStatus("The channel " + pChan->GetName() + " could not be joined, disabling it.");
-				pChan->Disable();
-			} else {
-				pChan->IncJoinTries();
-				MODULECALL(OnTimerAutoJoin(*pChan), this, NULL, continue);
+			if (!JoinChan(pChan))
+				continue;
 
-				PutIRC("JOIN " + pChan->GetName() + " " + pChan->GetKey());
-
-				// Limit the number of joins
-				if (uJoins != 0 && --uJoins == 0)
-					return;
-			}
+			// Limit the number of joins
+			if (uJoins != 0 && --uJoins == 0)
+				return;
 		}
 	}
+}
+
+bool CUser::JoinChan(CChan* pChan) {
+	if (JoinTries() != 0 && pChan->GetJoinTries() >= JoinTries()) {
+		PutStatus("The channel " + pChan->GetName() + " could not be joined, disabling it.");
+		pChan->Disable();
+	} else {
+		pChan->IncJoinTries();
+		MODULECALL(OnTimerAutoJoin(*pChan), this, NULL, return false);
+
+		PutIRC("JOIN " + pChan->GetName() + " " + pChan->GetKey());
+		return true;
+	}
+	return false;
 }
 
 CServer* CUser::FindServer(const CString& sName) const {
@@ -859,7 +875,7 @@ CServer* CUser::GetNextServer() {
 }
 
 CServer* CUser::GetCurrentServer() const {
-	unsigned int uIdx = (m_uServerIdx) ? m_uServerIdx -1 : 0;
+	size_t uIdx = (m_uServerIdx) ? m_uServerIdx -1 : 0;
 
 	if (uIdx >= m_vServers.size()) {
 		return NULL;
@@ -1094,7 +1110,7 @@ void CUser::SetDenySetVHost(bool b) { m_bDenySetVHost = b; }
 void CUser::SetDefaultChanModes(const CString& s) { m_sDefaultChanModes = s; }
 void CUser::SetIRCServer(const CString& s) { m_sIRCServer = s; }
 void CUser::SetQuitMsg(const CString& s) { m_sQuitMsg = s; }
-void CUser::SetBufferCount(unsigned int u) { m_uBufferCount = u; }
+void CUser::SetBufferCount(size_t u) { m_uBufferCount = u; }
 void CUser::SetKeepBuffer(bool b) { m_bKeepBuffer = b; }
 
 void CUser::CheckIRCConnect()
@@ -1171,6 +1187,6 @@ const CNick& CUser::GetIRCNick() const { return m_IRCNick; }
 const CString& CUser::GetIRCServer() const { return m_sIRCServer; }
 CString CUser::GetQuitMsg() const { return (!m_sQuitMsg.empty()) ? m_sQuitMsg : CZNC::GetTag(false); }
 const MCString& CUser::GetCTCPReplies() const { return m_mssCTCPReplies; }
-unsigned int CUser::GetBufferCount() const { return m_uBufferCount; }
+size_t CUser::GetBufferCount() const { return m_uBufferCount; }
 bool CUser::KeepBuffer() const { return m_bKeepBuffer; }
 // !Getters

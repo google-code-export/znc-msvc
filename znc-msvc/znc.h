@@ -51,10 +51,6 @@ public:
 	static CString GetTag(bool bIncludeVersion = true);
 	CString GetUptime() const;
 	static double GetCoreVersion();
-	// This returns the path to the .so and to the data dir
-	// which is where static data (webadmin skins) are saved
-	bool FindModPath(const CString& sModule, CString& sModPath,
-			CString& sDataPath) const;
 	void ClearVHosts();
 	bool AddVHost(const CString& sHost);
 	bool RemVHost(const CString& sHost);
@@ -114,6 +110,7 @@ public:
 	// Static allocator
 	static CZNC& Get();
 	static void _Reset();
+	void HookOutput(outputHook fHook);
 	CUser* FindUser(const CString& sUsername);
 	bool DeleteUser(const CString& sUsername);
 	bool AddUser(CUser* pUser, CString& sErrorRet);

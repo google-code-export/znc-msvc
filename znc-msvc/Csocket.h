@@ -28,7 +28,7 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* $Revision: 1.209 $
+* $Revision: 1.211 $
 */
 
 // note to compile with win32 need to link to winsock2, using gcc its -lws2_32
@@ -58,7 +58,6 @@
 #define ETIMEDOUT WSAETIMEDOUT
 #define EADDRNOTAVAIL WSAEADDRNOTAVAIL
 #define ECONNABORTED WSAECONNABORTED
-
 #endif /* _WIN32 */
 
 #include <stdlib.h>
@@ -300,12 +299,12 @@ inline void TFD_ZERO( fd_set *set )
 	FD_ZERO( set );
 }
 
-inline void TFD_SET( u_int iSock, fd_set *set )
+inline void TFD_SET( int iSock, fd_set *set )
 {
 	FD_SET( iSock, set );
 }
 
-inline bool TFD_ISSET( u_int iSock, fd_set *set )
+inline bool TFD_ISSET( int iSock, fd_set *set )
 {
 	if ( FD_ISSET( iSock, set ) )
 		return( true );
@@ -313,7 +312,7 @@ inline bool TFD_ISSET( u_int iSock, fd_set *set )
 	return( false );
 }
 
-inline void TFD_CLR( u_int iSock, fd_set *set )
+inline void TFD_CLR( int iSock, fd_set *set )
 {
 	FD_CLR( iSock, set );
 }
@@ -551,7 +550,7 @@ public:
 	* @param len the length of data
 	*
 	*/
-	virtual bool Write( const char *data, int len );
+	virtual bool Write( const char *data, size_t len );
 
 	/**
 	* convience function
@@ -592,8 +591,8 @@ public:
 	void SetSock( int iSock );
 	int & GetSock();
 
-	//! resets the time counter
-	void ResetTimer();
+	//! resets the time counter, this is virtual in the event you need an event on the timer being Reset
+	virtual void ResetTimer();
 
 	//! will pause/unpause reading on this socket
 	void PauseRead();
@@ -990,7 +989,6 @@ private:
 	CS_STRING			m_sSSLBuffer;
 	SSL 				*m_ssl;
 	SSL_CTX				*m_ssl_ctx;
-	SSL_METHOD			*m_ssl_method;
 	unsigned int		m_iRequireClientCertFlags;
 
 	FPCertVerifyCB		m_pCerVerifyCB;

@@ -30,7 +30,7 @@ CBuffer::CBuffer(unsigned int uLineCount) {
 
 CBuffer::~CBuffer() {}
 
-int CBuffer::AddLine(const CString& sPre, const CString& sPost, bool bIncNick) {
+size_t CBuffer::AddLine(const CString& sPre, const CString& sPost, bool bIncNick) {
 	if (!m_uLineCount) {
 		return 0;
 	}
@@ -43,7 +43,7 @@ int CBuffer::AddLine(const CString& sPre, const CString& sPost, bool bIncNick) {
 	return size();
 }
 
-int CBuffer::UpdateLine(const CString& sPre, const CString& sPost, bool bIncNick) {
+size_t CBuffer::UpdateLine(const CString& sPre, const CString& sPost, bool bIncNick) {
 	for (iterator it = begin(); it != end(); it++) {
 		if (it->GetPre() == sPre) {
 			it->SetPost(sPost);
@@ -55,7 +55,7 @@ int CBuffer::UpdateLine(const CString& sPre, const CString& sPost, bool bIncNick
 	return AddLine(sPre, sPost, bIncNick);
 }
 
-int CBuffer::UpdateExactLine(const CString& sPre, const CString& sPost, bool bIncNick) {
+size_t CBuffer::UpdateExactLine(const CString& sPre, const CString& sPost, bool bIncNick) {
 	for (iterator it = begin(); it != end(); it++) {
 		if (it->GetPre() == sPre && it->GetPost() == sPost)
 			return size();

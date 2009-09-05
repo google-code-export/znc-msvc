@@ -82,8 +82,8 @@ public:
 	void SetHasData(bool b = true) { m_bHasData = b; }
 	void SetName(const CString& s) { m_sName = s; }
 	void SetRowIndex(unsigned int u) { m_uRowIndex = u; }
-	unsigned int IncRowIndex() { return ++m_uRowIndex; }
-	unsigned int DecRowIndex() { if (m_uRowIndex == 0) { return 0; } return --m_uRowIndex; }
+	size_t IncRowIndex() { return ++m_uRowIndex; }
+	size_t DecRowIndex() { if (m_uRowIndex == 0) { return 0; } return --m_uRowIndex; }
 	void SetFilePosition(unsigned int u) { m_uFilePosition = u; }
 	// !Setters
 
@@ -91,20 +91,20 @@ public:
 	bool HasData() const { return m_bHasData; }
 	const CString& GetName() const { return m_sName; }
 	unsigned long GetFilePosition() const { return m_uFilePosition; }
-	unsigned int GetRowIndex() const { return m_uRowIndex; }
-	unsigned int GetRowCount() { return m_pvRows->size(); }
+	size_t GetRowIndex() const { return m_uRowIndex; }
+	size_t GetRowCount() { return m_pvRows->size(); }
 	vector<CTemplate*>* GetRows() { return m_pvRows; }
 	CTemplate* GetNextRow() { return GetRow(IncRowIndex()); }
 	CTemplate* GetCurRow() { return GetRow(m_uRowIndex); }
 
-	CTemplate* GetRow(unsigned int uIndex);
+	CTemplate* GetRow(size_t uIndex);
 	CString GetValue(const CString& sName, bool bFromIf = false);
 	// !Getters
 private:
 	bool				m_bReverse;			//!< Iterate through this loop in reverse order
 	bool				m_bHasData;			//!< Tells whether this loop has real data or not
 	CString				m_sName;			//!< The name portion of the <?LOOP name?> tag
-	unsigned int		m_uRowIndex;		//!< The index of the current row we're on
+	size_t				m_uRowIndex;		//!< The index of the current row we're on
 	unsigned long		m_uFilePosition;	//!< The file position of the opening <?LOOP?> tag
 	vector<CTemplate*>*	m_pvRows;			//!< This holds pointers to the templates associated with this loop
 };

@@ -42,6 +42,7 @@ public:
 	bool AddChan(const CString& sName, bool bInConfig);
 	bool DelChan(const CString& sName);
 	void JoinChans();
+	bool JoinChan(CChan* pChan);
 	CServer* FindServer(const CString& sName) const;
 	bool DelServer(const CString& sName);
 	bool AddServer(const CString& sName);
@@ -143,7 +144,7 @@ public:
 	void SetIRCServer(const CString& s);
 	void SetQuitMsg(const CString& s);
 	bool AddCTCPReply(const CString& sCTCP, const CString& sReply);
-	void SetBufferCount(unsigned int u);
+	void SetBufferCount(size_t u);
 	void SetKeepBuffer(bool b);
 	void SetChanPrefixes(const CString& s) { m_sChanPrefixes = s; }
 	void SetBeingDeleted(bool b) { m_bBeingDeleted = b; }
@@ -197,7 +198,7 @@ public:
 	const CString& GetIRCServer() const;
 	CString GetQuitMsg() const;
 	const MCString& GetCTCPReplies() const;
-	unsigned int GetBufferCount() const;
+	size_t GetBufferCount() const;
 	bool KeepBuffer() const;
 	bool IsBeingDeleted() const { return m_bBeingDeleted; }
 	bool HasServers() const { return m_vServers.size() > 0; }
@@ -261,8 +262,8 @@ protected:
 	set<CDCCBounce*>	m_sDCCBounces;
 	set<CDCCSock*>		m_sDCCSocks;
 	set<CString>		m_ssAllowedHosts;
-	unsigned int		m_uServerIdx;
-	unsigned int		m_uBufferCount;
+	size_t				m_uServerIdx;
+	size_t				m_uBufferCount;
 	unsigned long long      m_uBytesRead;
 	unsigned long long      m_uBytesWritten;
 	unsigned int		m_uMaxJoinTries;
