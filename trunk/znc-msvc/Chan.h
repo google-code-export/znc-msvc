@@ -84,7 +84,7 @@ public:
 	// !Nicks
 
 	// Buffer
-	int AddBuffer(const CString& sLine);
+	size_t AddBuffer(const CString& sLine);
 	void ClearBuffer();
 	void SendBuffer(CClient* pClient);
 	// !Buffer
@@ -103,7 +103,7 @@ public:
 	void SetTopicOwner(const CString& s) { m_sTopicOwner = s; }
 	void SetTopicDate(unsigned long u) { m_ulTopicDate = u; }
 	void SetDefaultModes(const CString& s) { m_sDefaultModes = s; }
-	void SetBufferCount(unsigned int u) { m_uBufferCount = u; }
+	void SetBufferCount(size_t u) { m_uBufferCount = u; }
 	void SetKeepBuffer(bool b) { m_bKeepBuffer = b; }
 	void SetDetached(bool b = true) { m_bDetached = b; }
 	void SetInConfig(bool b) { m_bInConfig = b; }
@@ -129,8 +129,8 @@ public:
 	const CString& GetDefaultModes() const { return m_sDefaultModes; }
 	const vector<CString>& GetBuffer() const { return m_vsBuffer; }
 	const map<CString,CNick*>& GetNicks() const { return m_msNicks; }
-	unsigned int GetNickCount() const { return m_msNicks.size(); }
-	unsigned int GetBufferCount() const { return m_uBufferCount; }
+	size_t GetNickCount() const { return m_msNicks.size(); }
+	size_t GetBufferCount() const { return m_uBufferCount; }
 	bool KeepBuffer() const { return m_bKeepBuffer; }
 	bool IsDetached() const { return m_bDetached; }
 	bool InConfig() const { return m_bInConfig; }
@@ -156,7 +156,7 @@ protected:
 	unsigned int		m_uJoinTries;
 	CString				m_sDefaultModes;
 	map<CString,CNick*>	m_msNicks;	// Todo: make this caseless (irc style)
-	unsigned int		m_uBufferCount;
+	size_t				m_uBufferCount;
 	vector<CString>		m_vsBuffer;
 
 	map<unsigned char, CString>			m_musModes;

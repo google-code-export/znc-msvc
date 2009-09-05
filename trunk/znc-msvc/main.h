@@ -24,8 +24,12 @@
 
 // You can add -DVERSION_EXTRA="stuff" to your CXXFLAGS!
 #ifndef VERSION_EXTRA
-# ifdef _WIN32
-#  define VERSION_EXTRA "-r" REVISION_STR "-Win32"
+# ifdef _WIN32 // yes, _win32 is also defined during 64 bit compiles.
+#  ifdef _WIN64
+#    define VERSION_EXTRA "-r" REVISION_STR "-Win-x64"
+#  else
+#    define VERSION_EXTRA "-r" REVISION_STR "-Win-x86"
+#  endif
 # else
 #  define VERSION_EXTRA ""
 # endif
@@ -62,10 +66,8 @@
 	}
 # ifndef _WIN32
 #  define MODULE_FILE_EXT ".so"
-#  define MODULE_FILE_EXT_LEN 3
  #else
 #  define MODULE_FILE_EXT ".dll"
-#  define MODULE_FILE_EXT_LEN 4
 # endif
 #else
 #define MODULECALL(macFUNC, macUSER, macCLIENT, macEXITER)

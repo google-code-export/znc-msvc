@@ -25,9 +25,13 @@ using std::pair;
 using std::cout;
 using std::endl;
 
+typedef void (*outputHook)(int type, const char* text, void *userData);
+
 #define DEBUG(f) do { \
 	if (CUtils::Debug()) { \
-		cout << f << endl; \
+		std::stringstream sTmpDbg; \
+		sTmpDbg << f << endl; \
+		CUtils::PrintDebug(sTmpDbg.str()); \
 	} \
 } while (0);
 
@@ -55,8 +59,12 @@ public:
 	static bool StdoutIsTTY() { return stdoutIsTTY; }
 	static void SetDebug(bool b) { debug = b; }
 	static bool Debug() { return debug; }
+	static void HookOutput(outputHook fHook, void* userData) { outputHook = fHook; outputHookUserData = userData; }
+	static bool OutputHooked() { return (outputHook != NULL); }
+	static void HookedOutput(int type, const CString& message) { if(OutputHooked()) { outputHook(type, message.c_str(), outputHookUserData); } }
 
 	static void PrintError(const CString& sMessage);
+	static void PrintDebug(const CString& sMessage);
 	static void PrintMessage(const CString& sMessage, bool bStrong = false);
 	static void PrintPrompt(const CString& sMessage);
 	static void PrintAction(const CString& sMessage);
@@ -87,6 +95,8 @@ private:
 protected:
 	static bool stdoutIsTTY;
 	static bool debug;
+	static outputHook outputHook;
+	static void* outputHookUserData;
 };
 
 class CException {
@@ -114,11 +124,11 @@ public:
 	virtual ~CTable() {}
 
 	bool AddColumn(const CString& sName);
-	unsigned int AddRow();
-	bool SetCell(const CString& sColumn, const CString& sValue, unsigned int uRowIdx = ~0);
-	bool GetLine(unsigned int uIdx, CString& sLine) const;
+	size_t AddRow();
+	bool SetCell(const CString& sColumn, const CString& sValue, size_t uRowIdx = ~0);
+	bool GetLine(size_t uIdx, CString& sLine) const;
 
-	unsigned int GetColumnWidth(unsigned int uIdx) const;
+	size_t GetColumnWidth(size_t uIdx) const;
 
 	void Clear();
 	using vector<vector<CString> >::size;
@@ -127,7 +137,7 @@ private:
 
 protected:
 	vector<CString>				m_vsHeaders;
-	map<CString, unsigned int>	m_msuWidths;	// Used to cache the width of a column
+	map<CString, size_t>		m_msuWidths;	// Used to cache the width of a column
 };
 
 
@@ -146,16 +156,16 @@ public:
 	~CBlowfish();
 
 	//! output must be freed
-	static unsigned char *MD5(const unsigned char *input, u_int ilen);
+	static unsigned char *MD5(const unsigned char *input, size_t ilen);
 
 	//! returns an md5 of the CString (not hex encoded)
 	static CString MD5(const CString & sInput, bool bHexEncode = false);
 
 	//! output must be the same size as input
-	void Crypt(unsigned char *input, unsigned char *output, u_int ibytes);
+	void Crypt(unsigned char *input, unsigned char *output, size_t ibytes);
 
 	//! must free result
-	unsigned char * Crypt(unsigned char *input, u_int ibytes);
+	unsigned char * Crypt(unsigned char *input, size_t ibytes);
 	CString Crypt(const CString & sData);
 
 private:
@@ -291,46 +301,6 @@ private:
 	typedef typename map<K, value>::iterator iterator;
 	map<K, value>	m_mItems;	//!< Map of cached items.  The value portion of the map is for the expire time
 	unsigned int	m_uTTL;					//!< Default time-to-live duration
-};
-
-/**
- * @class CNoCopy
- * @author prozac <prozac@rottenboy.com>
- * @brief This class is intended to be derived from to prevent copying of your derived class, the implementations of the copy constructor and equals operator were intentionally made private and omitted
- */
-class CNoCopy {
-protected:
-	CNoCopy() {}	// Allow construction
-	~CNoCopy() {}	// and destruction of derived objects
-private:
-	CNoCopy(const CNoCopy&);				// Disallow copying
-	CNoCopy& operator =(const CNoCopy&);	// and assignment
-};
-
-/**
- * @class CSafePtr
- * @author prozac <prozac@rottenboy.com>
- * @brief Safe deletion of a pointer.
- *
- * This class is intended to be created on the stack and hold a pointer which
- * will be deleted upon destruction.  It is useful for functions where you need
- * an allocated pointer and have many return paths.  It prevents copying to get
- * around the exclusive ownership situation which makes std::auto_ptr
- * invalidate the first pointer on copy.  This is intended to be used in
- * simplistic situations such as local variables.
- */
-template<typename T>
-class CSafePtr : private CNoCopy {
-public:
-	CSafePtr() { m_pType = new T; }
-	CSafePtr(T* p) { m_pType = p; }
-	virtual ~CSafePtr() { delete m_pType; }
-
-	T& operator *() const { assert(m_pType); return *m_pType; }
-	T* operator ->() const { assert(m_pType); return m_pType; }
-private:
-	operator T() const;
-	T*	m_pType;
 };
 
 /**

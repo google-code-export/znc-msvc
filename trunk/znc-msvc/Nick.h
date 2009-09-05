@@ -30,7 +30,7 @@ public:
 	void Reset();
 	void Parse(const CString& sNickMask);
 	CString GetHostMask() const;
-	unsigned int GetCommonChans(vector<CChan*>& vChans, CUser* pUser) const;
+	size_t GetCommonChans(vector<CChan*>& vChans, CUser* pUser) const;
 
 	// Setters
 	void SetUser(CUser* pUser);

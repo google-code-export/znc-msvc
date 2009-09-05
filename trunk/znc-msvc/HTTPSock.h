@@ -66,8 +66,8 @@ public:
 	const CString& GetPass() const;
 	const CString& GetParamString() const;
 	const CString& GetContentType() const;
-	unsigned int GetParamValues(const CString& sName, VCString& vsRet, const CString& sFilter = "\r\n") const;
-	unsigned int GetParamValues(const CString& sName, set<CString>& ssRet, const CString& sFilter = "\r\n") const;
+	size_t GetParamValues(const CString& sName, VCString& vsRet, const CString& sFilter = "\r\n") const;
+	size_t GetParamValues(const CString& sName, set<CString>& ssRet, const CString& sFilter = "\r\n") const;
 	const map<CString, VCString>& GetParams() const;
 	// !Getters
 private:

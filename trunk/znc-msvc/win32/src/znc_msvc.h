@@ -26,6 +26,7 @@ using std::_cpp_max;
 #include <shlobj.h>
 #include <stdint.h>
 #include <string>
+#include <queue>
 
 #include "exports.h"
 

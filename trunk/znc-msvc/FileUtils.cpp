@@ -392,7 +392,7 @@ bool CFile::ReadFile(CString& sData, size_t iMaxSize) {
 	return false;
 }
 
-int CFile::Write(const char *pszBuffer, u_int iBytes) {
+int CFile::Write(const char *pszBuffer, size_t iBytes) {
 	if (m_iFD == -1) {
 		return -1;
 	}

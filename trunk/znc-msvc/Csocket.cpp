@@ -28,7 +28,7 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* $Revision: 1.99 $
+* $Revision: 1.104 $
 */
 
 #include "stdafx.hpp"
@@ -575,7 +575,7 @@ void Csock::Copy( const Csock & cCopy )
 	m_iLocalPort	= cCopy.m_iLocalPort;
 	m_iReadSock		= cCopy.m_iReadSock;
 	m_iWriteSock	= cCopy.m_iWriteSock;
-	m_itimeout		= cCopy.m_iWriteSock;
+	m_itimeout		= cCopy.m_itimeout;
 	m_iConnType		= cCopy.m_iConnType;
 	m_iMethod		= cCopy.m_iMethod;
 	m_bssl			= cCopy.m_bssl;
@@ -620,7 +620,6 @@ void Csock::Copy( const Csock & cCopy )
 	FREE_CTX(); // be sure to remove anything that was already here
 	m_ssl				= cCopy.m_ssl;
 	m_ssl_ctx			= cCopy.m_ssl_ctx;
-	m_ssl_method		= cCopy.m_ssl_method;
 
 	m_pCerVerifyCB		= cCopy.m_pCerVerifyCB;
 
@@ -991,8 +990,8 @@ bool Csock::SSLClientSetup()
 	switch( m_iMethod )
 	{
 		case SSL2:
-			m_ssl_method = SSLv2_client_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( SSLv2_client_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... SSLv2_client_method failed!" );
 				return( false );
@@ -1000,16 +999,16 @@ bool Csock::SSLClientSetup()
 			break;
 
 		case SSL3:
-			m_ssl_method = SSLv3_client_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( SSLv3_client_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... SSLv3_client_method failed!" );
 				return( false );
 			}
 			break;
 		case TLS1:
-			m_ssl_method = TLSv1_client_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( TLSv1_client_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... TLSv1_client_method failed!" );
 				return( false );
@@ -1017,8 +1016,8 @@ bool Csock::SSLClientSetup()
 			break;
 		case SSL23:
 		default:
-			m_ssl_method = SSLv23_client_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( SSLv23_client_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... SSLv23_client_method failed!" );
 				return( false );
@@ -1026,10 +1025,6 @@ bool Csock::SSLClientSetup()
 			break;
 	}
 
-	// wrap some warnings in here
-	m_ssl_ctx = SSL_CTX_new ( m_ssl_method );
-	if ( !m_ssl_ctx )
-		return( false );
 
 	SSL_CTX_set_default_verify_paths( m_ssl_ctx );
 
@@ -1080,8 +1075,8 @@ bool Csock::SSLServerSetup()
 	switch( m_iMethod )
 	{
 		case SSL2:
-			m_ssl_method = SSLv2_server_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( SSLv2_server_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... SSLv2_server_method failed!" );
 				return( false );
@@ -1089,8 +1084,8 @@ bool Csock::SSLServerSetup()
 			break;
 
 		case SSL3:
-			m_ssl_method = SSLv3_server_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( SSLv3_server_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... SSLv3_server_method failed!" );
 				return( false );
@@ -1098,8 +1093,8 @@ bool Csock::SSLServerSetup()
 			break;
 
 		case TLS1:
-			m_ssl_method = TLSv1_server_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( TLSv1_server_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... TLSv1_server_method failed!" );
 				return( false );
@@ -1108,8 +1103,8 @@ bool Csock::SSLServerSetup()
 
 		case SSL23:
 		default:
-			m_ssl_method = SSLv23_server_method();
-			if ( !m_ssl_method )
+			m_ssl_ctx = SSL_CTX_new ( SSLv23_server_method() );
+			if ( !m_ssl_ctx )
 			{
 				CS_DEBUG( "WARNING: MakeConnection .... SSLv23_server_method failed!" );
 				return( false );
@@ -1117,10 +1112,6 @@ bool Csock::SSLServerSetup()
 			break;
 	}
 
-	// wrap some warnings in here
-	m_ssl_ctx = SSL_CTX_new ( m_ssl_method );
-	if ( !m_ssl_ctx )
-		return( false );
 	SSL_CTX_set_default_verify_paths( m_ssl_ctx );
 
 	// set the pemfile password
@@ -1135,7 +1126,7 @@ bool Csock::SSLServerSetup()
 
 	//
 	// set up the CTX
-	if ( SSL_CTX_use_certificate_file( m_ssl_ctx, m_sPemFile.c_str() , SSL_FILETYPE_PEM ) <= 0 )
+	if ( SSL_CTX_use_certificate_chain_file( m_ssl_ctx, m_sPemFile.c_str() ) <= 0 )
 	{
 		CS_DEBUG( "Error with PEM file [" << m_sPemFile << "]" );
 		SSLErrors( __FILE__, __LINE__ );
@@ -1244,7 +1235,7 @@ bool Csock::AllowWrite( unsigned long long & iNOW ) const
 	return( true );
 }
 
-bool Csock::Write( const char *data, int len )
+bool Csock::Write( const char *data, size_t len )
 {
 	m_sSend.append( data, len );
 
@@ -1261,7 +1252,7 @@ bool Csock::Write( const char *data, int len )
 
 	}
 	// rate shaping
-	u_int iBytesToSend = 0;
+	size_t iBytesToSend = 0;
 
 #ifdef HAVE_LIBSSL
 	if( m_bssl && m_sSSLBuffer.empty() && !m_bsslEstablished )
@@ -1612,7 +1603,7 @@ void Csock::PushBuff( const char *data, int len, bool bStartAtZero )
 	if ( !m_bEnableReadLine )
 		return;	// If the ReadLine event is disabled, just ditch here
 
-	u_int iStartPos = ( m_sbuffer.empty() || bStartAtZero ? 0 : m_sbuffer.length() - 1 );
+	size_t iStartPos = ( m_sbuffer.empty() || bStartAtZero ? 0 : m_sbuffer.length() - 1 );
 
 	if ( data )
 		m_sbuffer.append( data, len );
@@ -2057,9 +2048,8 @@ int Csock::DNSLookup( EDNSLType eDNSLType )
 		if( !CreateSocksFD() )
 		{
 			m_iDNSTryCount = 0;
-			return ETIMEDOUT;
+			return( ETIMEDOUT );
 		}
-
 		if ( m_eConState != CST_OK )
 			m_eConState = ( ( eDNSLType == DNS_VHOST ) ? CST_BINDVHOST : CST_CONNECT );
 		m_iDNSTryCount = 0;

@@ -103,7 +103,7 @@ public:
 	int Read(char *pszBuffer, int iBytes);
 	bool ReadLine(CString & sData, const CString & sDelimiter = "\n");
 	bool ReadFile(CString& sData, size_t iMaxSize = 512 * 1024);
-	int Write(const char *pszBuffer, u_int iBytes);
+	int Write(const char *pszBuffer, size_t iBytes);
 	int Write(const CString & sData);
 	void Close();
 	void ClearBuffer();
@@ -155,7 +155,7 @@ public:
 		clear();
 	}
 
-	int Fill(const CString& sDir) {
+	size_t Fill(const CString& sDir) {
 		return FillByWildcard(sDir, "*");
 	}
 
@@ -199,7 +199,7 @@ public:
 		return size();
 	}*/
 
-	int FillByWildcard(const CString& sDir, const CString& sWildcard) {
+	size_t FillByWildcard(const CString& sDir, const CString& sWildcard) {
 		CleanUp();
 		DIR* dir = opendir((sDir.empty()) ? "." : sDir.c_str());
 
@@ -217,7 +217,7 @@ public:
 				continue;
 			}
 
-			CFile *file = new CFile(sDir + "/" + de->d_name/*, this*/);	// @todo need to pass pointer to 'this' if we want to do Sort()
+			CFile *file = new CFile(sDir + (sDir[sDir.size() - 1] == '/' ? "" : "/") + de->d_name/*, this*/);	// @todo need to pass pointer to 'this' if we want to do Sort()
 			push_back(file);
 		}
 
