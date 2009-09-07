@@ -8,6 +8,10 @@
 
 #define REQUIRESSL
 
+#if (!defined(ZNC_VERSION_MINOR) || ZNC_VERSION_MINOR < 72) && defined(VERSION_MAJOR) && VERSION_MAJOR == 0
+#error Twitter needs ZNC 0.072 or newer.
+#endif
+
 #include "main.h"
 #include "znc.h"
 #include "Chan.h"
