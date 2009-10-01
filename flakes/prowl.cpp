@@ -1,17 +1,23 @@
 /*
  * Copyright (C) 2009 flakes @ EFNet
- * Version 0.9.0 (2009-08-17)
+ * Version 0.9.5 (2009-10-01)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  */
 
+#define REQUIRESSL
+
 #include "znc.h"
 #include "User.h"
 #include "Chan.h"
 #include "Nick.h"
 #include "Modules.h"
+
+#if (!defined(ZNC_VERSION_MINOR) || !defined(VERSION_MAJOR) || (VERSION_MAJOR == 0 && ZNC_VERSION_MINOR < 72))
+#error This module needs ZNC 0.072 or newer.
+#endif
 
 class CProwlMod : public CModule
 {
@@ -88,9 +94,9 @@ protected:
 		// m_idleAfterMinutes < 1 == don't use the "idle feature"
 		bool bUseIdleFeature = (m_idleAfterMinutes > 0);
 		bool bUserAttached = m_pUser->IsUserAttached();
-		bool bIsIdle = bUseIdleFeature && (m_lastActivity < time(NULL) - m_idleAfterMinutes * 60 || !bUserAttached);
+		bool bIsIdle = (m_lastActivity < time(NULL) - m_idleAfterMinutes * 60 || !bUserAttached);
 
-		if(bIsIdle && (!m_onlyWhenDetached || !bUserAttached))
+		if(((bUseIdleFeature && bIsIdle) || !bUseIdleFeature) && (!m_onlyWhenDetached || !bUserAttached))
 		{
 			const CString sLcMessage = sMessage.AsLower();
 			bool bFound = (sLcMessage.find(m_pUser->GetCurNick().AsLower()) != CString::npos);
