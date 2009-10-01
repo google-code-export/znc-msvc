@@ -14,7 +14,7 @@
 #include "Modules.h"
 #include "User.h"
 
-#if (!defined(ZNC_VERSION_MINOR) || !defined(VERSION_MAJOR) || (VERSION_MAJOR == 0 && ZNC_VERSION_MINOR < 72))
+#if (!defined(VERSION_MAJOR) || !defined(VERSION_MINOR) || (VERSION_MAJOR == 0 && VERSION_MINOR < 72))
 #error This module needs ZNC 0.072 or newer.
 #endif
 
