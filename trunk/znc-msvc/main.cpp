@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 		CString sSalt;
 		CString sHash = CUtils::GetSaltedHashPass(sSalt);
 		CUtils::PrintMessage("Use this in the <User> section of your config:");
-		CUtils::PrintMessage("Pass = md5#" + sHash + "#" + sSalt + "#");
+		CUtils::PrintMessage("Pass = " + CUtils::sDefaultHash + "#" + sHash + "#" + sSalt + "#");
 
 		delete pZNC;
 		return 0;
@@ -312,6 +312,11 @@ int main(int argc, char** argv) {
 		switch (e.GetType()) {
 			case CException::EX_Shutdown:
 				iRet = 0;
+
+#ifdef _WIN32
+				CUtils::PrintMessage("************** Shutting down ZNC... **************");
+#endif
+
 				break;
 			case CException::EX_Restart: {
 				// strdup() because GCC is stupid
@@ -338,6 +343,11 @@ int main(int argc, char** argv) {
 				// The above code adds 4 entries to args tops
 				// which means the array should be big enough
 
+#ifdef _WIN32
+				CUtils::PrintMessage("************** Restarting ZNC... **************");
+				delete pZNC; /* stuff screws up real bad if we don't close all sockets etc. */
+				pZNC = NULL;
+#endif
 				execvp(args[0], args);
 				CUtils::PrintError("Unable to restart znc [" + CString(strerror(errno)) + "]");
 			} /* Fall through */
@@ -346,7 +356,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	delete pZNC;
+	if(pZNC) delete pZNC;
 
 	return iRet;
 }

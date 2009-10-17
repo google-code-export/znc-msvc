@@ -31,6 +31,9 @@ public:
 
 	void DeleteUsers();
 	void Loop();
+#ifdef _WIN32
+	int ServiceLoop(SERVICE_STATUS *serviceStatus);
+#endif
 	bool WriteISpoof(CUser* pUser);
 	void ReleaseISpoof();
 	bool WritePidFile(int iPid);
@@ -128,6 +131,9 @@ public:
 	// This creates a CConnectUserTimer if we haven't got one yet
 	void EnableConnectUser();
 	void DisableConnectUser();
+
+	// Never call this unless you are CConnectUserTimer::~CConnectUserTimer()
+	void LeakConnectUser(CConnectUserTimer *pTimer);
 
 private:
 	bool DoRehash(CString& sError);

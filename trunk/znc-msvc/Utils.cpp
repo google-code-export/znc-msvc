@@ -150,21 +150,9 @@ unsigned long CUtils::GetLongIP(const CString& sIP) {
 	return ret;
 }
 
-CString CUtils::GetHashPass() {
-	while (true) {
-		CString pass1 = CUtils::GetPass("Enter Password");
-		CString pass2 = CUtils::GetPass("Confirm Password");
-
-		if (!pass1.Equals(pass2, true)) {
-			CUtils::PrintError("The supplied passwords did not match");
-		} else if (pass1.empty()) {
-			CUtils::PrintError("You can not use an empty password");
-		} else {
-			return pass1.MD5();
-		}
-	}
-}
-
+// If you change this here and in GetSaltedHashPass(),
+// don't forget CUser::HASH_DEFAULT!
+const CString CUtils::sDefaultHash = "sha256";
 CString CUtils::GetSaltedHashPass(CString& sSalt) {
 	sSalt = GetSalt();
 
@@ -178,7 +166,7 @@ CString CUtils::GetSaltedHashPass(CString& sSalt) {
 			CUtils::PrintError("You can not use an empty password");
 		} else {
 			// Construct the salted pass
-			return SaltedHash(pass1, sSalt);
+			return SaltedSHA256Hash(pass1, sSalt);
 		}
 	}
 }
@@ -187,8 +175,12 @@ CString CUtils::GetSalt() {
 	return CString::RandomString(20);
 }
 
-CString CUtils::SaltedHash(const CString& sPass, const CString& sSalt) {
+CString CUtils::SaltedMD5Hash(const CString& sPass, const CString& sSalt) {
 	return CString(sPass + sSalt).MD5();
+}
+
+CString CUtils::SaltedSHA256Hash(const CString& sPass, const CString& sSalt) {
+	return CString(sPass + sSalt).SHA256();
 }
 
 CString CUtils::GetPass(const CString& sPrompt) {

@@ -237,12 +237,12 @@ CModule::CModule(ModHandle pDLL, const CString& sModName, const CString& sDataDi
 }
 
 CModule::~CModule() {
-	while (m_vTimers.size()) {
-		RemTimer(m_vTimers[0]->GetName());
+	while (!m_sTimers.empty()) {
+		RemTimer(*m_sTimers.begin());
 	}
 
-	while (m_vSockets.size()) {
-		RemSocket(m_vSockets[0]);
+	while (!m_sSockets.empty()) {
+		RemSocket(*m_sSockets.begin());
 	}
 
 	SaveRegistry();
@@ -312,8 +312,11 @@ bool CModule::AddTimer(CTimer* pTimer) {
 		return false;
 	}
 
+	if (!m_sTimers.insert(pTimer).second)
+		// Was already added
+		return true;
+
 	m_pManager->AddCron(pTimer);
-	m_vTimers.push_back(pTimer);
 	return true;
 }
 
@@ -324,24 +327,25 @@ bool CModule::AddTimer(FPTimer_t pFBCallback, const CString& sLabel, u_int uInte
 	return AddTimer(pTimer);
 }
 
+bool CModule::RemTimer(CTimer* pTimer) {
+	if (m_sTimers.erase(pTimer) == 0)
+		return false;
+	m_pManager->DelCronByAddr(pTimer);
+	return true;
+}
+
 bool CModule::RemTimer(const CString& sLabel) {
-	for (unsigned int a = 0; a < m_vTimers.size(); a++) {
-		CTimer* pTimer = m_vTimers[a];
-
-		if (pTimer->GetName().Equals(sLabel)) {
-			m_vTimers.erase(m_vTimers.begin() +a);
-			m_pManager->DelCronByAddr(pTimer);
-			return true;
-		}
-	}
-
-	return false;
+	CTimer *pTimer = FindTimer(sLabel);
+	if (!pTimer)
+		return false;
+	return RemTimer(pTimer);
 }
 
 bool CModule::UnlinkTimer(CTimer* pTimer) {
-	for (unsigned int a = 0; a < m_vTimers.size(); a++) {
-		if (pTimer == m_vTimers[a]) {
-			m_vTimers.erase(m_vTimers.begin() +a);
+	set<CTimer*>::iterator it;
+	for (it = m_sTimers.begin(); it != m_sTimers.end(); ++it) {
+		if (pTimer == *it) {
+			m_sTimers.erase(it);
 			return true;
 		}
 	}
@@ -350,8 +354,9 @@ bool CModule::UnlinkTimer(CTimer* pTimer) {
 }
 
 CTimer* CModule::FindTimer(const CString& sLabel) {
-	for (unsigned int a = 0; a < m_vTimers.size(); a++) {
-		CTimer* pTimer = m_vTimers[a];
+	set<CTimer*>::iterator it;
+	for (it = m_sTimers.begin(); it != m_sTimers.end(); ++it) {
+		CTimer* pTimer = *it;
 		if (pTimer->GetName().Equals(sLabel)) {
 			return pTimer;
 		}
@@ -361,7 +366,7 @@ CTimer* CModule::FindTimer(const CString& sLabel) {
 }
 
 void CModule::ListTimers() {
-	if (!m_vTimers.size()) {
+	if (m_sTimers.empty()) {
 		PutModule("You have no timers running.");
 		return;
 	}
@@ -372,8 +377,9 @@ void CModule::ListTimers() {
 	Table.AddColumn("Cycles");
 	Table.AddColumn("Description");
 
-	for (unsigned int a = 0; a < m_vTimers.size(); a++) {
-		CTimer* pTimer = (CTimer*) m_vTimers[a];
+	set<CTimer*>::iterator it;
+	for (it = m_sTimers.begin(); it != m_sTimers.end(); ++it) {
+		CTimer* pTimer = *it;
 		unsigned int uCycles = pTimer->GetCyclesLeft();
 
 		Table.AddRow();
@@ -391,14 +397,15 @@ bool CModule::AddSocket(CSocket* pSocket) {
 		return false;
 	}
 
-	m_vSockets.push_back(pSocket);
+	m_sSockets.insert(pSocket);
 	return true;
 }
 
 bool CModule::RemSocket(CSocket* pSocket) {
-	for (unsigned int a = 0; a < m_vSockets.size(); a++) {
-		if (m_vSockets[a] == pSocket) {
-			m_vSockets.erase(m_vSockets.begin() +a);
+	set<CSocket*>::iterator it;
+	for (it = m_sSockets.begin(); it != m_sSockets.end(); ++it) {
+		if (*it == pSocket) {
+			m_sSockets.erase(it);
 			m_pManager->DelSockByAddr(pSocket);
 			return true;
 		}
@@ -408,11 +415,12 @@ bool CModule::RemSocket(CSocket* pSocket) {
 }
 
 bool CModule::RemSocket(const CString& sSockName) {
-	for (unsigned int a = 0; a < m_vSockets.size(); a++) {
-		CSocket* pSocket = m_vSockets[a];
+	set<CSocket*>::iterator it;
+	for (it = m_sSockets.begin(); it != m_sSockets.end(); ++it) {
+		CSocket* pSocket = *it;
 
 		if (pSocket->GetSockName().Equals(sSockName)) {
-			m_vSockets.erase(m_vSockets.begin() +a);
+			m_sSockets.erase(it);
 			m_pManager->DelSockByAddr(pSocket);
 			return true;
 		}
@@ -422,9 +430,10 @@ bool CModule::RemSocket(const CString& sSockName) {
 }
 
 bool CModule::UnlinkSocket(CSocket* pSocket) {
-	for (unsigned int a = 0; a < m_vSockets.size(); a++) {
-		if (pSocket == m_vSockets[a]) {
-			m_vSockets.erase(m_vSockets.begin() +a);
+	set<CSocket*>::iterator it;
+	for (it = m_sSockets.begin(); it != m_sSockets.end(); ++it) {
+		if (pSocket == *it) {
+			m_sSockets.erase(it);
 			return true;
 		}
 	}
@@ -433,8 +442,9 @@ bool CModule::UnlinkSocket(CSocket* pSocket) {
 }
 
 CSocket* CModule::FindSocket(const CString& sSockName) {
-	for (unsigned int a = 0; a < m_vSockets.size(); a++) {
-		CSocket* pSocket = m_vSockets[a];
+	set<CSocket*>::iterator it;
+	for (it = m_sSockets.begin(); it != m_sSockets.end(); ++it) {
+		CSocket* pSocket = *it;
 		if (pSocket->GetSockName().Equals(sSockName)) {
 			return pSocket;
 		}
@@ -444,7 +454,7 @@ CSocket* CModule::FindSocket(const CString& sSockName) {
 }
 
 void CModule::ListSockets() {
-	if (!m_vSockets.size()) {
+	if (m_sSockets.empty()) {
 		PutModule("You have no open sockets.");
 		return;
 	}
@@ -457,8 +467,9 @@ void CModule::ListSockets() {
 	Table.AddColumn("RemoteIP");
 	Table.AddColumn("RemotePort");
 
-	for (unsigned int a = 0; a < m_vSockets.size(); a++) {
-		CSocket* pSocket = (CSocket*) m_vSockets[a];
+	set<CSocket*>::iterator it;
+	for (it = m_sSockets.begin(); it != m_sSockets.end(); ++it) {
+		CSocket* pSocket = *it;
 
 		Table.AddRow();
 		Table.SetCell("Name", pSocket->GetSockName());
@@ -486,6 +497,7 @@ void CModule::OnPreRehash() {}
 void CModule::OnPostRehash() {}
 void CModule::OnIRCDisconnected() {}
 void CModule::OnIRCConnected() {}
+CModule::EModRet CModule::OnIRCConnecting(CIRCSock *IRCSock) { return CONTINUE; }
 CModule::EModRet CModule::OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName) { return CONTINUE; }
 CModule::EModRet CModule::OnBroadcast(CString& sMessage) { return CONTINUE; }
 
@@ -628,6 +640,7 @@ bool CModules::OnBoot() {
 bool CModules::OnPreRehash() { MODUNLOADCHK(OnPreRehash()); return false; }
 bool CModules::OnPostRehash() { MODUNLOADCHK(OnPostRehash()); return false; }
 bool CModules::OnIRCConnected() { MODUNLOADCHK(OnIRCConnected()); return false; }
+bool CModules::OnIRCConnecting(CIRCSock *pIRCSock) { MODHALTCHK(OnIRCConnecting(pIRCSock)); }
 bool CModules::OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName) { MODHALTCHK(OnIRCRegistration(sPass, sNick, sIdent, sRealName)); }
 bool CModules::OnBroadcast(CString& sMessage) { MODHALTCHK(OnBroadcast(sMessage)); }
 bool CModules::OnIRCDisconnected() { MODUNLOADCHK(OnIRCDisconnected()); return false; }
@@ -937,7 +950,7 @@ void CModules::GetAvailableMods(set<CModInfo>& ssMods, bool bGlobal) {
 	ModDirList dirs = GetModDirs();
 
 	while (!dirs.empty()) {
-		Dir.FillByWildcard(dirs.top().first, "*" MODULE_FILE_EXT);
+		Dir.FillByWildcard(dirs.front().first, "*" MODULE_FILE_EXT);
 		dirs.pop();
 
 		for (a = 0; a < Dir.size(); a++) {
@@ -967,8 +980,8 @@ bool CModules::FindModPath(const CString& sModule, CString& sModPath,
 	ModDirList dirs = GetModDirs();
 
 	while (!dirs.empty()) {
-		sModPath = dirs.top().first + sMod;
-		sDataPath = dirs.top().second;
+		sModPath = dirs.front().first + sMod;
+		sDataPath = dirs.front().second;
 		dirs.pop();
 
 		if (CFile::Exists(sModPath)) {
