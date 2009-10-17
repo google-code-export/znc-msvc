@@ -14,16 +14,15 @@
 #include "FileUtils.h"
 #include "Utils.h"
 #include <set>
-#include <vector>
-#include <stack>
+#include <queue>
 
-using std::vector;
 using std::set;
 
 // Forward Declarations
 class CAuthBase;
 class CChan;
 class CClient;
+class CIRCSock;
 // !Forward Declarations
 
 // User Module Macros
@@ -240,6 +239,7 @@ public:
 	virtual void OnPostRehash();
 	virtual void OnIRCDisconnected();
 	virtual void OnIRCConnected();
+	virtual EModRet OnIRCConnecting(CIRCSock *pIRCSock);
 	virtual EModRet OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName);
 	virtual EModRet OnBroadcast(CString& sMessage);
 
@@ -316,11 +316,12 @@ public:
 	// Timer stuff
 	bool AddTimer(CTimer* pTimer);
 	bool AddTimer(FPTimer_t pFBCallback, const CString& sLabel, u_int uInterval, u_int uCycles = 0, const CString& sDescription = "");
+	bool RemTimer(CTimer* pTimer);
 	bool RemTimer(const CString& sLabel);
 	bool UnlinkTimer(CTimer* pTimer);
 	CTimer* FindTimer(const CString& sLabel);
-	vector<CTimer*>::const_iterator BeginTimers() const { return m_vTimers.begin(); }
-	vector<CTimer*>::const_iterator EndTimers() const { return m_vTimers.end(); }
+	set<CTimer*>::const_iterator BeginTimers() const { return m_sTimers.begin(); }
+	set<CTimer*>::const_iterator EndTimers() const { return m_sTimers.end(); }
 	virtual void ListTimers();
 	// !Timer stuff
 
@@ -330,8 +331,8 @@ public:
 	bool RemSocket(const CString& sSockName);
 	bool UnlinkSocket(CSocket* pSocket);
 	CSocket* FindSocket(const CString& sSockName);
-	vector<CSocket*>::const_iterator BeginSockets() const { return m_vSockets.begin(); }
-	vector<CSocket*>::const_iterator EndSockets() const { return m_vSockets.end(); }
+	set<CSocket*>::const_iterator BeginSockets() const { return m_sSockets.begin(); }
+	set<CSocket*>::const_iterator EndSockets() const { return m_sSockets.end(); }
 	virtual void ListSockets();
 	// !Socket stuff
 
@@ -369,8 +370,8 @@ protected:
 	bool			m_bFake;
 	bool			m_bGlobal;
 	CString			m_sDescription;
-	vector<CTimer*>		m_vTimers;
-	vector<CSocket*>	m_vSockets;
+	set<CTimer*>		m_sTimers;
+	set<CSocket*>		m_sSockets;
 	ModHandle 		m_pDLL;
 	CSockManager*		m_pManager;
 	CUser*			m_pUser;
@@ -400,6 +401,7 @@ public:
 	bool OnPostRehash();
 	bool OnIRCDisconnected();
 	bool OnIRCConnected();
+	bool OnIRCConnecting(CIRCSock *pIRCSock);
 	bool OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName);
 	bool OnBroadcast(CString& sMessage);
 
@@ -472,7 +474,7 @@ public:
 			CString& sDataPath);
 	// Return a list of <module dir, data dir> pairs for directories in
 	// which modules can be found.
-	typedef std::stack<std::pair<CString, CString> > ModDirList;
+	typedef std::queue<std::pair<CString, CString> > ModDirList;
 	static ModDirList GetModDirs();
 
 private:

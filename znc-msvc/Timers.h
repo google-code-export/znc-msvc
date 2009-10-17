@@ -13,14 +13,14 @@
 #include "IRCSock.h"
 #include "User.h"
 
-class CMiscTimer : public CCron {
+class CUserTimer : public CCron {
 public:
-	CMiscTimer(CUser* pUser) : CCron() {
+	CUserTimer(CUser* pUser) : CCron() {
 		m_pUser = pUser;
-		SetName("CMiscTimer::" + m_pUser->GetUserName());
+		SetName("CUserTimer::" + m_pUser->GetUserName());
 		Start(30);
 	}
-	virtual ~CMiscTimer() {}
+	virtual ~CUserTimer() {}
 
 private:
 protected:
@@ -39,49 +39,13 @@ protected:
 				pClient->PutClient("PING :ZNC");
 			}
 		}
-	}
 
-	CUser*	m_pUser;
-};
-
-class CJoinTimer : public CCron {
-public:
-	CJoinTimer(CUser* pUser) : CCron() {
-		m_pUser = pUser;
-		SetName("CJoinTimer::" + m_pUser->GetUserName());
-		Start(20);
-	}
-	virtual ~CJoinTimer() {}
-
-private:
-protected:
-	virtual void RunJob() {
 		if (m_pUser->IsIRCConnected()) {
 			m_pUser->JoinChans();
 		}
 	}
 
 	CUser*	m_pUser;
-};
-
-class CClientTimeout : public CCron {
-public:
-	CClientTimeout(CClient* pClient) : CCron() {
-		m_pClient = pClient;
-		SetName("CClientTimeout::UNKNOWN");
-		StartMaxCycles(60, 1);
-	}
-	virtual ~CClientTimeout() {}
-
-protected:
-	virtual void RunJob() {
-		if (m_pClient) {
-			m_pClient->LoginTimeout();
-			m_pClient = NULL;
-		}
-	}
-
-	CClient*	m_pClient;
 };
 
 #endif // !_TIMERS_H

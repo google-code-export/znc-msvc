@@ -161,6 +161,13 @@ bool CZNC::ConnectUser(CUser *pUser) {
 	}
 #endif
 
+	MODULECALL(OnIRCConnecting(pIRCSock), pUser, NULL,
+		DEBUG("Some module aborted the connection attempt");
+		ReleaseISpoof();
+		delete pIRCSock;
+		return false;
+	);
+
 	if (!m_Manager.Connect(pServer->GetName(), pServer->GetPort(), sSockName, 120, bSSL, pUser->GetVHost(), pIRCSock)) {
 		ReleaseISpoof();
 		pUser->PutStatus("Unable to connect. (Bad host?)");
@@ -238,6 +245,34 @@ void CZNC::Loop() {
 		m_Manager.DynamicSelectLoop(500 * 1000, 600 * 1000 * 1000);
 	}
 }
+
+#ifdef _WIN32
+int CZNC::ServiceLoop(SERVICE_STATUS *serviceStatus)
+{
+	while(serviceStatus->dwCurrentState == SERVICE_RUNNING)
+	{
+		if (GetNeedRehash()) {
+			CString sError;
+			SetNeedRehash(false);
+
+			if (RehashConfig(sError)) {
+				Broadcast("Rehashing succeeded", true);
+			} else {
+				Broadcast("Rehashing failed: " + sError, true);
+				Broadcast("ZNC is in some possibly inconsistent state!", true);
+			}
+		}
+
+		if (HandleUserDeletion()) {
+			WriteConfig();
+		}
+
+		m_Manager.DynamicSelectLoop(500 * 1000, 600 * 1000 * 1000);
+	}
+
+	return 0; /* service has been stopped */
+}
+#endif
 
 bool CZNC::WriteISpoof(CUser* pUser) {
 	if (m_pISpoofLockFile != NULL)
@@ -516,7 +551,11 @@ CString CZNC::ExpandConfigPath(const CString& sConfigFile) {
 	} else {
 		if (sConfigFile.Left(2) == "./" || sConfigFile.Left(3) == "../") {
 			sRetPath = GetCurPath() + "/" + sConfigFile;
+#ifdef WIN32
+		} else if(PathIsFileSpec(sConfigFile.c_str())) {
+#else
 		} else if (sConfigFile.Left(1) != "/") {
+#endif
 			sRetPath = GetConfPath() + "/" + sConfigFile;
 		} else {
 			sRetPath = sConfigFile;
@@ -753,7 +792,7 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 		vsLines.push_back("<User " + sUser + ">");
 		CString sSalt;
 		sAnswer = CUtils::GetSaltedHashPass(sSalt);
-		vsLines.push_back("\tPass       = md5#" + sAnswer + "#" + sSalt + "#");
+		vsLines.push_back("\tPass       = " + CUtils::sDefaultHash + "#" + sAnswer + "#" + sSalt + "#");
 
 		if (CUtils::GetBoolInput("Would you like this user to be an admin?", bFirstUser)) {
 			vsLines.push_back("\tAdmin      = true");
@@ -1283,24 +1322,29 @@ bool CZNC::DoRehash(CString& sError)
 						// Pass = <plain text>
 						// Pass = <md5 hash> -
 						// Pass = plain#<plain text>
-						// Pass = md5#<md5 hash>
-						// Pass = md5#<salted md5 hash>#<salt>#
-						// The last one is the md5 hash of 'password' + 'salt'
+						// Pass = <hash name>#<hash>
+						// Pass = <hash name>#<salted hash>#<salt>#
+						// 'Salted hash' means hash of 'password' + 'salt'
+						// Possible hashes are md5 and sha256
 						if (sValue.Right(1) == "-") {
 							sValue.RightChomp();
 							sValue.Trim();
-							pUser->SetPass(sValue, true);
+							pUser->SetPass(sValue, CUser::HASH_MD5);
 						} else {
 							CString sMethod = sValue.Token(0, false, "#");
 							CString sPass = sValue.Token(1, true, "#");
-							if (sMethod == "md5") {
+							if (sMethod == "md5" || sMethod == "sha256") {
+								CUser::eHashType type = CUser::HASH_MD5;
+								if (sMethod == "sha256")
+									type = CUser::HASH_SHA256;
+
 								CString sSalt = sPass.Token(1, false, "#");
 								sPass = sPass.Token(0, false, "#");
-								pUser->SetPass(sPass, true, sSalt);
+								pUser->SetPass(sPass, type, sSalt);
 							} else if (sMethod == "plain") {
-								pUser->SetPass(sPass, false);
+								pUser->SetPass(sPass, CUser::HASH_NONE);
 							} else {
-								pUser->SetPass(sValue, false);
+								pUser->SetPass(sValue, CUser::HASH_NONE);
 							}
 						}
 
@@ -1346,6 +1390,9 @@ bool CZNC::DoRehash(CString& sError)
 						continue;
 					} else if (sName.Equals("VHost")) {
 						pUser->SetVHost(sValue);
+						continue;
+					} else if (sName.Equals("DCCVHost")) {
+						pUser->SetDCCVHost(sValue);
 						continue;
 					} else if (sName.Equals("Allow")) {
 						pUser->AddAllowedHost(sValue);
@@ -1841,7 +1888,18 @@ public:
 		// Don't wait iSecs seconds for first timer run
 		m_bRunOnNextCall = true;
 	}
-	virtual ~CConnectUserTimer() {}
+	virtual ~CConnectUserTimer() {
+		// This is only needed when ZNC shuts down:
+		// CZNC::~CZNC() sets its CConnectUserTimer pointer to NULL and
+		// calls the manager's Cleanup() which destroys all sockets and
+		// timers. If something calls CZNC::EnableConnectUser() here
+		// (e.g. because a CIRCSock is destroyed), the socket manager
+		// deletes that timer almost immediately, but CZNC now got a
+		// dangling pointer to this timer which can crash later on.
+		//
+		// Unlikely but possible ;)
+		CZNC::Get().LeakConnectUser(this);
+	}
 
 protected:
 	virtual void RunJob() {
@@ -1922,4 +1980,9 @@ void CZNC::DisableConnectUser() {
 double CZNC::GetCoreVersion()
 {
 	return MODVERSION;
+}
+
+void CZNC::LeakConnectUser(CConnectUserTimer *pTimer) {
+	if (m_pConnectUserTimer == pTimer)
+		m_pConnectUserTimer = NULL;
 }
