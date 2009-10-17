@@ -24,8 +24,7 @@ using std::vector;
 class CChan;
 class CClient;
 class CIRCSock;
-class CJoinTimer;
-class CMiscTimer;
+class CUserTimer;
 class CServer;
 class CDCCBounce;
 class CDCCSock;
@@ -34,6 +33,20 @@ class CUser {
 public:
 	CUser(const CString& sUserName);
 	~CUser();
+
+	enum eHashType {
+		HASH_NONE,
+		HASH_MD5,
+		HASH_SHA256,
+
+		HASH_DEFAULT = HASH_SHA256
+	};
+
+	// If you change the default hash here and in HASH_DEFAULT,
+	// don't forget CUtils::sDefaultHash!
+	static CString SaltedHash(const CString& sPass, const CString& sSalt) {
+		return CUtils::SaltedSHA256Hash(sPass, sSalt);
+	}
 
 	bool PrintLine(CFile& File, const CString& sName, const CString& sValue);
 	bool WriteConfig(CFile& File);
@@ -44,7 +57,7 @@ public:
 	void JoinChans();
 	bool JoinChan(CChan* pChan);
 	CServer* FindServer(const CString& sName) const;
-	bool DelServer(const CString& sName);
+	bool DelServer(const CString& sName, unsigned short uPort, const CString& sPass);
 	bool AddServer(const CString& sName);
 	bool AddServer(const CString& sName, unsigned short uPort, const CString& sPass = "", bool bSSL = false);
 	CServer* GetNextServer();
@@ -98,6 +111,7 @@ public:
 	void UserDisconnected(CClient* pClient);
 
 	CString GetLocalIP();
+	CString GetLocalDCCIP();
 	bool IsIRCConnected() const { return GetIRCSock() != NULL; }
 	void IRCConnected(CIRCSock* pIRCSock);
 	void IRCDisconnected();
@@ -131,7 +145,8 @@ public:
 	void SetIdent(const CString& s);
 	void SetRealName(const CString& s);
 	void SetVHost(const CString& s);
-	void SetPass(const CString& s, bool bHashed, const CString& sSalt = "");
+	void SetDCCVHost(const CString& s);
+	void SetPass(const CString& s, eHashType eHash, const CString& sSalt = "");
 	void SetBounceDCCs(bool b);
 	void SetMultiClients(bool b);
 	void SetUseClientIP(bool b);
@@ -168,8 +183,9 @@ public:
 	const CString& GetIdent(bool bAllowDefault = true) const;
 	const CString& GetRealName() const;
 	const CString& GetVHost() const;
+	const CString& GetDCCVHost() const;
 	const CString& GetPass() const;
-	bool IsPassHashed() const;
+	eHashType GetPassHashType() const;
 	const CString& GetPassSalt() const;
 	const set<CString>& GetAllowedHosts() const;
 	const CString& GetTimestampFormat() const;
@@ -200,7 +216,7 @@ public:
 	unsigned int GetBufferCount() const;
 	bool KeepBuffer() const;
 	bool IsBeingDeleted() const { return m_bBeingDeleted; }
-	bool HasServers() const { return m_vServers.size() > 0; }
+	bool HasServers() const { return !m_vServers.empty(); }
 	float GetTimezoneOffset() const { return m_fTimezoneOffset; }
 	unsigned long long BytesRead() const { return m_uBytesRead; }
 	unsigned long long BytesWritten() const { return m_uBytesWritten; }
@@ -217,6 +233,7 @@ protected:
 	CString			m_sIdent;
 	CString			m_sRealName;
 	CString			m_sVHost;
+	CString			m_sDCCVHost;
 	CString			m_sPass;
 	CString			m_sPassSalt;
 	CString			m_sStatusPrefix;
@@ -228,6 +245,7 @@ protected:
 	MCString		m_mssCTCPReplies;
 	CString			m_sTimestampFormat;
 	float			m_fTimezoneOffset;
+	eHashType		m_eHashType;
 
 	// Paths
 	CString			m_sUserPath;
@@ -239,7 +257,6 @@ protected:
 	CBuffer				m_QueryBuffer;
 	bool				m_bMultiClients;
 	bool				m_bBounceDCCs;
-	bool				m_bPassHashed;
 	bool				m_bUseClientIP;
 	bool				m_bDenyLoadMod;
 	bool				m_bAdmin;
@@ -251,8 +268,7 @@ protected:
 	bool				m_bIRCConnectEnabled;
 	CIRCSock*			m_pIRCSock;
 
-	CJoinTimer*			m_pJoinTimer;
-	CMiscTimer*			m_pMiscTimer;
+	CUserTimer*			m_pUserTimer;
 
 	vector<CServer*>	m_vServers;
 	vector<CChan*>		m_vChans;

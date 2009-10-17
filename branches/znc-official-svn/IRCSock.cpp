@@ -650,15 +650,17 @@ bool CIRCSock::OnPrivCTCP(CNick& Nick, CString& sMessage) {
 
 		if (sType.Equals("CHAT")) {
 			CNick FromNick(Nick.GetNickMask());
-			unsigned short uBNCPort = CDCCBounce::DCCRequest(FromNick.GetNick(), uLongIP, uPort, "", true, m_pUser, GetLocalIP(), CUtils::GetIP(uLongIP));
+			unsigned short uBNCPort = CDCCBounce::DCCRequest(FromNick.GetNick(), uLongIP, uPort, "", true, m_pUser, CUtils::GetIP(uLongIP));
 			if (uBNCPort) {
-				m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + GetNick() + " :\001DCC CHAT chat " + CString(CUtils::GetLongIP(GetLocalIP())) + " " + CString(uBNCPort) + "\001");
+				CString sIP = m_pUser->GetLocalDCCIP();
+				m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + GetNick() + " :\001DCC CHAT chat " + CString(CUtils::GetLongIP(sIP)) + " " + CString(uBNCPort) + "\001");
 			}
 		} else if (sType.Equals("SEND")) {
 			// DCC SEND readme.txt 403120438 5550 1104
-			unsigned short uBNCPort = CDCCBounce::DCCRequest(Nick.GetNick(), uLongIP, uPort, sFile, false, m_pUser, GetLocalIP(), CUtils::GetIP(uLongIP));
+			unsigned short uBNCPort = CDCCBounce::DCCRequest(Nick.GetNick(), uLongIP, uPort, sFile, false, m_pUser, CUtils::GetIP(uLongIP));
 			if (uBNCPort) {
-				m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + GetNick() + " :\001DCC SEND " + sFile + " " + CString(CUtils::GetLongIP(GetLocalIP())) + " " + CString(uBNCPort) + " " + CString(uFileSize) + "\001");
+				CString sIP = m_pUser->GetLocalDCCIP();
+				m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + GetNick() + " :\001DCC SEND " + sFile + " " + CString(CUtils::GetLongIP(sIP)) + " " + CString(uBNCPort) + " " + CString(uFileSize) + "\001");
 			}
 		} else if (sType.Equals("RESUME")) {
 			// Need to lookup the connection by port, filter the port, and forward to the user
@@ -816,6 +818,9 @@ void CIRCSock::Connected() {
 
 	PutIRC("NICK " + sNick);
 	PutIRC("USER " + sIdent + " \"" + sIdent + "\" \"" + sIdent + "\" :" + sRealName);
+
+	// SendAltNick() needs this
+	m_Nick.SetNick(sNick);
 }
 
 void CIRCSock::Disconnected() {
@@ -1002,24 +1007,34 @@ void CIRCSock::ForwardRaw353(const CString& sLine) const {
 }
 
 void CIRCSock::SendAltNick(const CString& sBadNick) {
-	const unsigned int uMax = GetMaxNickLen();
-	const CString& sConfNick = m_pUser->GetNick().Left(uMax);
-	const CString& sAltNick = m_pUser->GetAltNick().Left(uMax);
+	const CString& sLastNick = m_Nick.GetNick();
 
-	if (sBadNick.Equals(sConfNick)) {
+	// We don't know the maximum allowed nick length yet, but we know which
+	// nick we sent last. If sBadNick is shorter than that, we assume the
+	// server truncated our nick.
+	if (sBadNick.length() < sLastNick.length())
+		m_uMaxNickLen = sBadNick.length();
+
+	unsigned int uMax = m_uMaxNickLen;
+
+	const CString& sConfNick = m_pUser->GetNick();
+	const CString& sAltNick  = m_pUser->GetAltNick();
+	CString sNewNick;
+
+	if (sLastNick.Equals(sConfNick)) {
 		if ((!sAltNick.empty()) && (!sConfNick.Equals(sAltNick))) {
-			PutIRC("NICK " + sAltNick);
+			sNewNick = sAltNick;
 		} else {
-			PutIRC("NICK " + sConfNick.Left(uMax -1) + "-");
+			sNewNick = sConfNick.Left(uMax - 1) + "-";
 		}
-	} else if (sBadNick.Equals(sAltNick)) {
-		PutIRC("NICK " + sConfNick.Left(uMax -1) + "-");
-	} else if (sBadNick.Equals(CString(sConfNick.Left(uMax -1) + "-"))) {
-		PutIRC("NICK " + sConfNick.Left(uMax -1) + "|");
-	} else if (sBadNick.Equals(CString(sConfNick.Left(uMax -1) + "|"))) {
-		PutIRC("NICK " + sConfNick.Left(uMax -1) + "^");
-	} else if (sBadNick.Equals(CString(sConfNick.Left(uMax -1) + "^"))) {
-		PutIRC("NICK " + sConfNick.Left(uMax -1) + "a");
+	} else if (sLastNick.Equals(sAltNick)) {
+		sNewNick = sConfNick.Left(uMax -1) + "-";
+	} else if (sLastNick.Equals(CString(sConfNick.Left(uMax -1) + "-"))) {
+		sNewNick = sConfNick.Left(uMax -1) + "|";
+	} else if (sLastNick.Equals(CString(sConfNick.Left(uMax -1) + "|"))) {
+		sNewNick = sConfNick.Left(uMax -1) + "^";
+	} else if (sLastNick.Equals(CString(sConfNick.Left(uMax -1) + "^"))) {
+		sNewNick = sConfNick.Left(uMax -1) + "a";
 	} else {
 		char cLetter = 0;
 		if (sBadNick.empty()) {
@@ -1036,9 +1051,10 @@ void CIRCSock::SendAltNick(const CString& sBadNick) {
 			return;
 		}
 
-		CString sSend = "NICK " + sConfNick.Left(uMax -1) + ++cLetter;
-		PutIRC(sSend);
+		sNewNick = sConfNick.Left(uMax -1) + ++cLetter;
 	}
+	PutIRC("NICK " + sNewNick);
+	m_Nick.SetNick(sNewNick);
 }
 
 unsigned char CIRCSock::GetPermFromMode(unsigned char uMode) const {

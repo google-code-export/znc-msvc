@@ -55,9 +55,6 @@ CClient::~CClient() {
 		m_pUser->AddBytesRead(GetBytesRead());
 		m_pUser->AddBytesWritten(GetBytesWritten());
 	}
-	if (m_pTimeout) {
-		CZNC::Get().GetManager().DelCronByAddr(m_pTimeout);
-	}
 }
 
 void CClient::ReadLine(const CString& sData) {
@@ -328,9 +325,13 @@ void CClient::ReadLine(const CString& sData) {
 			return;
 		}
 
+		// No idea what this is supposed to do, but it doesn't seem to
+		// make sense. Comment this out and wait for complaints.
+#if 0
 		if (sMsg.WildCmp("DCC * (*)")) {
 			sMsg = "DCC " + sLine.Token(3) + " (" + ((m_pIRCSock) ? m_pIRCSock->GetLocalIP() : GetLocalIP()) + ")";
 		}
+#endif
 
 #ifdef _MODULES
 		if (sMsg.WildCmp("\001*\001")) {
@@ -394,7 +395,7 @@ void CClient::ReadLine(const CString& sData) {
 				unsigned long uLongIP = sCTCP.Token(3).ToULong();
 				unsigned short uPort = sCTCP.Token(4).ToUShort();
 				unsigned long uFileSize = sCTCP.Token(5).ToULong();
-				CString sIP = (m_pIRCSock) ? m_pIRCSock->GetLocalIP() : GetLocalIP();
+				CString sIP = m_pUser->GetLocalDCCIP();
 
 				if (!m_pUser->UseClientIP()) {
 					uLongIP = CUtils::GetLongIP(GetRemoteIP());
@@ -402,7 +403,7 @@ void CClient::ReadLine(const CString& sData) {
 
 				if (sType.Equals("CHAT")) {
 					if (!sTarget.TrimPrefix(m_pUser->GetStatusPrefix())) {
-						unsigned short uBNCPort = CDCCBounce::DCCRequest(sTarget, uLongIP, uPort, "", true, m_pUser, (m_pIRCSock) ? m_pIRCSock->GetLocalIP() : GetLocalIP(), "");
+						unsigned short uBNCPort = CDCCBounce::DCCRequest(sTarget, uLongIP, uPort, "", true, m_pUser, "");
 						if (uBNCPort) {
 							PutIRC("PRIVMSG " + sTarget + " :\001DCC CHAT chat " + CString(CUtils::GetLongIP(sIP)) + " " + CString(uBNCPort) + "\001");
 						}
@@ -433,7 +434,7 @@ void CClient::ReadLine(const CString& sData) {
 							MODULECALL(OnDCCUserSend(CString(m_pUser->GetStatusPrefix() + sTarget), uLongIP, uPort, sFile, uFileSize), m_pUser, this, return);
 						}
 					} else {
-						unsigned short uBNCPort = CDCCBounce::DCCRequest(sTarget, uLongIP, uPort, sFile, false, m_pUser, (m_pIRCSock) ? m_pIRCSock->GetLocalIP() : GetLocalIP(), "");
+						unsigned short uBNCPort = CDCCBounce::DCCRequest(sTarget, uLongIP, uPort, sFile, false, m_pUser, "");
 						if (uBNCPort) {
 							PutIRC("PRIVMSG " + sTarget + " :\001DCC SEND " + sFile + " " + CString(CUtils::GetLongIP(sIP)) + " " + CString(uBNCPort) + " " + CString(uFileSize) + "\001");
 						}
@@ -658,11 +659,6 @@ void CAuthBase::RefuseLogin(const CString& sReason) {
 }
 
 void CClient::RefuseLogin(const CString& sReason) {
-	if (m_pTimeout) {
-		m_pTimeout->Stop();
-		m_pTimeout = NULL;
-	}
-
 	PutStatus("Bad username and/or password.");
 	PutClient(":irc.znc.in 464 " + GetNick() + " :" + sReason);
 	Close(Csock::CLT_AFTERWRITE);
@@ -678,10 +674,9 @@ void CClient::AcceptLogin(CUser& User) {
 	m_sPass = "";
 	m_pUser = &User;
 
-	if (m_pTimeout) {
-		m_pTimeout->Stop();
-		m_pTimeout = NULL;
-	}
+	// Set our proper timeout and set back our proper timeout mode
+	// (constructor set a different timeout and mode)
+	SetTimeout(240, TMO_READ);
 
 	SetSockName("USR::" + m_pUser->GetUserName());
 
@@ -693,23 +688,12 @@ void CClient::AcceptLogin(CUser& User) {
 	MODULECALL(OnClientLogin(), m_pUser, this, );
 }
 
-void CClient::StartLoginTimeout() {
-	m_pTimeout = new CClientTimeout(this);
-	CZNC::Get().GetManager().AddCron(m_pTimeout);
-}
-
-void CClient::LoginTimeout() {
+void CClient::Timeout() {
 	PutClient("ERROR :Closing link [Timeout]");
-	Close(Csock::CLT_AFTERWRITE);
-	if (m_pTimeout) {
-		m_pTimeout->Stop();
-		m_pTimeout = NULL;
-	}
 }
 
 void CClient::Connected() {
 	DEBUG(GetSockName() << " == Connected();");
-	SetTimeout(240, TMO_READ);	// Now that we are connected, let nature take its course
 }
 
 void CClient::ConnectionRefused() {

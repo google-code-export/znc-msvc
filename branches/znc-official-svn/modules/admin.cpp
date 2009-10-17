@@ -36,9 +36,9 @@ class CAdminMod : public CModule {
 		CmdTable.AddColumn("Description");
 		static const char* help[][3] = {
 			{"Get",       "variable [username]",           "Prints the variable's value for the given or current user"},
-			{"Set",       "variable [username] value",     "Sets the variable's value for the given or current user"},
+			{"Set",       "variable username value",       "Sets the variable's value for the given user (use $me for the current user)"},
 			{"GetChan",   "variable [username] chan",      "Prints the variable's value for the given channel"},
-			{"SetChan",   "variable [username] chan value", "Sets the variable's value for the given channel"},
+			{"SetChan",   "variable username chan value",   "Sets the variable's value for the given channel"},
 			{"ListUsers", "",                              "Lists users"},
 			{"AddUser",   "username password [ircserver]", "Adds a new user"},
 			{"DelUser",   "username",                      "Deletes a user"},
@@ -240,8 +240,8 @@ class CAdminMod : public CModule {
 		}
 		else if (var == "password") {
 			const CString sSalt = CUtils::GetSalt();
-			const CString sHash = CUtils::SaltedHash(value, sSalt);
-			user->SetPass(sHash, true, sSalt);
+			const CString sHash = CUser::SaltedHash(value, sSalt);
+			user->SetPass(sHash, CUser::HASH_DEFAULT, sSalt);
 			PutModule("Password has been changed!!");
 		}
 		else
@@ -296,7 +296,7 @@ class CAdminMod : public CModule {
 		CString value     = sLine.Token(4, true);
 
 		if (value.empty()) {
-			PutModule("Usage: set <variable> <username> <value>");
+			PutModule("Usage: setchan <variable> <username> <chan> <value>");
 			return;
 		}
 
@@ -391,7 +391,7 @@ class CAdminMod : public CModule {
 
 		CUser* pNewUser = new CUser(sUsername);
 		CString sSalt = CUtils::GetSalt();
-		pNewUser->SetPass(CUtils::SaltedHash(sPassword, sSalt), true, sSalt);
+		pNewUser->SetPass(CUser::SaltedHash(sPassword, sSalt), CUser::HASH_DEFAULT, sSalt);
 		if (sIRCServer.size())
 			pNewUser->AddServer(sIRCServer);
 

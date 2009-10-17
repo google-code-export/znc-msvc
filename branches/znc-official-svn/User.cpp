@@ -32,7 +32,7 @@ CUser::CUser(const CString& sUserName) {
 	m_MotdBuffer.SetLineCount(200);		// This should be more than enough motd lines
 	m_bMultiClients = true;
 	m_bBounceDCCs = true;
-	m_bPassHashed = false;
+	m_eHashType = HASH_NONE;
 	m_bUseClientIP = false;
 	m_bDenyLoadMod = false;
 	m_bAdmin= false;
@@ -48,10 +48,8 @@ CUser::CUser(const CString& sUserName) {
 	m_bAppendTimestamp = false;
 	m_bPrependTimestamp = true;
 	m_bIRCConnectEnabled = true;
-	m_pJoinTimer = new CJoinTimer(this);
-	m_pMiscTimer = new CMiscTimer(this);
-	CZNC::Get().GetManager().AddCron(m_pJoinTimer);
-	CZNC::Get().GetManager().AddCron(m_pMiscTimer);
+	m_pUserTimer = new CUserTimer(this);
+	CZNC::Get().GetManager().AddCron(m_pUserTimer);
 	m_sUserPath = CZNC::Get().GetUserPath() + "/" + sUserName;
 	m_sDLPath = GetUserPath() + "/downloads";
 }
@@ -76,8 +74,7 @@ CUser::~CUser() {
 	while (!m_sDCCSocks.empty())
 		CZNC::Get().GetManager().DelSockByAddr((CZNCSock*) *m_sDCCSocks.begin());
 
-	CZNC::Get().GetManager().DelCronByAddr(m_pJoinTimer);
-	CZNC::Get().GetManager().DelCronByAddr(m_pMiscTimer);
+	CZNC::Get().GetManager().DelCronByAddr(m_pUserTimer);
 }
 
 #ifdef _MODULES
@@ -324,7 +321,7 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	}
 
 	if (!User.GetPass().empty()) {
-		SetPass(User.GetPass(), User.IsPassHashed(), User.GetPassSalt());
+		SetPass(User.GetPass(), User.GetPassHashType(), User.GetPassSalt());
 	}
 
 	SetNick(User.GetNick(false));
@@ -333,6 +330,7 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	SetRealName(User.GetRealName());
 	SetStatusPrefix(User.GetStatusPrefix());
 	SetVHost(User.GetVHost());
+	SetDCCVHost(User.GetDCCVHost());
 	SetQuitMsg(User.GetQuitMsg());
 	SetDefaultChanModes(User.GetDefaultChanModes());
 	SetBufferCount(User.GetBufferCount());
@@ -356,39 +354,6 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	}
 
 	// !Allowed Hosts
-
-#ifdef _MODULES
-	// Modules
-	set<CString> ssUnloadMods;
-	CModules& vCurMods = GetModules();
-	const CModules& vNewMods = User.GetModules();
-
-	for (a = 0; a < vNewMods.size(); a++) {
-		CString sModRet;
-		CModule* pNewMod = vNewMods[a];
-		CModule* pCurMod = vCurMods.FindModule(pNewMod->GetModName());
-
-		if (!pCurMod) {
-			vCurMods.LoadModule(pNewMod->GetModName(), pNewMod->GetArgs(), this, sModRet);
-		} else if (pNewMod->GetArgs() != pCurMod->GetArgs()) {
-			vCurMods.ReloadModule(pNewMod->GetModName(), pNewMod->GetArgs(), this, sModRet);
-		}
-	}
-
-	for (a = 0; a < vCurMods.size(); a++) {
-		CModule* pCurMod = vCurMods[a];
-		CModule* pNewMod = vNewMods.FindModule(pCurMod->GetModName());
-
-		if (!pNewMod) {
-			ssUnloadMods.insert(pCurMod->GetModName());
-		}
-	}
-
-	for (set<CString>::iterator it = ssUnloadMods.begin(); it != ssUnloadMods.end(); it++) {
-		vCurMods.UnloadModule(*it);
-	}
-	// !Modules
-#endif // !_MODULES
 
 	// Servers
 	const vector<CServer*>& vServers = User.GetServers();
@@ -471,6 +436,39 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	SetTimestampFormat(User.GetTimestampFormat());
 	SetTimezoneOffset(User.GetTimezoneOffset());
 	// !Flags
+
+#ifdef _MODULES
+	// Modules
+	set<CString> ssUnloadMods;
+	CModules& vCurMods = GetModules();
+	const CModules& vNewMods = User.GetModules();
+
+	for (a = 0; a < vNewMods.size(); a++) {
+		CString sModRet;
+		CModule* pNewMod = vNewMods[a];
+		CModule* pCurMod = vCurMods.FindModule(pNewMod->GetModName());
+
+		if (!pCurMod) {
+			vCurMods.LoadModule(pNewMod->GetModName(), pNewMod->GetArgs(), this, sModRet);
+		} else if (pNewMod->GetArgs() != pCurMod->GetArgs()) {
+			vCurMods.ReloadModule(pNewMod->GetModName(), pNewMod->GetArgs(), this, sModRet);
+		}
+	}
+
+	for (a = 0; a < vCurMods.size(); a++) {
+		CModule* pCurMod = vCurMods[a];
+		CModule* pNewMod = vNewMods.FindModule(pCurMod->GetModName());
+
+		if (!pNewMod) {
+			ssUnloadMods.insert(pCurMod->GetModName());
+		}
+	}
+
+	for (set<CString>::iterator it = ssUnloadMods.begin(); it != ssUnloadMods.end(); it++) {
+		vCurMods.UnloadModule(*it);
+	}
+	// !Modules
+#endif // !_MODULES
 
 	return true;
 }
@@ -600,11 +598,14 @@ bool CUser::PrintLine(CFile& File, const CString& sName, const CString& sValue) 
 bool CUser::WriteConfig(CFile& File) {
 	File.Write("<User " + GetUserName().FirstLine() + ">\n");
 
-	if (IsPassHashed()) {
+	if (m_eHashType != HASH_NONE) {
+		CString sHash = "md5";
+		if (m_eHashType == HASH_SHA256)
+			sHash = "sha256";
 		if (m_sPassSalt.empty()) {
-			PrintLine(File, "Pass", "md5#" + GetPass());
+			PrintLine(File, "Pass", sHash + "#" + GetPass());
 		} else {
-			PrintLine(File, "Pass", "md5#" + GetPass() + "#" + m_sPassSalt + "#");
+			PrintLine(File, "Pass", sHash + "#" + GetPass() + "#" + m_sPassSalt + "#");
 		}
 	} else {
 		PrintLine(File, "Pass", "plain#" + GetPass());
@@ -614,6 +615,7 @@ bool CUser::WriteConfig(CFile& File) {
 	PrintLine(File, "Ident", GetIdent());
 	PrintLine(File, "RealName", GetRealName());
 	PrintLine(File, "VHost", GetVHost());
+	PrintLine(File, "DCCVHost", GetDCCVHost());
 	PrintLine(File, "QuitMsg", GetQuitMsg());
 	if (CZNC::Get().GetStatusPrefix() != GetStatusPrefix())
 		PrintLine(File, "StatusPrefix", GetStatusPrefix());
@@ -752,7 +754,7 @@ CServer* CUser::FindServer(const CString& sName) const {
 	return NULL;
 }
 
-bool CUser::DelServer(const CString& sName) {
+bool CUser::DelServer(const CString& sName, unsigned short uPort, const CString& sPass) {
 	if (sName.empty()) {
 		return false;
 	}
@@ -762,29 +764,36 @@ bool CUser::DelServer(const CString& sName) {
 	for (vector<CServer*>::iterator it = m_vServers.begin(); it != m_vServers.end(); it++, a++) {
 		CServer* pServer = *it;
 
-		if (pServer->GetName().Equals(sName)) {
-			CServer* pCurServer = GetCurrentServer();
-			m_vServers.erase(it);
+		if (!pServer->GetName().Equals(sName))
+			continue;
 
-			if (pServer == pCurServer) {
-				CIRCSock* pIRCSock = GetIRCSock();
+		if (uPort != 0 && pServer->GetPort() != uPort)
+			continue;
 
-				if (m_uServerIdx) {
-					m_uServerIdx--;
-				}
+		if (!sPass.empty() && pServer->GetPass() != sPass)
+			continue;
 
-				if (pIRCSock) {
-					pIRCSock->Quit();
-					PutStatus("Your current server was removed, jumping...");
-				}
-			} else if (m_uServerIdx >= m_vServers.size()) {
-				m_uServerIdx = 0;
+		CServer* pCurServer = GetCurrentServer();
+		m_vServers.erase(it);
+
+		if (pServer == pCurServer) {
+			CIRCSock* pIRCSock = GetIRCSock();
+
+			if (m_uServerIdx) {
+				m_uServerIdx--;
 			}
 
-			delete pServer;
-
-			return true;
+			if (pIRCSock) {
+				pIRCSock->Quit();
+				PutStatus("Your current server was removed, jumping...");
+			}
+		} else if (m_uServerIdx >= m_vServers.size()) {
+			m_uServerIdx = 0;
 		}
+
+		delete pServer;
+
+		return true;
 	}
 
 	return false;
@@ -883,11 +892,16 @@ CServer* CUser::GetCurrentServer() const {
 }
 
 bool CUser::CheckPass(const CString& sPass) const {
-	if (!m_bPassHashed) {
+	switch (m_eHashType)
+	{
+	case HASH_MD5:
+		return m_sPass.Equals(CUtils::SaltedMD5Hash(sPass, m_sPassSalt));
+	case HASH_SHA256:
+		return m_sPass.Equals(CUtils::SaltedSHA256Hash(sPass, m_sPassSalt));
+	case HASH_NONE:
+	default:
 		return (sPass == m_sPass);
 	}
-
-	return m_sPass.Equals(CUtils::SaltedHash(sPass, m_sPassSalt));
 }
 
 /*CClient* CUser::GetClient() {
@@ -919,6 +933,12 @@ CString CUser::GetLocalIP() {
 	}
 
 	return "";
+}
+
+CString CUser::GetLocalDCCIP() {
+	if (!GetDCCVHost().empty())
+		return GetDCCVHost();
+	return GetLocalIP();
 }
 
 bool CUser::PutIRC(const CString& sLine) {
@@ -1020,13 +1040,13 @@ bool CUser::SendFile(const CString& sRemoteNick, const CString& sFileName, const
 		return false;
 	}
 
-	unsigned short uPort = CZNC::Get().GetManager().ListenRand("DCC::LISTEN::" + sRemoteNick, GetLocalIP(), false, SOMAXCONN, pSock, 120);
+	unsigned short uPort = CZNC::Get().GetManager().ListenRand("DCC::LISTEN::" + sRemoteNick, GetLocalDCCIP(), false, SOMAXCONN, pSock, 120);
 
 	if (GetNick().Equals(sRemoteNick)) {
-		PutUser(":" + GetStatusPrefix() + "status!znc@znc.in PRIVMSG " + sRemoteNick + " :\001DCC SEND " + pFile->GetShortName() + " " + CString(CUtils::GetLongIP(GetLocalIP())) + " "
+		PutUser(":" + GetStatusPrefix() + "status!znc@znc.in PRIVMSG " + sRemoteNick + " :\001DCC SEND " + pFile->GetShortName() + " " + CString(CUtils::GetLongIP(GetLocalDCCIP())) + " "
 				+ CString(uPort) + " " + CString(pFile->GetSize()) + "\001");
 	} else {
-		PutIRC("PRIVMSG " + sRemoteNick + " :\001DCC SEND " + pFile->GetShortName() + " " + CString(CUtils::GetLongIP(GetLocalIP())) + " "
+		PutIRC("PRIVMSG " + sRemoteNick + " :\001DCC SEND " + pFile->GetShortName() + " " + CString(CUtils::GetLongIP(GetLocalDCCIP())) + " "
 			    + CString(uPort) + " " + CString(pFile->GetSize()) + "\001");
 	}
 
@@ -1047,7 +1067,7 @@ bool CUser::GetFile(const CString& sRemoteNick, const CString& sRemoteIP, unsign
 		return false;
 	}
 
-	if (!CZNC::Get().GetManager().Connect(sRemoteIP, uRemotePort, "DCC::GET::" + sRemoteNick, 60, false, GetLocalIP(), pSock)) {
+	if (!CZNC::Get().GetManager().Connect(sRemoteIP, uRemotePort, "DCC::GET::" + sRemoteNick, 60, false, GetLocalDCCIP(), pSock)) {
 		PutModule(sModuleName, "DCC <- [" + sRemoteNick + "][" + sFileName + "] - Unable to connect.");
 		return false;
 	}
@@ -1094,9 +1114,10 @@ void CUser::SetAltNick(const CString& s) { m_sAltNick = s; }
 void CUser::SetIdent(const CString& s) { m_sIdent = s; }
 void CUser::SetRealName(const CString& s) { m_sRealName = s; }
 void CUser::SetVHost(const CString& s) { m_sVHost = s; }
-void CUser::SetPass(const CString& s, bool bHashed, const CString& sSalt) {
+void CUser::SetDCCVHost(const CString& s) { m_sDCCVHost = s; }
+void CUser::SetPass(const CString& s, eHashType eHash, const CString& sSalt) {
 	m_sPass = s;
-	m_bPassHashed = bHashed;
+	m_eHashType = eHash;
 	m_sPassSalt = sSalt;
 }
 void CUser::SetMultiClients(bool b) { m_bMultiClients = b; }
@@ -1153,8 +1174,9 @@ const CString& CUser::GetAltNick(bool bAllowDefault) const { return (bAllowDefau
 const CString& CUser::GetIdent(bool bAllowDefault) const { return (bAllowDefault && m_sIdent.empty()) ? GetCleanUserName() : m_sIdent; }
 const CString& CUser::GetRealName() const { return m_sRealName.empty() ? m_sUserName : m_sRealName; }
 const CString& CUser::GetVHost() const { return m_sVHost; }
+const CString& CUser::GetDCCVHost() const { return m_sDCCVHost; }
 const CString& CUser::GetPass() const { return m_sPass; }
-bool CUser::IsPassHashed() const { return m_bPassHashed; }
+CUser::eHashType CUser::GetPassHashType() const { return m_eHashType; }
 const CString& CUser::GetPassSalt() const { return m_sPassSalt; }
 
 bool CUser::ConnectPaused() {
