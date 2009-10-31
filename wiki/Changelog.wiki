@@ -1,15 +1,15 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
-== 2009-10-31 (0.077-r1654) ==
-  * Updated to official SVN revison 1654. Props to the ZNC team!
+== 2009-10-31 (0.077-r 1654) ==
+  * Updated to official SVN revision 1654. Props to the ZNC team!
   * Added twitter module, thanks flakes!
   * Fixed issue 16 (away module crash)
   * Fixed issue 17 (restart command not working)
   * Created a znc_service.exe that can be used to make ZNC run as a service
   * Added license files to the download
 
-== 2009-09-25 (0.076-r1634) ==
+== 2009-09-25 (0.076-r 1634) ==
   * Matches official ZNC release 0.076
   * Various fixes and improvements
 
