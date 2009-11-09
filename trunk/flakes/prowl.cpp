@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2009 flakes @ EFNet
- * Version 0.9.5 (2009-10-01)
+ * tweaked by Gm4n @ freenode
+ * Version 0.9.5-2 (2009-11-9)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -27,6 +28,8 @@ protected:
 	int m_priority;
 	int m_idleAfterMinutes;
 	bool m_onlyWhenDetached;
+	bool m_pmWhenDetached;
+	bool m_pmAll;
 	VCString m_highlights;
 	unsigned int m_notificationsSent;
 
@@ -41,6 +44,8 @@ public:
 		m_priority = 1;
 		m_idleAfterMinutes = 5;
 		m_onlyWhenDetached = false;
+		m_pmWhenDetached = false;
+		m_pmAll = false;
 		// defaults end.
 
 		m_notificationsSent = 0;
@@ -100,7 +105,8 @@ protected:
 		{
 			const CString sLcMessage = sMessage.AsLower();
 			bool bFound = (sLcMessage.find(m_pUser->GetCurNick().AsLower()) != CString::npos);
-
+			bFound |= (sChannel == "(priv)" && m_pmAll);
+			
 			for(VCString::iterator it = m_highlights.begin();
 				!bFound && it != m_highlights.end();
 				it++)
@@ -112,6 +118,10 @@ protected:
 			{
 				SendNotification("<" + sNick + "> on " + sChannel + ": " + sMessage);
 			}
+		}
+		else if(m_pmWhenDetached && !bUserAttached && sChannel == "(priv)")
+		{
+				SendNotification("<" + sNick + "> on " + sChannel + ": " + sMessage);
 		}
 	}
 
@@ -139,6 +149,14 @@ protected:
 			{
 				it->second.Split("\n", m_highlights, false);
 			}
+			else if(it->first == "u:pmdetached")
+			{
+				m_pmWhenDetached = (it->second != "0");
+			}
+			else if(it->first == "u:pmall")
+			{
+				m_pmAll = (it->second != "0");
+			}
 		}
 	}
 
@@ -150,7 +168,9 @@ protected:
 		SetNV("api:priority", CString(m_priority), false);
 		SetNV("u:idle", CString(m_idleAfterMinutes), false);
 		SetNV("u:onlydetached", (m_onlyWhenDetached ? "1" : "0"), false);
-
+		SetNV("u:pmdetached", (m_pmWhenDetached ? "1" : "0"), false);
+		SetNV("u:pmall", (m_pmAll ? "1" : "0"), false);
+		
 		CString sTmp;
 		for(VCString::const_iterator it = m_highlights.begin(); it != m_highlights.end(); it++) { sTmp += *it + "\n"; }
 
@@ -190,6 +210,14 @@ public:
 			CmdTable.SetCell("Command", "SET onlydetached (on|off)");
 			CmdTable.SetCell("Description", "On means 'never send notifications when a client is connected to ZNC'.");
 
+			CmdTable.AddRow();
+			CmdTable.SetCell("Command", "SET pmdetached (on|off)");
+			CmdTable.SetCell("Description", "On means 'send notifications of all PMs when no client is connected to ZNC'.");
+			
+			CmdTable.AddRow();
+			CmdTable.SetCell("Command", "SET pmall (on|off)");
+			CmdTable.SetCell("Description", "On means 'treat every PM as a highlight'.");
+			
 			CmdTable.AddRow();
 			CmdTable.SetCell("Command", "HIGHLIGHTS");
 			CmdTable.SetCell("Description", "Shows additional words (besides your current nick) that trigger a notification.");
@@ -236,6 +264,18 @@ public:
 				const CString sTmp = sCommand.Token(2).AsLower(); 
 				m_onlyWhenDetached = (sTmp != "off" && sTmp != "false" && sTmp != "0" && sTmp != "no");
 				PutModule("Setting changed to '" + CString(m_onlyWhenDetached ? "on" : "off") + "'!");
+			}
+			else if(sKey == "pmdetached")
+			{
+				const CString sTmp = sCommand.Token(2).AsLower(); 
+				m_pmWhenDetached = (sTmp != "off" && sTmp != "false" && sTmp != "0" && sTmp != "no");
+				PutModule("Setting changed to '" + CString(m_pmWhenDetached ? "on" : "off") + "'!");
+			}
+			else if(sKey == "pmall")
+			{
+				const CString sTmp = sCommand.Token(2).AsLower(); 
+				m_pmAll = (sTmp != "off" && sTmp != "false" && sTmp != "0" && sTmp != "no");
+				PutModule("Setting changed to '" + CString(m_pmAll ? "on" : "off") + "'!");
 			}
 			else
 			{
@@ -310,7 +350,7 @@ public:
 
 			CmdTable.AddRow();
 			CmdTable.SetCell("What", "Notification Parameters");
-			CmdTable.SetCell("Status", "Idle time = '" + CString(m_idleAfterMinutes) + " minutes', Only when detached = '" + CString(m_onlyWhenDetached ? "on" : "off") + "'.");
+			CmdTable.SetCell("Status", "Idle time = '" + CString(m_idleAfterMinutes) + " minutes', Only when detached = '" + CString(m_onlyWhenDetached ? "on" : "off") + "', All PMs when detached = '" + CString(m_pmWhenDetached ? "on" : "off") + "', PMs always match = '" + CString(m_pmAll ? "on" : "off") + "'.");
 
 			CmdTable.AddRow();
 			CmdTable.SetCell("What", "Additional highlights");
