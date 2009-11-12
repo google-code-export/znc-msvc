@@ -13,12 +13,12 @@ public:
 		
 	}
 	
-	virtual void OnUserAttached() {
+	virtual void OnClientLogin() {
 		pUserMap = CZNC::Get().GetUserMap();
 		Broadcast("has attached to ZNC from " + m_pClient->GetRemoteIP());
 	}
 	
-	virtual void OnUserDetached() {
+	virtual void OnClientDisconnect() {
 		pUserMap = CZNC::Get().GetUserMap();	
 		Broadcast("has detached out of ZNC from " + m_pClient->GetRemoteIP());
 	}

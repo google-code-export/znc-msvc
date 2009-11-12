@@ -171,6 +171,7 @@ public:
 	void SetMaxJoins(unsigned int i) { m_uMaxJoins = i; }
 	void SetIRCConnectEnabled(bool b) { m_bIRCConnectEnabled = b; }
 	void SetModRepliesAsNotices(bool b) { m_bModRepliesAsNotices = b; }
+	void SetIRCAway(bool b) { m_bIRCAway = b; }
 	// !Setters
 
 	// Getters
@@ -242,6 +243,7 @@ protected:
 	CString			m_sDefaultChanModes;
 	CString			m_sChanPrefixes;
 	CNick			m_IRCNick;
+	bool			m_bIRCAway;
 	CString			m_sIRCServer;
 	CString			m_sQuitMsg;
 	MCString		m_mssCTCPReplies;
