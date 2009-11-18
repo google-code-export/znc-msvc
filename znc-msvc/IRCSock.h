@@ -58,7 +58,7 @@ public:
 	// !Setters
 
 	// Getters
-	unsigned int GetMaxNickLen() const { return m_uMaxNickLen; }
+	size_t GetMaxNickLen() const { return m_uMaxNickLen; }
 	EChanModeArgs GetModeType(unsigned char uMode) const;
 	unsigned char GetPermFromMode(unsigned char uMode) const;
 	const map<unsigned char, EChanModeArgs>& GetChanModes() const { return m_mueChanModes; }
@@ -95,7 +95,7 @@ protected:
 	CNick						m_Nick;
 	CString						m_sPass;
 	map<CString, CChan*>		m_msChans;
-	unsigned int				m_uMaxNickLen;
+	size_t						m_uMaxNickLen;
 };
 
 #endif // !_IRCSOCK_H

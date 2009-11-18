@@ -38,6 +38,14 @@ class CIRCSock;
 
 typedef void* ModHandle;
 
+#define MODCOMMONDEFS(DESCRIPTION, GLOBAL) \
+	ZNC_HELPER_DLL_EXPORT const char *ZNCModDescription(); \
+	ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
+	ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
+	ZNC_HELPER_DLL_EXPORT const char *ZNCModDescription() { return DESCRIPTION; } \
+	ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return VERSION; } \
+	ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return GLOBAL; }
+
 #define MODCONSTRUCTOR(CLASS) \
 	CLASS(ModHandle pDLL, CUser* pUser, const CString& sModName, \
 			const CString& sModPath) \
@@ -45,18 +53,11 @@ typedef void* ModHandle;
 
 #define MODULEDEFS(CLASS, DESCRIPTION) \
 	extern "C" { \
+		MODCOMMONDEFS(DESCRIPTION, false) \
 		/* First the definitions to shut up some compiler warnings */ \
-		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription(); \
-		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
-		ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
-		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
-				const CString& sModPath); \
+		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, const CString& sModPath); \
 		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod); \
-		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription() { return DESCRIPTION; } \
-		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return false; } \
-		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return MODVERSION; } \
-		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, \
-				const CString& sModPath) \
+		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, const CString& sModPath) \
 		{ return new CLASS(p, pUser, sModName, sModPath); } \
 		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod) { if (pMod) { delete pMod; } } \
 	}
@@ -68,18 +69,11 @@ typedef void* ModHandle;
 			: CGlobalModule(pDLL, sModName, sModPath)
 #define GLOBALMODULEDEFS(CLASS, DESCRIPTION) \
 	extern "C" { \
+		MODCOMMONDEFS(DESCRIPTION, true) \
 		/* First the definitions to shut up some compiler warnings */ \
-		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription(); \
-		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
-		ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
-		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
-				const CString& sModPath); \
+		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, const CString& sModPath); \
 		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod); \
-		ZNC_HELPER_DLL_EXPORT CString ZNCModDescription() { return DESCRIPTION; } \
-		ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return true; } \
-		ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return MODVERSION; } \
-		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, \
-				const CString& sModPath) \
+		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, const CString& sModPath) \
 		{ return new CLASS(p, sModName, sModPath); } \
 		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod) { if (pMod) { delete pMod; } } \
 	}

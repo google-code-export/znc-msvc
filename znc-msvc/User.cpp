@@ -381,20 +381,20 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 		AddServer(pServer->GetName(), pServer->GetPort(), pServer->GetPass(), pServer->IsSSL());
 	}
 
+	m_uServerIdx = 0;
 	for (a = 0; a < m_vServers.size(); a++) {
 		if (sServer.Equals(m_vServers[a]->GetName())) {
-			m_uServerIdx = a +1;
+			m_uServerIdx = a + 1;
 			break;
 		}
+	}
+	if (m_uServerIdx == 0) {
+		m_uServerIdx = m_vServers.size();
+		CIRCSock* pSock = GetIRCSock();
 
-		if (a == m_vServers.size() -1) {
-			m_uServerIdx = m_vServers.size();
-			CIRCSock* pSock = GetIRCSock();
-
-			if (pSock) {
-				PutStatus("Jumping servers because this server is no longer in the list");
-				pSock->Quit();
-			}
+		if (pSock) {
+			PutStatus("Jumping servers because this server is no longer in the list");
+			pSock->Quit();
 		}
 	}
 	// !Servers
@@ -770,9 +770,14 @@ bool CUser::DelServer(const CString& sName, unsigned short uPort, const CString&
 	}
 
 	unsigned int a = 0;
+	bool bSawCurrentServer = false;
+	CServer* pCurServer = GetCurrentServer();
 
 	for (vector<CServer*>::iterator it = m_vServers.begin(); it != m_vServers.end(); it++, a++) {
 		CServer* pServer = *it;
+
+		if (pServer == pCurServer)
+			bSawCurrentServer = true;
 
 		if (!pServer->GetName().Equals(sName))
 			continue;
@@ -783,12 +788,12 @@ bool CUser::DelServer(const CString& sName, unsigned short uPort, const CString&
 		if (!sPass.empty() && pServer->GetPass() != sPass)
 			continue;
 
-		CServer* pCurServer = GetCurrentServer();
 		m_vServers.erase(it);
 
 		if (pServer == pCurServer) {
 			CIRCSock* pIRCSock = GetIRCSock();
 
+			// Make sure we don't skip the next server in the list!
 			if (m_uServerIdx) {
 				m_uServerIdx--;
 			}
@@ -797,8 +802,11 @@ bool CUser::DelServer(const CString& sName, unsigned short uPort, const CString&
 				pIRCSock->Quit();
 				PutStatus("Your current server was removed, jumping...");
 			}
-		} else if (m_uServerIdx >= m_vServers.size()) {
-			m_uServerIdx = 0;
+		} else if (!bSawCurrentServer) {
+			// Our current server comes after the server which we
+			// are removing. This means that it now got a different
+			// index in m_vServers!
+			m_uServerIdx--;
 		}
 
 		delete pServer;

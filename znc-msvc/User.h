@@ -280,8 +280,8 @@ protected:
 	set<CDCCBounce*>	m_sDCCBounces;
 	set<CDCCSock*>		m_sDCCSocks;
 	set<CString>		m_ssAllowedHosts;
-	size_t				m_uServerIdx;
-	size_t				m_uBufferCount;
+	size_t		m_uServerIdx; ///< Index in m_vServers of our current server + 1
+	size_t		m_uBufferCount;
 	unsigned long long      m_uBytesRead;
 	unsigned long long      m_uBytesWritten;
 	unsigned int		m_uMaxJoinTries;

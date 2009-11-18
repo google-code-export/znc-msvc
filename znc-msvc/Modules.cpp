@@ -1018,6 +1018,12 @@ CModules::ModDirList CModules::GetModDirs() {
 
 ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, bool &bVersionMismatch,
 		bool &bIsGlobal, CString& sDesc, CString& sRetMsg) {
+	// Some sane defaults in case anything errors out below
+	bVersionMismatch = false;
+	bIsGlobal = false;
+	sDesc.clear();
+	sRetMsg.clear();
+
 	for (unsigned int a = 0; a < sModule.length(); a++) {
 		if (((sModule[a] < '0') || (sModule[a] > '9')) && ((sModule[a] < 'a') || (sModule[a] > 'z')) && ((sModule[a] < 'A') || (sModule[a] > 'Z')) && (sModule[a] != '_')) {
 			sRetMsg = "Module names can only contain letters, numbers and underscores, [" + sModule + "] is invalid.";
@@ -1050,7 +1056,7 @@ ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, 
 		return NULL;
 	}
 
-	typedef CString (*sFP)();
+	typedef const char *(*sFP)();
 	sFP GetDesc = (sFP) dlsym(p, "ZNCModDescription");
 
 	if (!GetDesc) {
@@ -1058,9 +1064,6 @@ ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, 
 		sRetMsg = "Could not find ZNCModDescription() in module [" + sModule + "]";
 		return false;
 	}
-
-	bIsGlobal = IsGlobal();
-	sDesc = GetDesc();
 
 	if (CModule::GetCoreVersion() != Version()) {
 		bVersionMismatch = true;
@@ -1073,6 +1076,8 @@ ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, 
 	} else {
 		sRetMsg = "";
 		bVersionMismatch = false;
+		bIsGlobal = IsGlobal();
+		sDesc = GetDesc();
 	}
 
 	return p;
