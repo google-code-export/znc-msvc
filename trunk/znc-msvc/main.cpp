@@ -103,9 +103,9 @@ int main(int argc, char** argv) {
 #ifdef HAVE_LIBSSL
 	bool bMakePem = false;
 
-	while ((iArg = getopt_long(argc, argv, "hvcspd:Df", g_LongOpts, &iOptIndex)) != -1) {
+	while ((iArg = getopt_long(argc, argv, "hvcspd:D", g_LongOpts, &iOptIndex)) != -1) {
 #else
-	while ((iArg = getopt_long(argc, argv, "hvcsd:Df", g_LongOpts, &iOptIndex)) != -1) {
+	while ((iArg = getopt_long(argc, argv, "hvcsd:D", g_LongOpts, &iOptIndex)) != -1) {
 #endif /* HAVE_LIBSSL */
 		switch (iArg) {
 		case 'h':
