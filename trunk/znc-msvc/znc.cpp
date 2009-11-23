@@ -37,7 +37,7 @@ CZNC::CZNC() {
 	m_uBytesRead = 0;
 	m_uBytesWritten = 0;
 	m_pConnectUserTimer = NULL;
-	m_bNeedRehash = false;
+	m_eConfigState = ECONFIG_NOTHING;
 	m_TimeStarted = time(NULL);
 }
 
@@ -220,41 +220,39 @@ bool CZNC::HandleUserDeletion()
 	return true;
 }
 
+#ifdef _WIN32
+void CZNC::Loop(bool* bLoop) {
+	while (*bLoop) {
+		LoopDoMaintenance();
+
+		// have to use Loop instead of DynamicSelectLoop because the latter waits for too long
+		m_Manager.Loop();
+	}
+	Broadcast("ZNC has been requested to shut down!");
+	if(!CZNC::Get().WriteConfig())
+	{
+		CUtils::PrintError("Writing config file to disk failed! We are forced to continue shutting down anyway.");
+	}
+}
+#else
 void CZNC::Loop() {
 	while (true) {
-		CString sError;
-
-		if (GetNeedRehash()) {
-			SetNeedRehash(false);
-
-			if (RehashConfig(sError)) {
-				Broadcast("Rehashing succeeded", true);
-			} else {
-				Broadcast("Rehashing failed: " + sError, true);
-				Broadcast("ZNC is in some possibly inconsistent state!", true);
-			}
-		}
-
-		// Check for users that need to be deleted
-		if (HandleUserDeletion()) {
-			// Also remove those user(s) from the config file
-			WriteConfig();
-		}
+		LoopDoMaintenance();
 
 		// Csocket wants micro seconds
 		// 500 msec to 600 sec
 		m_Manager.DynamicSelectLoop(500 * 1000, 600 * 1000 * 1000);
 	}
 }
+#endif
 
-#ifdef _WIN32
-int CZNC::ServiceLoop(SERVICE_STATUS *serviceStatus)
+void CZNC::LoopDoMaintenance()
 {
-	while(serviceStatus->dwCurrentState == SERVICE_RUNNING)
-	{
-		if (GetNeedRehash()) {
-			CString sError;
-			SetNeedRehash(false);
+	CString sError;
+
+	switch (GetConfigState()) {
+		case ECONFIG_NEED_REHASH:
+			SetConfigState(ECONFIG_NOTHING);
 
 			if (RehashConfig(sError)) {
 				Broadcast("Rehashing succeeded", true);
@@ -262,18 +260,27 @@ int CZNC::ServiceLoop(SERVICE_STATUS *serviceStatus)
 				Broadcast("Rehashing failed: " + sError, true);
 				Broadcast("ZNC is in some possibly inconsistent state!", true);
 			}
-		}
+			break;
+		case ECONFIG_NEED_WRITE:
+			SetConfigState(ECONFIG_NOTHING);
 
-		if (HandleUserDeletion()) {
-			WriteConfig();
-		}
-
-		m_Manager.DynamicSelectLoop(500 * 1000, 600 * 1000 * 1000);
+			if (WriteConfig()) {
+				Broadcast("Writing the config suceeded", true);
+			} else {
+				Broadcast("Writing the config file failed", true);
+			}
+			break;
+		case ECONFIG_NOTHING:
+			break;
 	}
 
-	return 0; /* service has been stopped */
+	// Check for users that need to be deleted
+	if (HandleUserDeletion()) {
+		// Also remove those user(s) from the config file
+		WriteConfig();
+	}
 }
-#endif
+
 
 bool CZNC::WriteISpoof(CUser* pUser) {
 	if (m_pISpoofLockFile != NULL)

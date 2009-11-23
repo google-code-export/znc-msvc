@@ -29,10 +29,18 @@ public:
 	CZNC();
 	~CZNC();
 
+	enum ConfigState {
+		ECONFIG_NOTHING,
+		ECONFIG_NEED_REHASH,
+		ECONFIG_NEED_WRITE
+	};
+
 	void DeleteUsers();
-	void Loop();
+	void LoopDoMaintenance();
 #ifdef _WIN32
-	int ServiceLoop(SERVICE_STATUS *serviceStatus);
+	void CZNC::Loop(bool* bLoop);
+#else
+	void Loop();
 #endif
 	bool WriteISpoof(CUser* pUser);
 	void ReleaseISpoof();
@@ -80,14 +88,14 @@ public:
 	void AuthUser(CSmartPtr<CAuthBase> AuthClass);
 
 	// Setters
-	void SetNeedRehash(bool b) { m_bNeedRehash = b; }
+	void SetConfigState(enum ConfigState e) { m_eConfigState = e; }
 	void SetStatusPrefix(const CString& s) { m_sStatusPrefix = (s.empty()) ? "*" : s; }
 	void SetISpoofFile(const CString& s) { m_sISpoofFile = s; }
 	void SetISpoofFormat(const CString& s) { m_sISpoofFormat = (s.empty()) ? "global { reply \"%\" }" : s; }
 	// !Setters
 
 	// Getters
-	bool GetNeedRehash() const { return m_bNeedRehash; }
+	enum ConfigState GetConfigState() const { return m_eConfigState; }
 	CSockManager& GetManager() { return m_Manager; }
 	const CSockManager& GetManager() const { return m_Manager; }
 #ifdef _MODULES
@@ -143,7 +151,7 @@ private:
 protected:
 	time_t				m_TimeStarted;
 
-	bool				m_bNeedRehash;
+	enum ConfigState		m_eConfigState;
 	vector<CListener*>		m_vpListeners;
 	map<CString,CUser*>		m_msUsers;
 	map<CString,CUser*>		m_msDelUsers;
