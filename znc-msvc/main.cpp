@@ -14,9 +14,6 @@ static const struct option g_LongOpts[] = {
 	{ "help",			no_argument,	0,	'h' },
 	{ "version",			no_argument,	0,	'v' },
 	{ "debug",			no_argument,	0,	'D' },
-	{ "foreground",			no_argument,	0,	'f' },
-	{ "no-color",			no_argument,	0,	'n' },
-	{ "allow-root",			no_argument,	0,	'r' },
 	{ "makeconf",			no_argument,	0,	'c' },
 	{ "makepass",			no_argument,	0,	's' },
 #ifdef HAVE_LIBSSL
@@ -31,10 +28,7 @@ static void GenerateHelp(const char *appname) {
 	CUtils::PrintMessage("Options are:");
 	CUtils::PrintMessage("\t-h, --help         List available command line options (this page)");
 	CUtils::PrintMessage("\t-v, --version      Output version information and exit");
-	CUtils::PrintMessage("\t-f, --foreground   Don't fork into the background");
 	CUtils::PrintMessage("\t-D, --debug        Output debugging information (Implies -f)");
-	CUtils::PrintMessage("\t-n, --no-color     Don't use escape sequences in the output");
-	CUtils::PrintMessage("\t-r, --allow-root   Don't complain if ZNC is run as root");
 	CUtils::PrintMessage("\t-c, --makeconf     Interactively create a new config");
 	CUtils::PrintMessage("\t-s, --makepass     Generates a password for use in config");
 #ifdef HAVE_LIBSSL
@@ -43,62 +37,42 @@ static void GenerateHelp(const char *appname) {
 	CUtils::PrintMessage("\t-d, --datadir      Set a different znc repository (default is ~/.znc)");
 }
 
-#ifndef _WIN32
-static void die(int sig) {
-	signal(SIGPIPE, SIG_DFL);
+// removed: die() rehash() isRoot()
 
-	CUtils::PrintMessage("Exiting on SIG [" + CString(sig) + "]");
-#ifdef _DEBUG
-	if ((sig == SIGABRT) || (sig == SIGSEGV)) {
-		abort();
-	}
-#endif /* _DEBUG */
 
-	delete &CZNC::Get();
-	exit(sig);
-}
+// false => exit main select() loop.
+bool g_bMainLoop = true;
 
-static void rehash(int sig) {
-	CUtils::PrintMessage("Caught SIGHUP");
-	CZNC::Get().SetNeedRehash(true);
-}
-
-static bool isRoot() {
-	// User root? If one of these were root, we could switch the others to root, too
-	if (geteuid() == 0 || getuid() == 0)
-		return true;
-
-	return false;
-}
-#endif
-
-#ifdef ZNC_DLL_EXPORTS
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType)
 {
-	return TRUE;
+	switch (dwCtrlType)
+	{
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+		g_bMainLoop = false;
+		return TRUE;
+	default:
+		return FALSE;
+	}
 }
 
-#ifdef _WIN32
-#include "openssl/applink.c"
-// for OpenSSL. see http://www.openssl.org/support/faq.html
-#endif
-
-#else
 
 int main(int argc, char** argv) {
 	CString sConfig;
 	CString sDataDir = "";
 
 	srand((unsigned int)time(NULL));
-#ifndef _WIN32
-	CUtils::SetStdoutIsTTY(isatty(1));
-#else
 	// Win32 doesn't support shell escape codes, so we do this.
 	CUtils::SetStdoutIsTTY(false);
 
 	CString sConsoleTitle = "ZNC " + CZNC::GetVersion();
 	SetConsoleTitle(sConsoleTitle.c_str());
+
+	// register Ctrl handler
+	if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleCtrlHandler, TRUE) == NULL)
+	{
+		CUtils::PrintMessage("Couldn't register console Ctrl handler function!");
+	}
 
 	// this prevents open()/read() and friends from stripping \r
 	// from files... simply adding _O_BINARY to the modes doesn't seem
@@ -118,22 +92,20 @@ int main(int argc, char** argv) {
 		CUtils::PrintError("The version number in ZNC.dll doesn't match. Aborting.");
 		return 1;
 	}
-#endif
+
+	// process command line arguments
 
 	int iArg, iOptIndex = -1;
 	bool bMakeConf = false;
 	bool bMakePass = false;
 	bool bAllowRoot = false;
-	bool bForeground = false;
-#ifdef _DEBUG
-	bForeground = true;
-#endif
+
 #ifdef HAVE_LIBSSL
 	bool bMakePem = false;
 
-	while ((iArg = getopt_long(argc, argv, "hvnrcspd:Df", g_LongOpts, &iOptIndex)) != -1) {
+	while ((iArg = getopt_long(argc, argv, "hvcspd:Df", g_LongOpts, &iOptIndex)) != -1) {
 #else
-	while ((iArg = getopt_long(argc, argv, "hvnrcsd:Df", g_LongOpts, &iOptIndex)) != -1) {
+	while ((iArg = getopt_long(argc, argv, "hvcsd:Df", g_LongOpts, &iOptIndex)) != -1) {
 #endif /* HAVE_LIBSSL */
 		switch (iArg) {
 		case 'h':
@@ -142,12 +114,6 @@ int main(int argc, char** argv) {
 		case 'v':
 			cout << CZNC::GetTag() << endl;
 			return 0;
-		case 'n':
-			CUtils::SetStdoutIsTTY(false);
-			break;
-		case 'r':
-			bAllowRoot = true;
-			break;
 		case 'c':
 			bMakeConf = true;
 			break;
@@ -162,11 +128,7 @@ int main(int argc, char** argv) {
 		case 'd':
 			sDataDir = CString(optarg);
 			break;
-		case 'f':
-			bForeground = true;
-			break;
 		case 'D':
-			bForeground = true;
 			CUtils::SetDebug(true);
 			break;
 		case '?':
@@ -227,96 +189,18 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-#ifndef _WIN32
-	if (isRoot()) {
-		CUtils::PrintError("You are running ZNC as root! Don't do that! There are not many valid");
-		CUtils::PrintError("reasons for this and it can, in theory, cause great damage!");
-		if (!bAllowRoot) {
-			delete pZNC;
-			return 1;
-		}
-		CUtils::PrintError("You have been warned.");
-		CUtils::PrintError("Hit CTRL+C now if you don't want to run ZNC as root.");
-		CUtils::PrintError("ZNC will start in 30 seconds.");
-		sleep(30);
-	}
-
-	if (bForeground) {
-		int iPid = getpid();
-		CUtils::PrintMessage("Staying open for debugging [pid: " + CString(iPid) + "]");
-
-		pZNC->WritePidFile(iPid);
-		CUtils::PrintMessage(CZNC::GetTag());
-	} else {
-		CUtils::PrintAction("Forking into the background");
-
-		int iPid = fork();
-
-		if (iPid == -1) {
-			CUtils::PrintStatus(false, strerror(errno));
-			delete pZNC;
-			return 1;
-		}
-
-		if (iPid > 0) {
-			// We are the parent. We are done and will go to bed.
-			CUtils::PrintStatus(true, "[pid: " + CString(iPid) + "]");
-
-			pZNC->WritePidFile(iPid);
-			CUtils::PrintMessage(CZNC::GetTag());
-			/* Don't destroy pZNC here or it will delete the pid file. */
-			return 0;
-		}
-
-		// Redirect std in/out/err to /dev/null
-		close(0); open("/dev/null", O_RDONLY);
-		close(1); open("/dev/null", O_WRONLY);
-		close(2); open("/dev/null", O_WRONLY);
-
-		CUtils::SetStdoutIsTTY(false);
-
-		// We are the child. There is no way we can be a process group
-		// leader, thus setsid() must succeed.
-		setsid();
-		// Now we are in our own process group and session (no
-		// controlling terminal). We are independent!
-	}
-
-	struct sigaction sa;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &sa, (struct sigaction*) NULL);
-
-	sa.sa_handler = rehash;
-	sigaction(SIGHUP,  &sa, (struct sigaction*) NULL);
-
-	// Once this signal is caught, the signal handler is reset
-	// to SIG_DFL. This avoids endless loop with signals.
-	sa.sa_flags = SA_RESETHAND;
-	sa.sa_handler = die;
-	sigaction(SIGINT,  &sa, (struct sigaction*) NULL);
-	sigaction(SIGILL,  &sa, (struct sigaction*) NULL);
-	sigaction(SIGQUIT, &sa, (struct sigaction*) NULL);
-	sigaction(SIGBUS,  &sa, (struct sigaction*) NULL);
-	sigaction(SIGSEGV, &sa, (struct sigaction*) NULL);
-	sigaction(SIGTERM, &sa, (struct sigaction*) NULL);
-#endif
+	// removed: checks for isRoot, bForeground, forking and signal handlers
 
 	int iRet = 0;
 
 	try {
-		pZNC->Loop();
+		pZNC->Loop(&g_bMainLoop);
+		CUtils::PrintMessage("Terminating ...");	
 	} catch (CException e) {
 		switch (e.GetType()) {
 			case CException::EX_Shutdown:
 				iRet = 0;
-
-#ifdef _WIN32
 				CUtils::PrintMessage("************** Shutting down ZNC... **************");
-#endif
-
 				break;
 			case CException::EX_Restart: {
 				// strdup() because GCC is stupid
@@ -333,21 +217,22 @@ int main(int argc, char** argv) {
 				int pos = 3;
 				if (CUtils::Debug())
 					args[pos++] = strdup("--debug");
+#if 0
 				else if (bForeground)
 					args[pos++] = strdup("--foreground");
 				if (!CUtils::StdoutIsTTY())
 					args[pos++] = strdup("--no-color");
 				if (bAllowRoot)
 					args[pos++] = strdup("--allow-root");
+#endif
 				args[pos++] = strdup(pZNC->GetConfigFile().c_str());
 				// The above code adds 4 entries to args tops
 				// which means the array should be big enough
 
-#ifdef _WIN32
 				CUtils::PrintMessage("************** Restarting ZNC... **************");
 				delete pZNC; /* stuff screws up real bad if we don't close all sockets etc. */
 				pZNC = NULL;
-#endif
+
 				execvp(args[0], args);
 				CUtils::PrintError("Unable to restart znc [" + CString(strerror(errno)) + "]");
 			} /* Fall through */
@@ -360,6 +245,3 @@ int main(int argc, char** argv) {
 
 	return iRet;
 }
-
-#endif // ! ZNC_DLL_EXPORTS
-
