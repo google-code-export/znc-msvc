@@ -23,12 +23,16 @@ class CIdentServerMod : public CGlobalModule
 protected:
 	unsigned short m_serverPort;
 	CIdentServer *m_identServer;
+	bool m_listenFailed;
+	CString m_sLastReply;
+	CString m_sLastRequest;
 
 public:
 	GLOBALMODCONSTRUCTOR(CIdentServerMod)
 	{
 		m_serverPort = 113;
 		m_identServer = NULL;
+		m_listenFailed = false;
 	}
 	virtual ~CIdentServerMod();
 
@@ -36,9 +40,14 @@ public:
 	void OnIRCConnected();
 	void NoLongerNeedsIdentServer();
 	void OnIRCDisconnected();
+	void OnClientLogin();
 	EModRet OnDeleteUser(CUser& User);
+	void OnModCommand(const CString& sLine);
 
 	CIdentServer *GetIdentServer() { return m_identServer; }
+	
+	void SetLastReply(const CString& s) { m_sLastReply = s; };
+	void SetLastRequest(const CString& s) { m_sLastRequest = s; };
 };
 
 
@@ -77,6 +86,7 @@ public:
 	bool ConnectionFrom(const CS_STRING & sHostname, u_short uPort);
 
 	CString GetResponse(const CString& sLine, const CString& sSocketIP, const CString& sRemoteIP);
+	const set<CUser*>& GetActiveUsers() { return m_activeUsers; };
 };
 
 
@@ -158,6 +168,10 @@ CString CIdentServer::GetResponse(const CString& sLine, const CString& sSocketIP
 
 	DEBUG("IDENT response: " << sReply);
 
+	CIdentServerMod *pMod = reinterpret_cast<CIdentServerMod*>(m_pModule);
+	pMod->SetLastRequest(sLine.Replace_n("\r\n", " ") + "from " + sRemoteIP + " on " + sSocketIP);
+	pMod->SetLastReply(sReply);
+
 	return sReply;
 }
 
@@ -215,21 +229,27 @@ CIdentServerMod::EModRet CIdentServerMod::OnIRCConnecting(CIRCSock *pIRCSock)
 {
 	assert(m_pUser != NULL);
 
+	DEBUG("CIdentServerMod::OnIRCConnecting");
+
 	if(!m_identServer)
 	{
 		DEBUG("Starting up IDENT listener.");
 		m_identServer = new CIdentServer(this, m_serverPort);
+
+		if(!m_identServer->StartListening())
+		{
+			DEBUG("WARNING: Opening the listening socket failed!");
+			m_listenFailed = true;
+			m_identServer = NULL; /* Csock deleted the instance. (gross) */
+			return CONTINUE;
+		}
+		else
+		{
+			m_listenFailed = false;
+		}
 	}
 
-	if(!m_identServer->StartListening())
-	{
-		PutModule("WARNING: Opening the listening socket failed!");
-		m_identServer = NULL; /* Csock deleted the instance. (gross) */
-	}
-	else
-	{
-		m_identServer->IncreaseUseCount(m_pUser);
-	}
+	m_identServer->IncreaseUseCount(m_pUser);
 
 	return CONTINUE;
 }
@@ -253,6 +273,11 @@ void CIdentServerMod::NoLongerNeedsIdentServer()
 
 void CIdentServerMod::OnIRCConnected()
 {
+	if((!m_pClient) && (m_listenFailed))
+	{
+		PutModule("*** WARNING: Opening the listening socket failed!");
+		PutModule("*** IDENT listener is NOT running.");
+	}
 	NoLongerNeedsIdentServer();
 }
 
@@ -265,6 +290,67 @@ CIdentServerMod::EModRet CIdentServerMod::OnDeleteUser(CUser& User)
 {
 	NoLongerNeedsIdentServer();
 	return CONTINUE;
+}
+
+void CIdentServerMod::OnClientLogin()
+{
+	if(m_listenFailed)
+	{
+		PutModule("*** WARNING: Opening the listening socket failed!");
+		PutModule("*** IDENT listener is NOT running.");
+	}	
+}
+
+void CIdentServerMod::OnModCommand(const CString& sLine)
+{
+	CString sCommand = sLine.Token(0);
+
+	if(sCommand.Equals("HELP"))
+	{
+		CTable Table;
+		Table.AddColumn("Command");
+		Table.AddColumn("Description");
+
+		Table.AddRow();
+		Table.SetCell("Command", "Status");
+		Table.SetCell("Description", "Displays status information about IdentServer");
+
+		PutModule(Table);
+		return;
+	}
+	else if(sCommand.Equals("STATUS"))
+	{
+		if(m_identServer)
+		{
+			PutModule("IdentServer is listening on: " + m_identServer->GetLocalIP() + ":" + CString(m_serverPort));
+
+			if(m_pUser->IsAdmin())
+			{
+				PutModule("List of active users:");
+
+				const set<CUser*> Users = m_identServer->GetActiveUsers();
+				for(set<CUser*>::const_iterator it = Users.begin(); it != Users.end(); it++)
+					PutModule("* " + (*it)->GetCleanUserName());
+			}
+		}
+		else
+		{
+			if(m_listenFailed)
+			{
+				PutModule("WARNING: Opening the listening socket failed!");
+			}
+			PutModule("IdentServer isn't listening.");
+		}
+		if(m_pUser->IsAdmin())
+		{
+			PutModule("Last IDENT request: " + m_sLastRequest);
+			PutModule("Last IDENT reply: " + m_sLastReply);
+		}
+	}
+	else
+	{
+		PutModule("Unknown command [" + sCommand + "] try 'Help'");
+	}
 }
 
 CIdentServerMod::~CIdentServerMod()
