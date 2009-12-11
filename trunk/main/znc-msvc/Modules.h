@@ -43,7 +43,7 @@ typedef void* ModHandle;
 	ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
 	ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
 	ZNC_HELPER_DLL_EXPORT const char *ZNCModDescription() { return DESCRIPTION; } \
-	ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return VERSION; } \
+	ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return MODVERSION; } \
 	ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return GLOBAL; }
 
 #define MODCONSTRUCTOR(CLASS) \
