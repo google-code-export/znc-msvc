@@ -45,7 +45,7 @@ public:
 	void OnModCommand(const CString& sLine);
 
 	CIdentServer *GetIdentServer() { return m_identServer; }
-	
+
 	void SetLastReply(const CString& s) { m_sLastReply = s; };
 	void SetLastRequest(const CString& s) { m_sLastRequest = s; };
 };
@@ -288,7 +288,17 @@ void CIdentServerMod::OnIRCDisconnected()
 
 CIdentServerMod::EModRet CIdentServerMod::OnDeleteUser(CUser& User)
 {
+	// NoLongerNeedsIdentServer needs m_pUser,
+	// so let's set it:
+	CUser *pTmp = m_pUser;
+	m_pUser = &User;
+	// thanks to psychon for figuring this out!
+
 	NoLongerNeedsIdentServer();
+
+	// ident server business is done for this user now.
+	m_pUser = pTmp;
+
 	return CONTINUE;
 }
 
@@ -298,7 +308,7 @@ void CIdentServerMod::OnClientLogin()
 	{
 		PutModule("*** WARNING: Opening the listening socket failed!");
 		PutModule("*** IDENT listener is NOT running.");
-	}	
+	}
 }
 
 void CIdentServerMod::OnModCommand(const CString& sLine)
