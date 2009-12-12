@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZNC", "ZNC.vcproj", "{91EC5E7F-9220-4C8B-8519-85DF01DA7764}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9775CB8F-D77C-40D2-B484-39892A723CD1} = {9775CB8F-D77C-40D2-B484-39892A723CD1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZNC_DLL", "ZNC_DLL.vcproj", "{9775CB8F-D77C-40D2-B484-39892A723CD1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZNC_Service", "ZNC_Service.vcproj", "{1D726E51-4E33-4616-B34B-B6066D94181B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{91EC5E7F-9220-4C8B-8519-85DF01DA7764} = {91EC5E7F-9220-4C8B-8519-85DF01DA7764}
+		{9775CB8F-D77C-40D2-B484-39892A723CD1} = {9775CB8F-D77C-40D2-B484-39892A723CD1}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91EC5E7F-9220-4C8B-8519-85DF01DA7764}.Debug|Win32.ActiveCfg = Debug|Win32
+		{91EC5E7F-9220-4C8B-8519-85DF01DA7764}.Debug|Win32.Build.0 = Debug|Win32
+		{91EC5E7F-9220-4C8B-8519-85DF01DA7764}.Release|Win32.ActiveCfg = Release|Win32
+		{91EC5E7F-9220-4C8B-8519-85DF01DA7764}.Release|Win32.Build.0 = Release|Win32
+		{9775CB8F-D77C-40D2-B484-39892A723CD1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9775CB8F-D77C-40D2-B484-39892A723CD1}.Debug|Win32.Build.0 = Debug|Win32
+		{9775CB8F-D77C-40D2-B484-39892A723CD1}.Release|Win32.ActiveCfg = Release|Win32
+		{9775CB8F-D77C-40D2-B484-39892A723CD1}.Release|Win32.Build.0 = Release|Win32
+		{1D726E51-4E33-4616-B34B-B6066D94181B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1D726E51-4E33-4616-B34B-B6066D94181B}.Debug|Win32.Build.0 = Debug|Win32
+		{1D726E51-4E33-4616-B34B-B6066D94181B}.Release|Win32.ActiveCfg = Release|Win32
+		{1D726E51-4E33-4616-B34B-B6066D94181B}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
