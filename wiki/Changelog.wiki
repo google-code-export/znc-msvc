@@ -1,6 +1,13 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2009-12-?? (0.078) ==
+  * Updated to official SVN revision ???? (= official ZNC version 0.078)
+  * Fixed two crash bugs in the identserver module
+  * Updated OpenSSL libraries to 0.9.8l
+  * Updated c-ares library to 1.7.0
+  * _TBA_
+
 == 2009-10-31 (0.077-r 1654) ==
   * Updated to official SVN revision 1654. Props to the ZNC team!
   * Added twitter module, thanks flakes!
