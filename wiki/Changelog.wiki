@@ -4,8 +4,11 @@
 == 2009-12-?? (0.078) ==
   * Updated to official SVN revision ???? (= official ZNC version 0.078)
   * Fixed two crash bugs in the identserver module
+  * Control + C gracefully shuts down ZNC (patch by laszlo.tamas.szabo!)
+  * znc_service: Stopping the service gracefully shuts down (patch by laszlo.tamas.szabo!)
   * Updated OpenSSL libraries to 0.9.8l
   * Updated c-ares library to 1.7.0
+  * Updated project files and uploaded them to SVN (laszlo.tamas.szabo, ingmar.runge), building ZNC-MSVC at home is now very [CompilingZNC easy]
   * _TBA_
 
 == 2009-10-31 (0.077-r 1654) ==
