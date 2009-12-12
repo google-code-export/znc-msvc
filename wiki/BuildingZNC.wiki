@@ -20,3 +20,5 @@ Once you did that, you're ready to compile.
 === Compiling ZNC ===
 Use the solution file from _znc-msvc\win32\project_. If you built and copied all dependencies, ZNC should now compile successfully.
 Please note that the x64 builds will emit a number of warnings for WinAPI and OpenSSL API calls.
+
+The resulting DLL and EXE files will be copied to the _build-out_ folder by a post-build event.
