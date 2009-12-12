@@ -9,10 +9,12 @@
 #include "stdafx.hpp"
 #include "FileUtils.h"
 #include "Utils.h"
-#include "MD5.h"
 #ifndef HAVE_LIBSSL
+/* don't forget to link with MD5.cpp and SHA256.cpp if you don't have OpenSSL */
+#include "MD5.h"
 #include "SHA256.h"
 #else
+#include <openssl/md5.h>
 #include <openssl/sha.h>
 #endif
 #include <sstream>
@@ -869,7 +871,27 @@ size_t CString::Base64Decode(CString& sRet) const {
 }
 
 CString CString::MD5() const {
+#ifndef HAVE_LIBSSL
 	return (const char*) CMD5(*this);
+#else
+	const unsigned char *message = (const unsigned char *) c_str();
+
+	char digest_hex[MD5_DIGEST_LENGTH * 2 + 1];
+	unsigned char digest[MD5_DIGEST_LENGTH];
+	memset(digest, 0, MD5_DIGEST_LENGTH);
+
+	MD5_CTX ctx;
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, message, length());
+	MD5_Final(digest, &ctx);
+
+	sprintf(digest_hex, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+		digest[0], digest[1], digest[2], digest[3], digest[4], digest[5],
+		digest[6], digest[7], digest[8], digest[9], digest[10], digest[11],
+		digest[12], digest[13], digest[14], digest[15]);
+
+	return digest_hex;
+#endif
 }
 
 CString CString::SHA256() const {
