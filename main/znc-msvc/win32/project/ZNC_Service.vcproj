@@ -12,6 +12,9 @@
 		<Platform
 			Name="Win32"
 		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
@@ -142,7 +145,7 @@
 				AdditionalDependencies="libeay32.lib ssleay32.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x86\release"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -168,7 +171,164 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x86 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="libeay32.lib ssleay32.lib"
+				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x64\debug;..\..\..\dependencies\lib_x64\release"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
 				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			ConfigurationType="1"
+			CharacterSet="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x86 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="libeay32.lib ssleay32.lib"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x64\release"
+				GenerateDebugInformation="false"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -193,6 +353,22 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
