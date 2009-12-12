@@ -7,7 +7,7 @@ For c-ares (1.7.0 or newer):
   ares_version.h
 
 For OpenSSL:
-	The "openssl" directory from OpenSSL's include dir.
+	The "openssl" directory from OpenSSL's inc32 (not include!) dir.
 
 Resulting directory structure:
 	includes\ares.h
