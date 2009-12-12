@@ -6,6 +6,7 @@
    Public License.
 */
 
+#include "winver.h"
 #include <stdlib.h>
 
 /* Knuth's TAOCP section 3.6 */

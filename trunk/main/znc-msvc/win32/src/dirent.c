@@ -14,6 +14,8 @@
  *	
  */
 
+#include "winver.h"
+
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -21,7 +23,6 @@
 #include <direct.h>
 #include <dirent.h>
 
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h> /* for GetFileAttributes */
 
 #include <tchar.h>
