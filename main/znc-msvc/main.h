@@ -91,7 +91,6 @@
 #include "FileUtils.h"
 #include "HTTPSock.h"
 #include "IRCSock.h"
-#include "MD5.h"
 #include "Modules.h"
 #include "Nick.h"
 #include "Server.h"

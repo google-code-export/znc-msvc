@@ -8,7 +8,6 @@
 
 #include "stdafx.hpp"
 #include "Utils.h"
-#include "MD5.h"
 #include <errno.h>
 #ifdef HAVE_LIBSSL
 #include <openssl/ssl.h>
