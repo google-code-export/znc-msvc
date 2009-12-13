@@ -47,15 +47,25 @@ rem http://gnuwin32.sourceforge.net/packages/unzip.htm
 rem http://gnuwin32.sourceforge.net/packages/bzip2.htm
 rem and put the binaries in the PATH
 
-rem ToDo: fix %date% format, make it independent of regional settings
+rem Use a VBScript to get a locale independent version of %date% as YYYY-MM-DD:
+set TmpFile="build-temp\tmp-date.vbs"
+echo > %TmpFile% WScript.Echo "set year = " + CStr(Year(Now))
+echo >> %TmpFile% WScript.Echo "set month = " + Right(100 + Month(Now), 2)
+echo >> %TmpFile% WScript.Echo "set day = " + Right(100 + Day(Now), 2)
+cscript /nologo "%TmpFile%" > "build-temp\tmp-date.cmd"
+call "build-temp\tmp-date.cmd"
+rem del "build-temp\tmp-date.cmd"
+rem del %TmpFile%
 
-echo Compressing [znc-binaries-x86-%date%.zip] ...
+set thedate = "%year%-%month%-%day%"
+
+echo Compressing [znc-binaries-x86-%thedate%.zip] ...
 cd build-temp\x86
-zip -r -9 -T -o -l -q ../../znc-binaries-x86-%date%.zip znc
+zip -r -9 -T -o -l -q ../../znc-binaries-x86-%thedate%.zip znc
 
-echo Compressing [znc-binaries-x64-%date%.zip] ...
+echo Compressing [znc-binaries-x64-%thedate%.zip] ...
 cd ..\x64
-zip -r -9 -T -o -l -q ../../znc-binaries-x64-%date%.zip znc
+zip -r -9 -T -o -l -q ../../znc-binaries-x64-%thedate%.zip znc
 
 cd ..\..
 
