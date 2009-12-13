@@ -49,15 +49,15 @@ rem and put the binaries in the PATH
 
 rem Use a VBScript to get a locale independent version of %date% as YYYY-MM-DD:
 set TmpFile="build-temp\tmp-date.vbs"
-echo > %TmpFile% WScript.Echo "set year = " + CStr(Year(Now))
-echo >> %TmpFile% WScript.Echo "set month = " + Right(100 + Month(Now), 2)
-echo >> %TmpFile% WScript.Echo "set day = " + Right(100 + Day(Now), 2)
+echo > %TmpFile% WScript.Echo "set year=" + CStr(Year(Now))
+echo >> %TmpFile% WScript.Echo "set month=" + Right(100 + Month(Now), 2)
+echo >> %TmpFile% WScript.Echo "set day=" + Right(100 + Day(Now), 2)
 cscript /nologo "%TmpFile%" > "build-temp\tmp-date.cmd"
 call "build-temp\tmp-date.cmd"
-rem del "build-temp\tmp-date.cmd"
-rem del %TmpFile%
+del "build-temp\tmp-date.cmd"
+del %TmpFile%
 
-set thedate = "%year%-%month%-%day%"
+set thedate=%year%-%month%-%day%
 
 echo Compressing [znc-binaries-x86-%thedate%.zip] ...
 cd build-temp\x86
