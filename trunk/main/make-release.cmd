@@ -1,13 +1,17 @@
 @echo off
 
+
 echo ************************* Making folders... **************************
 
 if exist build-temp\x86 rd /s /q build-temp\x86
 md build-temp\x86\znc
 md build-temp\x86\znc\modules
+md build-temp\x86\znc\modules\webadmin
 if exist build-temp\x64 rd /s /q build-temp\x64
 md build-temp\x64\znc
 md build-temp\x64\znc\modules
+md build-temp\x64\znc\modules\webadmin
+
 
 echo ************************** Copying binaries... ***********************
 
@@ -25,6 +29,15 @@ echo ********************** Copying support files... **********************
 
 copy release\* build-temp\x86\znc
 copy release\* build-temp\x64\znc
+
+
+echo ****************** Copying webadmin skin files... ********************
+
+echo .svn > build-temp\xcopyskipsvn.txt
+xcopy znc-msvc\modules\webadmin build-temp\x86\znc\modules\webadmin /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+xcopy znc-msvc\modules\webadmin build-temp\x64\znc\modules\webadmin /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+del build-temp\xcopyskipsvn.txt
+
 
 echo ********************** Making zip files... ***************************
 rem Uses zip and unzip from GnuWin32
