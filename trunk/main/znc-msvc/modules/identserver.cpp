@@ -10,7 +10,12 @@
 * by the Free Software Foundation.
 */
 
+#ifdef WIN32
 #include "stdafx.hpp"
+#endif
+#include "znc.h"
+#include "User.h"
+#include "IRCSock.h"
 #include "Modules.h"
 
 /************************************************************************/
