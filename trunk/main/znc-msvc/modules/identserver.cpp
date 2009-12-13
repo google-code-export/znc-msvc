@@ -169,8 +169,11 @@ CString CIdentServer::GetResponse(const CString& sLine, const CString& sSocketIP
 	DEBUG("IDENT response: " << sReply);
 
 	CIdentServerMod *pMod = reinterpret_cast<CIdentServerMod*>(m_pModule);
-	pMod->SetLastRequest(sLine.Replace_n("\r\n", " ") + "from " + sRemoteIP + " on " + sSocketIP);
-	pMod->SetLastReply(sReply);
+	if(pMod)
+	{
+		pMod->SetLastRequest(sLine.Replace_n("\r", "").Replace_n("\n", " ") + "from " + sRemoteIP + " on " + sSocketIP);
+		pMod->SetLastReply(sReply);
+	}
 
 	return sReply;
 }
