@@ -26,9 +26,29 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake -f Modules.make CFG=Win32-Debug all"
-				ReBuildCommandLine="nmake -f Modules.make CFG=Win32-Debug clean&#x0D;&#x0A;nmake -f Modules.make CFG=Win32-Debug all&#x0D;&#x0A;"
+				BuildCommandLine="nmake -f Modules.make CFG=Win32-Debug build"
+				ReBuildCommandLine="nmake -f Modules.make CFG=Win32-Debug rebuild"
 				CleanCommandLine="nmake -f Modules.make CFG=Win32-Debug clean"
+				Output=""
+				PreprocessorDefinitions="WIN32;_DEBUG"
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="call &quot;$(VCInstallDir)\vcvarsall.bat&quot; amd64&#x0D;&#x0A;nmake -f Modules.make CFG=$(PlatformName)-$(ConfigurationName) build"
+				ReBuildCommandLine="call &quot;$(VCInstallDir)\vcvarsall.bat&quot; amd64&#x0D;&#x0A;nmake -f Modules.make CFG=$(PlatformName)-$(ConfigurationName) rebuild"
+				CleanCommandLine="call &quot;$(VCInstallDir)\vcvarsall.bat&quot; amd64&#x0D;&#x0A;nmake -f Modules.make CFG=$(PlatformName)-$(ConfigurationName) clean"
 				Output=""
 				PreprocessorDefinitions="WIN32;_DEBUG"
 				IncludeSearchPath=""
@@ -46,8 +66,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake -f Modules.make CFG=Win32-Release all"
-				ReBuildCommandLine="nmake -f Modules.make CFG=Win32-Release clean&#x0D;&#x0A;nmake -f Modules.make CFG=Win32-Release all&#x0D;&#x0A;"
+				BuildCommandLine="nmake -f Modules.make CFG=Win32-Release build"
+				ReBuildCommandLine="nmake -f Modules.make CFG=Win32-Release rebuild&#x0D;&#x0A;"
 				CleanCommandLine="nmake -f Modules.make CFG=Win32-Release clean"
 				Output=""
 				PreprocessorDefinitions="WIN32;NDEBUG"
@@ -59,36 +79,16 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="0"
-			>
-			<Tool
-				Name="VCNMakeTool"
-				BuildCommandLine="nmake -f Modules.make CFG=x64-Debug all"
-				ReBuildCommandLine="nmake -f Modules.make CFG=x64-Debug clean&#x0D;&#x0A;nmake -f Modules.make CFG=Win32-Debug all&#x0D;&#x0A;"
-				CleanCommandLine="nmake -f Modules.make CFG=x64-Debug clean"
-				Output=""
-				PreprocessorDefinitions="WIN32;_DEBUG"
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(PlatformName)-$(ConfigurationName)"
 			ConfigurationType="0"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake -f Modules.make CFG=x64-Release all"
-				ReBuildCommandLine="nmake -f Modules.make CFG=x64-Release clean&#x0D;&#x0A;nmake -f Modules.make CFG=x64-Release all&#x0D;&#x0A;"
-				CleanCommandLine="nmake -f Modules.make CFG=x64-Release clean"
+				BuildCommandLine="call &quot;$(VCInstallDir)\vcvarsall.bat&quot; amd64&#x0D;&#x0A;nmake -f Modules.make CFG=$(PlatformName)-$(ConfigurationName) build"
+				ReBuildCommandLine="call &quot;$(VCInstallDir)\vcvarsall.bat&quot; amd64&#x0D;&#x0A;nmake -f Modules.make CFG=$(PlatformName)-$(ConfigurationName) rebuild"
+				CleanCommandLine="call &quot;$(VCInstallDir)\vcvarsall.bat&quot; amd64&#x0D;&#x0A;nmake -f Modules.make CFG=$(PlatformName)-$(ConfigurationName) clean"
 				Output=""
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				IncludeSearchPath=""
