@@ -83,12 +83,21 @@ LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /M
 
 # x64-Release configuration
 !IF "$(CFG)" == "x64-Release"
-!ERROR Not yet implemented!
+DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "MODULES_ADMIN_EXPORTS" \
+/D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
+/D "HAVE_IPV6" /D "_WINDLL"
+CXXFLAGS=/O2 /Oi /GL /Gy /EHsc /MD /W3 /c /TP /nologo
+LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOGO \
+/DYNAMICBASE /NXCOMPAT /MACHINE:X64
 !ENDIF
 
 # x64-Debug configuration
-!IF "$(CFG)" == "x66-Debug"
-!ERROR Not yet implemented!
+!IF "$(CFG)" == "x64-Debug"
+DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "MODULES_ADMIN_EXPORTS" \
+/D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
+/D "HAVE_IPV6" /D "_WINDLL"
+CXXFLAGS=/Od /Gm /EHsc /MDd /RTC1 /W3 /c /Zi /TP /nologo
+LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:X64 /DEBUG
 !ENDIF
 
 # --------------------
@@ -99,7 +108,7 @@ DLLS=$(MAKDIR)\admin.dll \
 $(MAKDIR)\adminlog.dll \
 $(MAKDIR)\autoattach.dll \
 $(MAKDIR)\autocycle.dll \
-$(MAKDIR)\autoop.dll \
+$(MAKDIR)\autoop.dll 
 $(MAKDIR)\autoreply.dll \
 $(MAKDIR)\away.dll \
 $(MAKDIR)\awaynick.dll \
@@ -161,7 +170,7 @@ OBJS=$(MAKDIR)\admin.obj \
 $(MAKDIR)\adminlog.obj \
 $(MAKDIR)\autoattach.obj \
 $(MAKDIR)\autocycle.obj \
-$(MAKDIR)\autoop.obj \
+$(MAKDIR)\autoop.obj 
 $(MAKDIR)\autoreply.obj \
 $(MAKDIR)\away.obj \
 $(MAKDIR)\awaynick.obj \
@@ -224,27 +233,18 @@ $(MAKDIR)\extra\send_raw.obj \
 # Makefile targets
 # ----------------
 
-all: _dir_check _setenv _pch $(DLLS)
+build: _dir_check _pch $(DLLS)
 
 clean:
   echo Deleting intermediate files for configuration: $(CFG)
   if exist $(INTDIR) rmdir /S /Q $(INTDIR)
+  
+rebuild: clean build
 
 _dir_check:
   if not exist $(INTDIR) md $(INTDIR)
   if not exist $(INTDIR)\extra md $(INTDIR)\extra
   if not exist $(BUILDOUT) md $(BUILDOUT)
-  
-_setenv:
-!IF "$(CFG)" == "Win32-Release"
-  rem call setenv /Release /x86
-!ELSEIF "$(CFG)" == "Win32-Debug"
-  rem setenv /Debug /x86
-!ELSEIF "$(CFG)" == "x64-Release"
-  rem setenv /Release /x64
-!ELSEIF "$(CFG)" == "x64-Debug"
-  rem setenv /Debug /x64
-!ENDIF
   
 _pch:
   if exist $(RSP) del $(RSP)
@@ -256,7 +256,7 @@ _pch:
   echo /Fo$(INTDIR) >>$(RSP)
   echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
   echo ..\..\stdafx.cpp >>$(RSP)
-  $(CC) @$(RSP)
+  cl @$(RSP)
   del $(RSP)
 
 # compile .obj files using inference rules
@@ -277,7 +277,7 @@ $(OBJS):
   echo /Fo$(INTDIR) >>$(RSP)
   echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
   echo $< >>$(RSP)
-  $(CC) @$(RSP)
+  cl @$(RSP)
   del $(RSP)
   
 # extra\ cpp => obj
@@ -291,7 +291,7 @@ $(OBJS):
   echo /Fo$(INTDIR)extra\ >>$(RSP)
   echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
   echo $< >>$(RSP)
-  $(CC) @$(RSP)
+  cl @$(RSP)
   del $(RSP)
 
 # obj => dll
