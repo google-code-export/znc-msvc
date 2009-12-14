@@ -1,26 +1,41 @@
 @echo off
 
+echo ************************ Checking folders... *************************
 
-echo ************************* Making folders... **************************
+FOR %%d in (build-out\Win32-Release build-out\x64-Release build-temp\ZNC_Service\Win32-Release build-temp\ZNC_Service\x64-Release) DO if not exist %%d set xf=%%d && goto :missingfolder
 
-if exist build-temp\x86 rd /s /q build-temp\x86
+goto :foldersok
+:missingfolder
+echo.
+echo ERROR: Couldn't find %xf%!
+echo.
+pause
+exit
+
+:foldersok
+
+echo Folders seem to be ok!
+
+echo ************************ Making folders...   *************************
+
+if exist build-temp\x86 echo Deleting temp x86 folder... && rd /s /q build-temp\x86
 md build-temp\x86\znc
 md build-temp\x86\znc\modules
 md build-temp\x86\znc\modules\webadmin
-if exist build-temp\x64 rd /s /q build-temp\x64
+if exist build-temp\x64 echo Deleting temp x64 folder... && rd /s /q build-temp\x64
 md build-temp\x64\znc
 md build-temp\x64\znc\modules
 md build-temp\x64\znc\modules\webadmin
 
 
-echo ************************** Copying binaries... ***********************
+echo ************************ Copying binaries... *************************
 
 copy build-out\Win32-Release\ZNC* build-temp\x86\znc
 copy build-out\x64-Release\ZNC* build-temp\x64\znc
 copy build-out\Win32-Release\modules\* build-temp\x86\znc\modules
 copy build-out\x64-Release\modules\* build-temp\x64\znc\modules
-copy build-out\ZNC_Service\Win32-Release\service_provider.dll build-temp\x86\znc
-copy build-out\ZNC_Service\x64-Release\service_provider.dll build-temp\x64\znc
+copy build-temp\ZNC_Service\Win32-Release\service_provider.dll build-temp\x86\znc
+copy build-temp\ZNC_Service\x64-Release\service_provider.dll build-temp\x64\znc
 copy dependencies\lib_x86\release\*.dll build-temp\x86\znc
 copy dependencies\lib_x64\release\*.dll build-temp\x64\znc
 
