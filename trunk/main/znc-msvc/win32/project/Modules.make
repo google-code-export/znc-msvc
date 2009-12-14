@@ -64,7 +64,7 @@ BUILDOUT=..\..\..\build-out\$(CFG)\modules
 
 # Win32-Release configuration
 !IF "$(VALID_CFG)" == "FALSE" || "$(CFG)" == "Win32-Release"
-DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "MODULES_ADMIN_EXPORTS" \
+DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
 /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
 /D "HAVE_IPV6" /D "HAVE_ARES" /D "_WINDLL"
 CXXFLAGS=/O2 /Oi /GL /Gy /EHsc /MD /W3 /c /TP /nologo
@@ -74,7 +74,7 @@ LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOG
 
 # Win32-Debug configuration
 !IF "$(CFG)" == "Win32-Debug"
-DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "MODULES_ADMIN_EXPORTS" \
+DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" \
 /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
 /D "HAVE_IPV6" /D "HAVE_ARES" /D "_WINDLL"
 CXXFLAGS=/Od /Gm /EHsc /MDd /RTC1 /W3 /c /Zi /TP /nologo
@@ -83,7 +83,7 @@ LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /M
 
 # x64-Release configuration
 !IF "$(CFG)" == "x64-Release"
-DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "MODULES_ADMIN_EXPORTS" \
+DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
 /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
 /D "HAVE_IPV6" /D "_WINDLL"
 CXXFLAGS=/O2 /Oi /GL /Gy /EHsc /MD /W3 /c /TP /nologo
@@ -93,7 +93,7 @@ LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOG
 
 # x64-Debug configuration
 !IF "$(CFG)" == "x64-Debug"
-DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "MODULES_ADMIN_EXPORTS" \
+DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" \
 /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
 /D "HAVE_IPV6" /D "_WINDLL"
 CXXFLAGS=/Od /Gm /EHsc /MDd /RTC1 /W3 /c /Zi /TP /nologo
@@ -108,7 +108,7 @@ DLLS=$(MAKDIR)\admin.dll \
 $(MAKDIR)\adminlog.dll \
 $(MAKDIR)\autoattach.dll \
 $(MAKDIR)\autocycle.dll \
-$(MAKDIR)\autoop.dll 
+$(MAKDIR)\autoop.dll \
 $(MAKDIR)\autoreply.dll \
 $(MAKDIR)\away.dll \
 $(MAKDIR)\awaynick.dll \
@@ -124,7 +124,7 @@ $(MAKDIR)\colloquy.dll \
 $(MAKDIR)\crypt.dll \
 $(MAKDIR)\extra \
 $(MAKDIR)\fail2ban.dll \
-$(MAKDIR)\fish.dll \
+#$(MAKDIR)\fish.dll \
 $(MAKDIR)\fixfreenode.dll \
 $(MAKDIR)\fix_lagchk.dll \
 $(MAKDIR)\flooddetach.dll \
@@ -170,7 +170,7 @@ OBJS=$(MAKDIR)\admin.obj \
 $(MAKDIR)\adminlog.obj \
 $(MAKDIR)\autoattach.obj \
 $(MAKDIR)\autocycle.obj \
-$(MAKDIR)\autoop.obj 
+$(MAKDIR)\autoop.obj \
 $(MAKDIR)\autoreply.obj \
 $(MAKDIR)\away.obj \
 $(MAKDIR)\awaynick.obj \
@@ -186,7 +186,7 @@ $(MAKDIR)\colloquy.obj \
 $(MAKDIR)\crypt.obj \
 $(MAKDIR)\extra \
 $(MAKDIR)\fail2ban.obj \
-$(MAKDIR)\fish.obj \
+#$(MAKDIR)\fish.obj \
 $(MAKDIR)\fixfreenode.obj \
 $(MAKDIR)\fix_lagchk.obj \
 $(MAKDIR)\flooddetach.obj \
