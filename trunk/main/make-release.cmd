@@ -2,7 +2,7 @@
 
 echo ************************ Checking folders... *************************
 
-FOR %%d in (build-out\Win32-Release build-out\x64-Release build-temp\ZNC_Service\Win32-Release build-temp\ZNC_Service\x64-Release) DO if not exist %%d set xf=%%d && goto :missingfolder
+FOR %%d in (build-out\Win32-Release build-out\x64-Release) DO if not exist %%d set xf=%%d && goto :missingfolder
 
 goto :foldersok
 :missingfolder
@@ -32,10 +32,13 @@ echo ************************ Copying binaries... *************************
 
 copy build-out\Win32-Release\ZNC* build-temp\x86\znc
 copy build-out\x64-Release\ZNC* build-temp\x64\znc
+
+copy build-out\Win32-Release\service_provider.dll build-temp\x86\znc
+copy build-out\x64-Release\service_provider.dll build-temp\x64\znc
+
 copy build-out\Win32-Release\modules\* build-temp\x86\znc\modules
 copy build-out\x64-Release\modules\* build-temp\x64\znc\modules
-copy build-temp\ZNC_Service\Win32-Release\service_provider.dll build-temp\x86\znc
-copy build-temp\ZNC_Service\x64-Release\service_provider.dll build-temp\x64\znc
+
 copy dependencies\lib_x86\release\*.dll build-temp\x86\znc
 copy dependencies\lib_x64\release\*.dll build-temp\x64\znc
 

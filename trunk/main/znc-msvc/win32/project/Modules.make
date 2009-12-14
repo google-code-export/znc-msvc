@@ -46,7 +46,8 @@ CFG = Win32-Release
 INCLUDES=/I "..\..\\" /I "..\src" /I "..\..\..\dependencies\include"
 LIBS=libeay32.lib ssleay32.lib ZNC.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ws2_32.lib
 RSP=_ZNCModules.rsp
-LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)" /LIBPATH:"..\..\..\dependencies\lib_x86\release"
+DEFINES=/D "WIN32" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" \
+ /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6"
 
 # Intermediate directory for .obj and .dll files
 INTDIR="..\..\..\build-temp\Modules\$(CFG)\\"
@@ -57,48 +58,51 @@ MAKDIR=..\..\..\build-temp\Modules\$(CFG)
 
 BUILDOUT=..\..\..\build-out\$(CFG)\modules
 
+# -----------------------------
+# Split configuration specific macros
+# -----------------------------
+
+# Win32-Release configuration (default)
+PLATFORM=x86
+PLATFORM_CFG=release
+
+# Win32-Debug configuration
+!IF "$(CFG)" == "Win32-Debug"
+PLATFORM_CFG=debug
+!ENDIF
+
+# x64-Release configuration
+!IF "$(CFG)" == "x64-Release"
+PLATFORM=x64
+!ENDIF
+
+# x64-Debug configuration
+!IF "$(CFG)" == "x64-Debug"
+PLATFORM=x64
+PLATFORM_CFG=debug
+!ENDIF
 
 # -----------------------------
 # Configuration specific macros
 # -----------------------------
 
-# Win32-Release configuration
-!IF "$(VALID_CFG)" == "FALSE" || "$(CFG)" == "Win32-Release"
-DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
-/D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
-/D "HAVE_IPV6" /D "HAVE_ARES" /D "_WINDLL"
+!IF "$(PLATFORM)" == "x86"
+DEFINES=$(DEFINES) /D "HAVE_ARES"
+!ENDIF
+
+!IF "$(PLATFORM_CFG)" == "release"
+DEFINES=$(DEFINES) /D "NDEBUG"
 CXXFLAGS=/O2 /Oi /GL /Gy /EHsc /MD /W3 /c /TP /nologo
-LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOGO \
-/DYNAMICBASE /NXCOMPAT /MACHINE:X86
+LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:$(PLATFORM)
 !ENDIF
 
-# Win32-Debug configuration
-!IF "$(CFG)" == "Win32-Debug"
-DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" \
-/D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
-/D "HAVE_IPV6" /D "HAVE_ARES" /D "_WINDLL"
+!IF "$(PLATFORM_CFG)" == "debug"
+DEFINES=$(DEFINES) /D "_DEBUG"
 CXXFLAGS=/Od /Gm /EHsc /MDd /RTC1 /W3 /c /Zi /TP /nologo
-LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:X86 /DEBUG
+LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:$(PLATFORM) /DEBUG
 !ENDIF
 
-# x64-Release configuration
-!IF "$(CFG)" == "x64-Release"
-DEFINES=/D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" \
-/D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
-/D "HAVE_IPV6" /D "_WINDLL"
-CXXFLAGS=/O2 /Oi /GL /Gy /EHsc /MD /W3 /c /TP /nologo
-LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOGO \
-/DYNAMICBASE /NXCOMPAT /MACHINE:X64
-!ENDIF
-
-# x64-Debug configuration
-!IF "$(CFG)" == "x64-Debug"
-DEFINES=/D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" \
-/D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "_MODULES" /D "WIN_MSVC" /D "HAVE_LIBSSL" \
-/D "HAVE_IPV6" /D "_WINDLL"
-CXXFLAGS=/Od /Gm /EHsc /MDd /RTC1 /W3 /c /Zi /TP /nologo
-LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:X64 /DEBUG
-!ENDIF
+LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)" /LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\release"
 
 # --------------------
 # List of target files
@@ -124,7 +128,7 @@ $(MAKDIR)\colloquy.dll \
 $(MAKDIR)\crypt.dll \
 $(MAKDIR)\extra \
 $(MAKDIR)\fail2ban.dll \
-#$(MAKDIR)\fish.dll \
+$(MAKDIR)\fish.dll \
 $(MAKDIR)\fixfreenode.dll \
 $(MAKDIR)\fix_lagchk.dll \
 $(MAKDIR)\flooddetach.dll \
@@ -186,7 +190,7 @@ $(MAKDIR)\colloquy.obj \
 $(MAKDIR)\crypt.obj \
 $(MAKDIR)\extra \
 $(MAKDIR)\fail2ban.obj \
-#$(MAKDIR)\fish.obj \
+$(MAKDIR)\fish.obj \
 $(MAKDIR)\fixfreenode.obj \
 $(MAKDIR)\fix_lagchk.obj \
 $(MAKDIR)\flooddetach.obj \
@@ -226,7 +230,7 @@ $(MAKDIR)\extra\listsockets.obj \
 $(MAKDIR)\extra\log.obj \
 $(MAKDIR)\extra\motdfile.obj \
 $(MAKDIR)\extra\notify_connect.obj \
-$(MAKDIR)\extra\send_raw.obj \
+$(MAKDIR)\extra\send_raw.obj
 
 
 # ----------------
