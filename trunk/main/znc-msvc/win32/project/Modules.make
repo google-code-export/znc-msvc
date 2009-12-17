@@ -45,9 +45,13 @@ CFG = Win32-Release
 
 INCLUDES=/I "..\..\\" /I "..\src" /I "..\..\..\dependencies\include"
 LIBS=libeay32.lib ssleay32.lib ZNC.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ws2_32.lib
-RSP=_ZNCModules.rsp
+LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)"
 DEFINES=/D "WIN32" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" \
  /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6"
+CXXFLAGS=/c /W3 /EHsc /TP /nologo
+LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /NOLOGO /DYNAMICBASE /NXCOMPAT
+
+RSP=_ZNCModules.rsp
 
 # Intermediate directory for .obj and .dll files
 INTDIR="..\..\..\build-temp\Modules\$(CFG)\\"
@@ -58,9 +62,9 @@ MAKDIR=..\..\..\build-temp\Modules\$(CFG)
 
 BUILDOUT=..\..\..\build-out\$(CFG)\modules
 
-# -----------------------------
+# -----------------------------------
 # Split configuration specific macros
-# -----------------------------
+# -----------------------------------
 
 # Win32-Release configuration (default)
 PLATFORM=x86
@@ -92,17 +96,19 @@ DEFINES=$(DEFINES) /D "HAVE_ARES"
 
 !IF "$(PLATFORM_CFG)" == "release"
 DEFINES=$(DEFINES) /D "NDEBUG"
-CXXFLAGS=/O2 /Oi /GL /Gy /EHsc /MD /W3 /c /TP /nologo
-LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:$(PLATFORM)
+CXXFLAGS=$(CXXFLAGS) /O2 /Oi /GL /Gy /MD
+LINKFLAGS=$(LINKFLAGS) /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG /MACHINE:$(PLATFORM)
+LIBPATHS=$(LIBPATHS) /LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\release"
 !ENDIF
 
 !IF "$(PLATFORM_CFG)" == "debug"
 DEFINES=$(DEFINES) /D "_DEBUG"
-CXXFLAGS=/Od /Gm /EHsc /MDd /RTC1 /W3 /c /Zi /TP /nologo
-LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /INCREMENTAL /NOLOGO /DYNAMICBASE /NXCOMPAT /MACHINE:$(PLATFORM) /DEBUG
+CXXFLAGS=$(CXXFLAGS) /Od /Gm /MDd /RTC1 /Zi
+LINKFLAGS=$(LINKFLAGS) /INCREMENTAL /DEBUG /MACHINE:$(PLATFORM)
+LIBPATHS=$(LIBPATHS) /LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\debug" \
+/LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\release"
 !ENDIF
 
-LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)" /LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\release"
 
 # --------------------
 # List of target files
@@ -237,7 +243,7 @@ $(MAKDIR)\extra\send_raw.obj
 # Makefile targets
 # ----------------
 
-build: _dir_check _pch $(DLLS)
+build: _dir_check $(DLLS)
 
 clean:
   echo Deleting intermediate files for configuration: $(CFG)
@@ -249,22 +255,10 @@ _dir_check:
   if not exist $(INTDIR) md $(INTDIR)
   if not exist $(INTDIR)\extra md $(INTDIR)\extra
   if not exist $(BUILDOUT) md $(BUILDOUT)
-  
-_pch:
-  if exist $(RSP) del $(RSP)
-  echo $(CXXFLAGS) >>$(RSP)
-  echo $(INCLUDES) >>$(RSP)
-  echo $(DEFINES) >>$(RSP)
-  echo /Yc"stdafx.hpp" >>$(RSP)
-  echo /Fp$(INTDIR)ZNC_mods.pch >>$(RSP)
-  echo /Fo$(INTDIR) >>$(RSP)
-  echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
-  echo ..\..\stdafx.cpp >>$(RSP)
-  cl @$(RSP)
-  del $(RSP)
 
 # compile .obj files using inference rules
 $(OBJS):
+
 
 # ---------------
 # Inference rules
