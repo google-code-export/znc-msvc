@@ -39,7 +39,6 @@ static void GenerateHelp(const char *appname) {
 
 // removed: die() rehash() isRoot()
 
-
 // false => exit main select() loop.
 bool g_bMainLoop = true;
 
@@ -190,6 +189,7 @@ int main(int argc, char** argv) {
 	}
 
 	// removed: checks for isRoot, bForeground, forking and signal handlers
+
 
 	int iRet = 0;
 
