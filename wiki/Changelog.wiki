@@ -1,15 +1,17 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
-== 2009-12-?? (0.078) ==
-  * Updated to official SVN revision ???? (= official ZNC version 0.078)
+== 2009-12-18 (0.078) ==
+  * Updated to official SVN revision 1674 (= official ZNC version 0.078)
   * Fixed two crash bugs in the identserver module
   * Control + C gracefully shuts down ZNC (patch by laszlo.tamas.szabo!)
   * znc_service: Stopping the service gracefully shuts down (patch by laszlo.tamas.szabo!)
   * Updated OpenSSL libraries to 0.9.8l
   * Updated c-ares library to 1.7.0
   * Updated project files and uploaded them to SVN (laszlo.tamas.szabo, ingmar.runge), building ZNC-MSVC at home is now very [BuildingZNC easy]
-  * _TBA_
+  * Made a nice build and packaging/release system. (laszlo.tamas.szabo, ingmar.runge)
+
+*Please report any problems [http://code.google.com/p/znc-msvc/source/list here] or on IRC. Thanks!*
 
 == 2009-10-31 (0.077-r 1654) ==
   * Updated to official SVN revision 1654. Props to the ZNC team!
