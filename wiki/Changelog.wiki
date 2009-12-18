@@ -2,7 +2,7 @@
 #labels Featured,Phase-Support
 
 == 2009-12-18 (0.078) ==
-  * Updated to official SVN revision 1674 (= official ZNC version 0.078)
+  * Updated to official SVN revision 1674 (= official ZNC version [http://sourceforge.net/projects/znc/files/znc/0.078/znc-0.078-changelog.txt/view 0.078])
   * Fixed two crash bugs in the identserver module
   * Control + C gracefully shuts down ZNC (patch by laszlo.tamas.szabo!)
   * znc_service: Stopping the service gracefully shuts down (patch by laszlo.tamas.szabo!)
