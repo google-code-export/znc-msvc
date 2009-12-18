@@ -1,0 +1,111 @@
+# Support out-of-tree builds
+srcdir      := @srcdir@
+VPATH       := @srcdir@
+
+prefix      := @prefix@
+exec_prefix := @exec_prefix@
+datarootdir := @datarootdir@
+bindir      := @bindir@
+datadir     := @datadir@
+sysconfdir  := @sysconfdir@
+libdir      := @libdir@
+includedir  := @includedir@
+sbindir     := @sbindir@
+localstatedir := @localstatedir@
+CXX      := @CXX@
+CXXFLAGS := @CPPFLAGS@ @CXXFLAGS@
+LDFLAGS  := @LDFLAGS@
+LIBS     := @LIBS@
+LIBZNC   := @LIBZNC@
+LIBZNCDIR:= @LIBZNCDIR@
+PKGCONFIGDIR := $(libdir)/pkgconfig
+
+LIB_SRCS  := ZNCString.cpp Csocket.cpp znc.cpp User.cpp IRCSock.cpp Client.cpp DCCBounce.cpp \
+	DCCSock.cpp Chan.cpp Nick.cpp Server.cpp Modules.cpp MD5.cpp Buffer.cpp Utils.cpp \
+	FileUtils.cpp HTTPSock.cpp Template.cpp ClientCommand.cpp Socket.cpp SHA256.cpp
+BIN_SRCS  := main.cpp
+LIB_OBJS  := $(patsubst %cpp,%o,$(LIB_SRCS))
+BIN_OBJS  := $(patsubst %cpp,%o,$(BIN_SRCS))
+CLEAN     := znc *.o core core.*
+DISTCLEAN := Makefile config.log config.status znc-config znc-buildmod .depend \
+	modules/.depend modules/Makefile man/Makefile znc.pc znc-uninstalled.pc
+
+.PHONY: all man modules clean distclean install
+
+all: znc man @MODTARGET@ $(LIBZNC)
+
+ifeq "$(LIBZNC)" ""
+OBJS := $(BIN_OBJS) $(LIB_OBJS)
+
+znc: $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+else
+znc: $(BIN_OBJS) $(LIBZNC)
+	$(CXX) $(LDFLAGS) -o $@ $(BIN_OBJS) -L. -lznc -Wl,-rpath,$(LIBZNCDIR) $(LIBS)
+
+$(LIBZNC): $(LIB_OBJS)
+	$(CXX) $(LDFLAGS) -shared -o $@ $(LIB_OBJS) $(LIBS)
+endif
+
+man:
+	@$(MAKE) -C man
+
+modules: $(LIBZNC)
+	@if test -n "@MODTARGET@"; then \
+		$(MAKE) -C modules; \
+	else \
+		echo "Modules are not enabled"; \
+	fi
+
+clean:
+	rm -rf $(CLEAN)
+	@if test -n "@MODTARGET@"; then \
+		$(MAKE) -C modules clean; \
+	fi
+	@$(MAKE) -C man clean
+
+distclean: clean
+	rm -rf $(DISTCLEAN)
+
+%.o: %.cpp Makefile
+	@mkdir -p .depend
+	$(CXX) $(CXXFLAGS) -c -o $@ $< -MMD -MF .depend/$@.dep
+
+install: znc $(LIBZNC)
+	mkdir -p $(DESTDIR)$(bindir)
+	mkdir -p $(DESTDIR)$(includedir)/znc
+	mkdir -p $(DESTDIR)$(PKGCONFIGDIR)
+	install -m 0755 znc $(DESTDIR)$(bindir)
+	install -m 0755 znc-config $(DESTDIR)$(bindir)
+	install -m 0755 znc-buildmod $(DESTDIR)$(bindir)
+	install -m 0644 $(srcdir)/*.h $(DESTDIR)$(includedir)/znc
+	install -m 0644 znc.pc $(DESTDIR)$(PKGCONFIGDIR)
+	@if test -n "@MODTARGET@"; then \
+		$(MAKE) -C modules install DESTDIR=$(DESTDIR); \
+	fi
+	if test -n "$(LIBZNC)"; then \
+		mkdir -p $(DESTDIR)$(LIBZNCDIR) || exit 1 ; \
+		install -m 0755 $(LIBZNC) $(DESTDIR)$(LIBZNCDIR) || exit 1 ; \
+	fi
+	@$(MAKE) -C man install DESTDIR=$(DESTDIR)
+
+uninstall:
+	rm $(DESTDIR)$(bindir)/znc
+	rm $(DESTDIR)$(bindir)/znc-config
+	rm $(DESTDIR)$(bindir)/znc-buildmod
+	rm $(DESTDIR)$(includedir)/znc/*.h
+	rm $(DESTDIR)$(PKGCONFIGDIR)/znc.pc
+	if test -n "$(LIBZNC)"; then \
+		rm $(DESTDIR)$(LIBZNCDIR)/$(LIBZNC) || exit 1 ; \
+		rmdir $(DESTDIR)$(LIBZNCDIR) || exit 1 ; \
+	fi
+	@$(MAKE) -C man uninstall DESTDIR=$(DESTDIR)
+	@if test -n "modules"; then \
+		$(MAKE) -C modules uninstall DESTDIR=$(DESTDIR); \
+	fi
+	rmdir $(DESTDIR)$(bindir)
+	rmdir $(DESTDIR)$(includedir)/znc
+	rmdir $(DESTDIR)$(PKGCONFIGDIR)
+	@echo "Successfully uninstalled, but emptry directories were left behind"
+
+-include $(wildcard .depend/*.dep)
