@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZNC", "ZNC.vcproj", "{91EC5E7F-9220-4C8B-8519-85DF01DA7764}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9775CB8F-D77C-40D2-B484-39892A723CD1} = {9775CB8F-D77C-40D2-B484-39892A723CD1}
@@ -18,6 +18,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Modules", "Modules.vcproj",
 	ProjectSection(ProjectDependencies) = postProject
 		{1D726E51-4E33-4616-B34B-B6066D94181B} = {1D726E51-4E33-4616-B34B-B6066D94181B}
 		{91EC5E7F-9220-4C8B-8519-85DF01DA7764} = {91EC5E7F-9220-4C8B-8519-85DF01DA7764}
+		{9775CB8F-D77C-40D2-B484-39892A723CD1} = {9775CB8F-D77C-40D2-B484-39892A723CD1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "znc_gui", "..\znc_gui\znc_gui2.vcproj", "{3106363A-2809-4864-AAF2-D8DEC9B70462}"
+	ProjectSection(ProjectDependencies) = postProject
 		{9775CB8F-D77C-40D2-B484-39892A723CD1} = {9775CB8F-D77C-40D2-B484-39892A723CD1}
 	EndProjectSection
 EndProject
@@ -61,6 +66,12 @@ Global
 		{1F28EB13-7603-4103-97E7-E8DC786F63B7}.Release|Win32.Build.0 = Release|Win32
 		{1F28EB13-7603-4103-97E7-E8DC786F63B7}.Release|x64.ActiveCfg = Release|x64
 		{1F28EB13-7603-4103-97E7-E8DC786F63B7}.Release|x64.Build.0 = Release|x64
+		{3106363A-2809-4864-AAF2-D8DEC9B70462}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3106363A-2809-4864-AAF2-D8DEC9B70462}.Debug|Win32.Build.0 = Debug|Win32
+		{3106363A-2809-4864-AAF2-D8DEC9B70462}.Debug|x64.ActiveCfg = Debug|Win32
+		{3106363A-2809-4864-AAF2-D8DEC9B70462}.Release|Win32.ActiveCfg = Release|Win32
+		{3106363A-2809-4864-AAF2-D8DEC9B70462}.Release|Win32.Build.0 = Release|Win32
+		{3106363A-2809-4864-AAF2-D8DEC9B70462}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
