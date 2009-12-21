@@ -2060,6 +2060,7 @@ int Csock::GetPending()
 
 int Csock::GetAddrInfo( const CS_STRING & sHostname, CSSockAddr & csSockAddr )
 {
+#if (WINVER >= 0x0600)
 #ifdef HAVE_IPV6
 	if( csSockAddr.GetAFRequire() != AF_INET && inet_pton( AF_INET6, sHostname.c_str(), csSockAddr.GetAddr6() ) > 0 )
 	{
@@ -2074,6 +2075,7 @@ int Csock::GetAddrInfo( const CS_STRING & sHostname, CSSockAddr & csSockAddr )
 #endif /* HAVE_IPV6 */
 		return( 0 );
 	}
+#endif
 
 #ifdef HAVE_C_ARES
 	if( GetType() != LISTENER )
