@@ -190,7 +190,6 @@ int main(int argc, char** argv) {
 
 	// removed: checks for isRoot, bForeground, forking and signal handlers
 
-
 	int iRet = 0;
 
 	try {
