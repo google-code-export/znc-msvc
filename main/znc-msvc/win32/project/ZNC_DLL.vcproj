@@ -124,7 +124,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES;CARES_STATICLIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -144,7 +144,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib"
+				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib libcares.lib"
 				OutputFile="$(OutDir)\ZNC.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x64\debug;..\..\..\dependencies\lib_x64\release"
@@ -286,7 +286,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES;CARES_STATICLIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -305,7 +305,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib"
+				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib libcares.lib"
 				OutputFile="$(OutDir)\ZNC.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x64\release"

@@ -47,7 +47,7 @@ INCLUDES=/I "..\..\\" /I "..\src" /I "..\..\..\dependencies\include"
 LIBS=libeay32.lib ssleay32.lib ZNC.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ws2_32.lib
 LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)"
 DEFINES=/D "WIN32" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" \
- /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6"
+ /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6" /D "HAVE_ARES" /D "CARES_STATICLIB"
 CXXFLAGS=/c /W3 /EHsc /TP /nologo
 LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /NOLOGO /DYNAMICBASE /NXCOMPAT
 
@@ -89,10 +89,6 @@ PLATFORM_CFG=debug
 # -----------------------------
 # Configuration specific macros
 # -----------------------------
-
-!IF "$(PLATFORM)" == "x86"
-DEFINES=$(DEFINES) /D "HAVE_ARES"
-!ENDIF
 
 !IF "$(PLATFORM_CFG)" == "release"
 DEFINES=$(DEFINES) /D "NDEBUG"
