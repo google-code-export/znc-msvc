@@ -1,6 +1,10 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2009-12-21 (0.079-r 1685) (x86 only) ==
+  * Updated to official SVN revision 1685
+  * Worked around c-ares crash bug, issue 22 for details
+
 == 2009-12-18 (0.078) ==
   * Updated to official SVN revision 1674 (= official ZNC version [http://sourceforge.net/projects/znc/files/znc/0.078/znc-0.078-changelog.txt/view 0.078])
   * Fixed two crash bugs in the identserver module
