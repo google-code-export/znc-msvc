@@ -8,7 +8,7 @@
 
 === Building dependencies ===
   * *OpenSSL*: Get OpenSSL from http://www.openssl.org/source/ (e.g. _openssl-0.9.8l.tar.gz_), download, extract and build according to _INSTALL.W32_ and _INSTALL.W64_. Please note that there is a bug with the x64 build process and recent Platform SDKs that requires you to comment out all lines with `$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);` in _util\pl\VC-32.pl_.
-  * *C-ares*: Get c-ares from http://c-ares.haxx.se/ (e.g. _c-ares-1.7.0.tar.gz_, don't use an SVN version, they often do not build on Windows), download, extract and build using VC command line and the `nmake -f Makefile.msvc` command.
+  * *C-ares*: Get c-ares from http://c-ares.haxx.se/ (e.g. _c-ares-1.7.1.tar.gz_ (minimum required version due to issue 22), don't use a snapshot release, they often do not build on Windows), download, extract and build using VC command line and the `nmake -f Makefile.msvc` command *or* via the included project files.
 
 === Getting the ZNC source code ===
 Follow the [http://code.google.com/p/znc-msvc/source/checkout SVN checkout instructions] here, or get a source code zip file from the [http://code.google.com/p/znc-msvc/downloads/list downloads] page, if there is one.
