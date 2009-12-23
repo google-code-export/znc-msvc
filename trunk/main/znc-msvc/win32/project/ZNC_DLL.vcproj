@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES;CARES_STATICLIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib libcares.lib"
+				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib cares.lib"
 				OutputFile="$(OutDir)\ZNC.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x86\debug;..\..\..\dependencies\lib_x86\release"
@@ -94,7 +94,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out&#x0D;&#x0A;xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="set OUTDIR=$(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;set RELEASELIBS=$(SolutionDir)..\..\..\dependencies\lib_x86\release&#x0D;&#x0A;set DEBUGLIBS=$(SolutionDir)..\..\..\dependencies\lib_x86\debug&#x0D;&#x0A;&#x0D;&#x0A;xcopy /y $(TargetPath) %OUTDIR%&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb %OUTDIR%&#x0D;&#x0A;&#x0D;&#x0A;for %%f in (libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  if exist  %DEBUGLIBS%\%%f (&#x0D;&#x0A;    xcopy /y %DEBUGLIBS%\%%f %OUTDIR%&#x0D;&#x0A;  ) else (&#x0D;&#x0A;    xcopy /y %RELEASELIBS%\%%f %OUTDIR%&#x0D;&#x0A;  )&#x0D;&#x0A;)&#x0D;&#x0A;if exist %DEBUGLIBS%\caresd.dll (&#x0D;&#x0A;  xcopy /y %DEBUGLIBS%\caresd.dll %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;  xcopy /y %RELEASELIBS%\cares.dll %OUTDIR%&#x0D;&#x0A;)"
 			/>
 		</Configuration>
 		<Configuration
@@ -124,7 +124,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES;CARES_STATICLIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -144,7 +144,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib libcares.lib"
+				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib cares.lib"
 				OutputFile="$(OutDir)\ZNC.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x64\debug;..\..\..\dependencies\lib_x64\release"
@@ -173,7 +173,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out&#x0D;&#x0A;xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="set OUTDIR=$(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;set RELEASELIBS=$(SolutionDir)..\..\..\dependencies\lib_x64\release&#x0D;&#x0A;set DEBUGLIBS=$(SolutionDir)..\..\..\dependencies\lib_x64\debug&#x0D;&#x0A;&#x0D;&#x0A;xcopy /y $(TargetPath) %OUTDIR%&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb %OUTDIR%&#x0D;&#x0A;&#x0D;&#x0A;for %%f in (libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  if exist  %DEBUGLIBS%\%%f (&#x0D;&#x0A;    xcopy /y %DEBUGLIBS%\%%f %OUTDIR%&#x0D;&#x0A;  ) else (&#x0D;&#x0A;    xcopy /y %RELEASELIBS%\%%f %OUTDIR%&#x0D;&#x0A;  )&#x0D;&#x0A;)&#x0D;&#x0A;if exist %DEBUGLIBS%\caresd.dll (&#x0D;&#x0A;  xcopy /y %DEBUGLIBS%\caresd.dll %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;  xcopy /y %RELEASELIBS%\cares.dll %OUTDIR%&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -204,7 +204,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES;CARES_STATICLIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -223,7 +223,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib libcares.lib"
+				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib cares.lib"
 				OutputFile="$(OutDir)\ZNC.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x86\release"
@@ -254,7 +254,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out&#x0D;&#x0A;xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;for %%f in (cares.dll libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x86\release\%%f $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -286,7 +286,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="..\..\;..\src;..\..\..\dependencies\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES;CARES_STATICLIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZNC_DLL_EXPORTS;WIN_MSVC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_ARES"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -305,7 +305,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib libcares.lib"
+				AdditionalDependencies="ws2_32.lib shlwapi.lib libeay32.lib ssleay32.lib cares.lib"
 				OutputFile="$(OutDir)\ZNC.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\dependencies\lib_x64\release"
@@ -336,7 +336,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out&#x0D;&#x0A;md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)znc.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;for %%f in (cares.dll libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x64\release\%%f $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

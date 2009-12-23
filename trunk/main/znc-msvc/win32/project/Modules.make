@@ -157,7 +157,6 @@ $(MAKDIR)\stickychan.dll \
 $(MAKDIR)\twitter.dll \
 $(MAKDIR)\watch.dll \
 $(MAKDIR)\watch_only_detached.dll \
-$(MAKDIR)\webadmin \
 $(MAKDIR)\webadmin.dll \
 $(MAKDIR)\extra\antiidle.dll \
 $(MAKDIR)\extra\autovoice.dll \
@@ -219,7 +218,6 @@ $(MAKDIR)\stickychan.obj \
 $(MAKDIR)\twitter.obj \
 $(MAKDIR)\watch.obj \
 $(MAKDIR)\watch_only_detached.obj \
-$(MAKDIR)\webadmin \
 $(MAKDIR)\webadmin.obj \
 $(MAKDIR)\extra\antiidle.obj \
 $(MAKDIR)\extra\autovoice.obj \

@@ -28,6 +28,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Compiling Event Log message DLL"
 				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x86 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
 			/>
 			<Tool
@@ -92,7 +93,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -104,7 +105,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x86 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
+				Description="Compiling Event Log message DLL"
+				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x64 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -169,7 +171,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -182,6 +184,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Compiling Event Log message DLL"
 				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x86 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
 			/>
 			<Tool
@@ -248,7 +251,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -261,7 +264,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x86 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
+				Description="Compiling Event Log message DLL"
+				CommandLine="mc -r $(IntDir) -h $(SolutionDir)\..\znc_service\ -U $(SolutionDir)\..\znc_service\service_provider.mc&#x0D;&#x0A;rc $(IntDir)\service_provider.rc&#x0D;&#x0A;link /dll /noentry /machine:x64 /out:$(IntDir)\service_provider.dll $(IntDir)\service_provider.res&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -328,7 +332,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(IntDir)\service_provider.dll $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
