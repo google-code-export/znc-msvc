@@ -91,7 +91,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\"
 			/>
 		</Configuration>
 		<Configuration
@@ -167,7 +167,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\"
 			/>
 		</Configuration>
 		<Configuration
@@ -245,7 +245,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\"
 			/>
 		</Configuration>
 		<Configuration
@@ -324,7 +324,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="md $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetDir)$(TargetName).exe $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\"
 			/>
 		</Configuration>
 	</Configurations>
