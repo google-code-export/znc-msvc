@@ -45,8 +45,18 @@ CZNCSock::~CZNCSock() {
 
 CSockManager::CSockManager() : TSocketManager<CZNCSock>() {
 #ifdef HAVE_ARES
-	int i = ares_init(&GetAres());
-	if (i != ARES_SUCCESS) {
+	bool bAresInit = true;
+	int i = ares_library_init(ARES_LIB_INIT_ALL);
+	if (i == ARES_SUCCESS)
+	{
+		i = ares_init(&GetAres());
+		if (i != ARES_SUCCESS)
+			bAresInit = false;
+	}
+	else
+		bAresInit = false;
+	if (!bAresInit)
+	{
 		CUtils::PrintError("Could not initialize c-ares: " + CString(ares_strerror(i)));
 		exit(-1);
 	}
@@ -57,6 +67,7 @@ CSockManager::CSockManager() : TSocketManager<CZNCSock>() {
 CSockManager::~CSockManager() {
 #ifdef HAVE_ARES
 	ares_destroy(GetAres());
+	ares_library_cleanup();
 #endif
 }
 

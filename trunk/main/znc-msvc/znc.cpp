@@ -1824,9 +1824,6 @@ bool CZNC::AddUser(CUser* pUser, CString& sErrorRet) {
 static CZNC* g_pZNC = NULL;
 CZNC& CZNC::Get() {
 	if(!g_pZNC) {
-#ifdef HAVE_ARES
-		ares_library_init(ARES_LIB_INIT_WIN32);
-#endif
 		g_pZNC = new CZNC();
 	}
 	return *g_pZNC;
