@@ -38,7 +38,7 @@ public:
 	void DeleteUsers();
 	void LoopDoMaintenance();
 #ifdef _WIN32
-	void CZNC::Loop(bool* bLoop);
+	void Loop(bool* bLoop);
 #else
 	void Loop();
 #endif
