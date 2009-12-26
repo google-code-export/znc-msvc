@@ -546,8 +546,8 @@ CBlowfish::CBlowfish(const CString & sPassword, int iEncrypt, const CString & sI
 	if (sIvec.length() >= 8) {
 		memcpy(m_ivec, sIvec.data(), 8);
 	}
-
-	BF_set_key(&m_bkey, sPassword.length(), (unsigned char *)sPassword.data());
+	
+	BF_set_key(&m_bkey, (int)sPassword.length(), (unsigned char *)sPassword.data());
 }
 
 CBlowfish::~CBlowfish() {
@@ -581,7 +581,7 @@ CString CBlowfish::MD5(const CString & sInput, bool bHexEncode) {
 
 //! output must be the same size as input
 void CBlowfish::Crypt(unsigned char *input, unsigned char *output, size_t ibytes) {
-	BF_cfb64_encrypt(input, output, ibytes, &m_bkey, m_ivec, &m_num, m_iEncrypt);
+	BF_cfb64_encrypt(input, output, (long)ibytes, &m_bkey, m_ivec, &m_num, m_iEncrypt);
 }
 
 //! must free result

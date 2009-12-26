@@ -211,7 +211,9 @@ struct _tdirent * readdir (_TDIR * dirp)
       /* Successfully got an entry. Everything about the file is
        * already appropriately filled in except the length of the
        * file name. */
-      dirp->dd_dir.d_namlen = _tcslen (dirp->dd_dta.name);
+      /* d_namelen is unsigned short which is fine because sizeof(name) == FILENAME_MAX
+	     (by default 260 chars) This typecast isn't necessary on Win32 only on Win64; */
+      dirp->dd_dir.d_namlen = (unsigned short)_tcslen (dirp->dd_dta.name);
       _tcscpy (dirp->dd_dir.d_name, dirp->dd_dta.name);
       return &dirp->dd_dir;
     }

@@ -1022,7 +1022,7 @@ void CIRCSock::SendAltNick(const CString& sBadNick) {
 	if (sBadNick.length() < sLastNick.length())
 		m_uMaxNickLen = sBadNick.length();
 
-	unsigned int uMax = m_uMaxNickLen;
+	unsigned int uMax = (unsigned int)(m_uMaxNickLen);
 
 	const CString& sConfNick = m_pUser->GetNick();
 	const CString& sAltNick  = m_pUser->GetAltNick();
