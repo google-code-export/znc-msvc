@@ -1,4 +1,4 @@
-/** @file
+(/** @file
 *
 *    Copyright (c) 1999-2009 Jim Hull <imaginos@imaginos.net>
 *    All rights reserved
@@ -957,7 +957,7 @@ int Csock::Accept( CS_STRING & sHost, u_short & iRPort )
 	{
 		struct sockaddr_in client;
 		socklen_t clen = sizeof( client );
-		iSock = accept( m_iReadSock, (struct sockaddr *) &client, &clen );
+		iSock = (int)( accept( m_iReadSock, (struct sockaddr *) &client, &clen ) );
 		if( iSock != -1 )
 		{
 			getpeername( iSock, (struct sockaddr *) &client, &clen );
@@ -971,7 +971,7 @@ int Csock::Accept( CS_STRING & sHost, u_short & iRPort )
 		char straddr[INET6_ADDRSTRLEN];
 		struct sockaddr_in6 client;
 		socklen_t clen = sizeof( client );
-		iSock = accept( m_iReadSock, (struct sockaddr *) &client, &clen );
+		iSock = (int)( accept( m_iReadSock, (struct sockaddr *) &client, &clen ) );
 		if( iSock != -1 )
 		{
 			getpeername( iSock, (struct sockaddr *) &client, &clen );
@@ -1405,7 +1405,8 @@ bool Csock::Write( const char *data, size_t len )
 	}
 #endif /* HAVE_LIBSSL */
 #ifdef _WIN32
-	int bytes = send( m_iWriteSock, m_sSend.data(), iBytesToSend, 0 );
+	// sending more than 2^31 chars is not possible and highly unlikely
+	int bytes = send( m_iWriteSock, m_sSend.data(), (int)( iBytesToSend ), 0 );
 #else
 	int bytes = write( m_iWriteSock, m_sSend.data(), iBytesToSend );
 #endif /* _WIN32 */
@@ -1818,7 +1819,7 @@ int Csock::PemPassCB( char *buf, int size, int rwflag, void *pcSocket )
 	memset( buf, '\0', size );
 	strncpy( buf, sPassword.c_str(), size );
 	buf[size-1] = '\0';
-	return( strlen( buf ) );
+	return( (int)( strlen( buf ) ) );
 }
 
 int Csock::CertVerifyCB( int preverify_ok, X509_STORE_CTX *x509_ctx )
@@ -2224,9 +2225,9 @@ void Csock::FREE_CTX()
 int Csock::SOCKET( bool bListen )
 {
 #ifdef HAVE_IPV6
-	int iRet = socket( ( GetIPv6() ? PF_INET6 : PF_INET ), SOCK_STREAM, IPPROTO_TCP );
+	int iRet = (int)( socket( ( GetIPv6() ? PF_INET6 : PF_INET ), SOCK_STREAM, IPPROTO_TCP ) );
 #else
-	int iRet = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+	int iRet = (int)( socket( PF_INET, SOCK_STREAM, IPPROTO_TCP ) );
 #endif /* HAVE_IPV6 */
 
 	if ( iRet >= 0 ) {

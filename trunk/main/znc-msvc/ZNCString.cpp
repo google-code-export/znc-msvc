@@ -957,7 +957,7 @@ void CString::Crypt(const CString& sPass, bool bEncrypt, const CString& sIvec) {
 		memcpy(szIvec, sIvec.data(), 8);
 	}
 
-	BF_set_key(&bKey, sPass.length(), (unsigned char*) sPass.data());
+	BF_set_key(&bKey, (int) sPass.length(), (unsigned char*) sPass.data());
 	unsigned int uPad = (length() % 8);
 
 	if (uPad) {
@@ -967,7 +967,7 @@ void CString::Crypt(const CString& sPass, bool bEncrypt, const CString& sIvec) {
 
 	size_t uLen = length();
 	unsigned char* szBuff = (unsigned char*) malloc(uLen);
-	BF_cbc_encrypt((const unsigned char*) data(), szBuff, uLen, &bKey, szIvec, ((bEncrypt) ? BF_ENCRYPT : BF_DECRYPT));
+	BF_cbc_encrypt((const unsigned char*) data(), szBuff, (long) uLen, &bKey, szIvec, ((bEncrypt) ? BF_ENCRYPT : BF_DECRYPT));
 
 	clear();
 	append((const char*) szBuff, uLen);

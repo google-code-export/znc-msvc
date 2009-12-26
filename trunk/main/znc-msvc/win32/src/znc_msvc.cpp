@@ -118,7 +118,8 @@ std::string getpass(const char *prompt)
 		return NULL;
 	}
 
-	if(WriteConsole(out, prompt, strlen(prompt), &count, NULL))
+	// the total size of the buffer must be less than 64K chars
+	if(WriteConsole(out, prompt, DWORD(strlen(prompt)), &count, NULL))
 	{
 		int istty = (GetFileType(in) == FILE_TYPE_CHAR);
 		DWORD old_mode;
