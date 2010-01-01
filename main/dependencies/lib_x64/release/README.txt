@@ -1,7 +1,8 @@
 Copy the dependencies' release libraries here.
 
 Copy these file here:
-	[c-ares does not properly support x64 builds on Windows right now, so we don't use c-ares for x64 builds]
+	c-ares\vc\cares\lib-release-x64\libcares.lib
+		(built using "nmake -f Makefile.msvc" from the x64 VS Command Line or the vc6cares.dsw project file)
 
 	openssl\out32dll\libeay32.{dll,dll.manifest,exp,lib}
 	openssl\out32dll\ssleay32.{dll,dll.manifest,exp,lib}
