@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009  See the AUTHORS file for details.
+ * Copyright (C) 2004-2010  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -11,7 +11,6 @@
 #include "Chan.h"
 #include "DCCBounce.h"
 #include "IRCSock.h"
-#include "Timers.h"
 #include "User.h"
 #include "znc.h"
 
