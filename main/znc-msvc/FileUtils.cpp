@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009  See the AUTHORS file for details.
+ * Copyright (C) 2004-2010  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -207,8 +207,7 @@ bool CFile::Move(const CString& sOldFileName, const CString& sNewFileName, bool 
 		return false;
 	}
 
-	//CString sNewLongName = (sNewFileName[0] == '/') ? sNewFileName : m_sPath + "/" + sNewFileName;
-	return (rename(sOldFileName.c_str(), sNewFileName.c_str()) == 0) ? true : false;
+	return (rename(sOldFileName.c_str(), sNewFileName.c_str()) == 0);
 #else
 	// msvc's rename() doesn't seem to overwrite files. d'oh.
 
