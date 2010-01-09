@@ -57,9 +57,9 @@ public:
 	{
 		if( sArgs == CRYPT_ASK_PASS )
 		{
-			char *pPass = getpass( "Enter pass for savebuff: " );
-			if( pPass )
-				m_sPassword = CBlowfish::MD5( pPass );
+			string sPass = getpass( "Enter pass for savebuff: " );
+			if( !sPass.empty() )
+				m_sPassword = CBlowfish::MD5( sPass );
 			else
 			{
 				m_bBootError = true;
