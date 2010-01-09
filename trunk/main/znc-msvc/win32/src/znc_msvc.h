@@ -41,7 +41,7 @@ ZNC_API struct tm* localtime_r(const time_t *clock, struct tm *result);
 ZNC_API struct tm* localtime_locked(const time_t *timer);
 int ZNC_API rand_r(unsigned int* seed);
 long long ZNC_API rand_r(unsigned long long* seed);
-std::string getpass(const char *prompt);
+std::string ZNC_API getpass(const char *prompt);
 
 int ZNC_API usleep(int useconds);
 int ZNC_API sleep(int seconds);

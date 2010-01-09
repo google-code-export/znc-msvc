@@ -95,7 +95,6 @@
 #include "Nick.h"
 #include "Server.h"
 #include "Template.h"
-#include "Timers.h"
 #include "User.h"
 #include "znc.h"
 
