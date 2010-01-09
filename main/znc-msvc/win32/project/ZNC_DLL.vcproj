@@ -94,7 +94,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="set OUTDIR=$(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;set RELEASELIBS=$(SolutionDir)..\..\..\dependencies\lib_x86\release&#x0D;&#x0A;set DEBUGLIBS=$(SolutionDir)..\..\..\dependencies\lib_x86\debug&#x0D;&#x0A;&#x0D;&#x0A;xcopy /y $(TargetPath) %OUTDIR%&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb %OUTDIR%&#x0D;&#x0A;&#x0D;&#x0A;for %%f in (libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  if exist  %DEBUGLIBS%\%%f (&#x0D;&#x0A;    xcopy /y %DEBUGLIBS%\%%f %OUTDIR%&#x0D;&#x0A;  ) else (&#x0D;&#x0A;    xcopy /y %RELEASELIBS%\%%f %OUTDIR%&#x0D;&#x0A;  )&#x0D;&#x0A;)&#x0D;&#x0A;if exist %DEBUGLIBS%\caresd.dll (&#x0D;&#x0A;  xcopy /y %DEBUGLIBS%\caresd.dll %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;  xcopy /y %RELEASELIBS%\cares.dll %OUTDIR%&#x0D;&#x0A;)"
+				CommandLine="set OUTDIR=$(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;set RELEASELIBS=$(SolutionDir)..\..\..\dependencies\lib_x86\release&#x0D;&#x0A;set DEBUGLIBS=$(SolutionDir)..\..\..\dependencies\lib_x86\debug&#x0D;&#x0A;&#x0D;&#x0A;xcopy /y $(TargetPath) %OUTDIR%&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb %OUTDIR%&#x0D;&#x0A;&#x0D;&#x0A;for %%f in (libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;if exist  %DEBUGLIBS%\%%f (&#x0D;&#x0A;xcopy /y %DEBUGLIBS%\%%f %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;xcopy /y %RELEASELIBS%\%%f %OUTDIR%&#x0D;&#x0A;)&#x0D;&#x0A;)&#x0D;&#x0A;if exist %DEBUGLIBS%\caresd.dll (&#x0D;&#x0A;xcopy /y %DEBUGLIBS%\caresd.dll %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;xcopy /y %RELEASELIBS%\cares.dll %OUTDIR%&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -173,7 +173,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="set OUTDIR=$(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;set RELEASELIBS=$(SolutionDir)..\..\..\dependencies\lib_x64\release&#x0D;&#x0A;set DEBUGLIBS=$(SolutionDir)..\..\..\dependencies\lib_x64\debug&#x0D;&#x0A;&#x0D;&#x0A;xcopy /y $(TargetPath) %OUTDIR%&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb %OUTDIR%&#x0D;&#x0A;&#x0D;&#x0A;for %%f in (libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  if exist  %DEBUGLIBS%\%%f (&#x0D;&#x0A;    xcopy /y %DEBUGLIBS%\%%f %OUTDIR%&#x0D;&#x0A;  ) else (&#x0D;&#x0A;    xcopy /y %RELEASELIBS%\%%f %OUTDIR%&#x0D;&#x0A;  )&#x0D;&#x0A;)&#x0D;&#x0A;if exist %DEBUGLIBS%\caresd.dll (&#x0D;&#x0A;  xcopy /y %DEBUGLIBS%\caresd.dll %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;  xcopy /y %RELEASELIBS%\cares.dll %OUTDIR%&#x0D;&#x0A;)&#x0D;&#x0A;"
+				CommandLine="set OUTDIR=$(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;set RELEASELIBS=$(SolutionDir)..\..\..\dependencies\lib_x64\release&#x0D;&#x0A;set DEBUGLIBS=$(SolutionDir)..\..\..\dependencies\lib_x64\debug&#x0D;&#x0A;&#x0D;&#x0A;xcopy /y $(TargetPath) %OUTDIR%&#x0D;&#x0A;xcopy /y $(TargetDir)ZNC_DLL.pdb %OUTDIR%&#x0D;&#x0A;&#x0D;&#x0A;for %%f in (libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;if exist  %DEBUGLIBS%\%%f (&#x0D;&#x0A;xcopy /y %DEBUGLIBS%\%%f %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;xcopy /y %RELEASELIBS%\%%f %OUTDIR%&#x0D;&#x0A;)&#x0D;&#x0A;)&#x0D;&#x0A;if exist %DEBUGLIBS%\caresd.dll (&#x0D;&#x0A;xcopy /y %DEBUGLIBS%\caresd.dll %OUTDIR%&#x0D;&#x0A;) else (&#x0D;&#x0A;xcopy /y %RELEASELIBS%\cares.dll %OUTDIR%&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -254,7 +254,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;for %%f in (cares.dll libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x86\release\%%f $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;)&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;for %%f in (cares.dll libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x86\release\%%f $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -336,7 +336,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;for %%f in (cares.dll libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;  xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x64\release\%%f $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;)&#x0D;&#x0A;"
+				CommandLine="xcopy /y $(TargetPath) $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;for %%f in (cares.dll libeay32.dll ssleay32.dll) do (&#x0D;&#x0A;xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x64\release\%%f $(SolutionDir)..\..\..\build-out\$(PlatformName)-$(ConfigurationName)\&#x0D;&#x0A;)&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -684,6 +684,10 @@
 			</File>
 			<File
 				RelativePath="..\..\znc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\znc_msvc.h"
 				>
 			</File>
 			<File

@@ -37,9 +37,6 @@
 #  define LOCK_WRITE   128
 #  define LOCK_RW      192
 #  define flock(a, b)  0
-
-#  define mkdir(a, b)	mkdir(a)
-#  define fsync(a)     _commit(a)
 #endif
 
 CFile::CFile() {
