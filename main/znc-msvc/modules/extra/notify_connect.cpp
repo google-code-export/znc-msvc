@@ -8,31 +8,24 @@
 
 #include "stdafx.hpp"
 #include "znc.h"
-#include "main.h"
 #include "User.h"
-#include "Nick.h"
-#include "Modules.h"
-#include "Chan.h"
 
 class CNotifyConnectMod : public CGlobalModule {
 public:
 	GLOBALMODCONSTRUCTOR(CNotifyConnectMod) {}
 
-	virtual void OnClientLogin()
-	{
-		SendAdmins(m_pUser->GetUserName() + " attached");
+	virtual void OnClientLogin() {
+		SendAdmins(m_pUser->GetUserName() + " attached (from " + m_pClient->GetRemoteIP() + ")");
 	}
 
-	virtual void OnClientDisconnect()
-	{
-		SendAdmins(m_pUser->GetUserName() + " detached");
+	virtual void OnClientDisconnect() {
+		SendAdmins(m_pUser->GetUserName() + " detached (gone: " + m_pClient->GetRemoteIP() + ")");
 	}
 
 private:
-	void SendAdmins(const CString &msg)
-	{
+	void SendAdmins(const CString &msg) {
 		CZNC::Get().Broadcast(msg, true, NULL, GetClient());
 	}
 };
 
-GLOBALMODULEDEFS(CNotifyConnectMod, "");
+GLOBALMODULEDEFS(CNotifyConnectMod, "Notifies all admin users when a client connects or disconnects.");

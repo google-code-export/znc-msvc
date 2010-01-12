@@ -7,21 +7,17 @@
  */
 
 #include "stdafx.hpp"
-#include "User.h"
+#include "Modules.h"
 
-class CBlockMotd : public CModule
-{
+class CBlockMotd : public CModule {
 public:
-	MODCONSTRUCTOR(CBlockMotd)
-	{
+	MODCONSTRUCTOR(CBlockMotd) {
 	}
 
-	virtual ~CBlockMotd()
-	{
+	virtual ~CBlockMotd() {
 	}
 
-	virtual EModRet OnRaw(CString &sLine)
-	{
+	virtual EModRet OnRaw(CString &sLine) {
 		const CString sCmd = sLine.Token(1);
 
 		if (sCmd == "375" /* begin of MOTD */
@@ -35,4 +31,4 @@ public:
 	}
 };
 
-MODULEDEFS(CBlockMotd, "Block the MOTD from IRC")
+MODULEDEFS(CBlockMotd, "Block the MOTD from IRC so it's not sent to your client(s).")
