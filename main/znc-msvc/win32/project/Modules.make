@@ -47,7 +47,7 @@ INCLUDES=/I "..\..\\" /I "..\src" /I "..\..\..\dependencies\include"
 LIBS=libeay32.lib ssleay32.lib ZNC.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ws2_32.lib
 LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)"
 DEFINES=/D "WIN32" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" \
- /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6" /D "HAVE_ARES" /D "CARES_STATICLIB"
+ /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6" /D "HAVE_C_ARES"
 CXXFLAGS=/c /W3 /EHsc /TP /nologo
 LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /NOLOGO /DYNAMICBASE /NXCOMPAT
 
@@ -120,11 +120,11 @@ $(MAKDIR)\away.dll \
 $(MAKDIR)\awaynick.dll \
 $(MAKDIR)\blockserver.dll \
 $(MAKDIR)\block_lagchk.dll \
-$(MAKDIR)\block_motd.dll \
 $(MAKDIR)\buffextras.dll \
 $(MAKDIR)\certauth.dll \
 $(MAKDIR)\certchecker.dll \
 $(MAKDIR)\chansaver.dll \
+$(MAKDIR)\clientnotify.dll \
 $(MAKDIR)\clientpart.dll \
 $(MAKDIR)\colloquy.dll \
 $(MAKDIR)\crypt.dll \
@@ -133,7 +133,6 @@ $(MAKDIR)\fail2ban.dll \
 $(MAKDIR)\fish.dll \
 $(MAKDIR)\fixfreenode.dll \
 $(MAKDIR)\fix_lagchk.dll \
-$(MAKDIR)\flooddetach.dll \
 $(MAKDIR)\highlightattach.dll \
 $(MAKDIR)\identserver.dll \
 $(MAKDIR)\imapauth.dll \
@@ -160,10 +159,12 @@ $(MAKDIR)\watch_only_detached.dll \
 $(MAKDIR)\webadmin.dll \
 $(MAKDIR)\extra\antiidle.dll \
 $(MAKDIR)\extra\autovoice.dll \
+$(MAKDIR)\extra\block_motd.dll \
 $(MAKDIR)\extra\blockuser.dll \
 $(MAKDIR)\extra\ctcpflood.dll \
 $(MAKDIR)\extra\discon_kick.dll \
 $(MAKDIR)\extra\fakeonline.dll \
+$(MAKDIR)\extra\flooddetach.dll \
 $(MAKDIR)\extra\lastseen.dll \
 $(MAKDIR)\extra\listsockets.dll \
 $(MAKDIR)\extra\log.dll \
@@ -181,11 +182,11 @@ $(MAKDIR)\away.obj \
 $(MAKDIR)\awaynick.obj \
 $(MAKDIR)\blockserver.obj \
 $(MAKDIR)\block_lagchk.obj \
-$(MAKDIR)\block_motd.obj \
 $(MAKDIR)\buffextras.obj \
 $(MAKDIR)\certauth.obj \
 $(MAKDIR)\certchecker.obj \
 $(MAKDIR)\chansaver.obj \
+$(MAKDIR)\clientnotify.obj \
 $(MAKDIR)\clientpart.obj \
 $(MAKDIR)\colloquy.obj \
 $(MAKDIR)\crypt.obj \
@@ -194,7 +195,6 @@ $(MAKDIR)\fail2ban.obj \
 $(MAKDIR)\fish.obj \
 $(MAKDIR)\fixfreenode.obj \
 $(MAKDIR)\fix_lagchk.obj \
-$(MAKDIR)\flooddetach.obj \
 $(MAKDIR)\highlightattach.obj \
 $(MAKDIR)\identserver.obj \
 $(MAKDIR)\imapauth.obj \
@@ -221,10 +221,12 @@ $(MAKDIR)\watch_only_detached.obj \
 $(MAKDIR)\webadmin.obj \
 $(MAKDIR)\extra\antiidle.obj \
 $(MAKDIR)\extra\autovoice.obj \
+$(MAKDIR)\extra\block_motd.obj \
 $(MAKDIR)\extra\blockuser.obj \
 $(MAKDIR)\extra\ctcpflood.obj \
 $(MAKDIR)\extra\discon_kick.obj \
 $(MAKDIR)\extra\fakeonline.obj \
+$(MAKDIR)\extra\flooddetach.obj \
 $(MAKDIR)\extra\lastseen.obj \
 $(MAKDIR)\extra\listsockets.obj \
 $(MAKDIR)\extra\log.obj \
