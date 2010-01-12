@@ -175,9 +175,9 @@ public:
 			Save();
 		} else if (sCmd.Equals("show")) {
 			PutModule("Current limit is " + CString(m_iThresholdMsgs) + " lines "
-					"in " + CString(m_iThresholdSecs) + " secs");
+					"in " + CString(m_iThresholdSecs) + " secs.");
 		} else {
-			PutModule("Commands: show, secs [limit], lines [limit]");
+			PutModule("Commands: show, secs <limit>, lines <limit>");
 		}
 	}
 private:
