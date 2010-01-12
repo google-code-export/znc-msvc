@@ -100,6 +100,7 @@ public:
 	const CSockManager& GetManager() const { return m_Manager; }
 #ifdef _MODULES
 	CGlobalModules& GetModules() { return *m_pModules; }
+	size_t FilterUncommonModules(set<CModInfo>& ssModules);
 #endif
 	const CString& GetStatusPrefix() const { return m_sStatusPrefix; }
 	const CString& GetCurPath() const { if (!CFile::Exists(m_sCurPath)) { CDir::MakeDir(m_sCurPath); } return m_sCurPath; }
@@ -179,6 +180,7 @@ protected:
 	unsigned long long		m_uBytesRead;
 	unsigned long long		m_uBytesWritten;
 	CConnectUserTimer		*m_pConnectUserTimer;
+	TCacheMap<CString>		m_sConnectThrottle;
 };
 
 class CRealListener : public CZNCSock {
