@@ -42,7 +42,8 @@ public:
 
 			if(client)
 			{
-				(*client)->PutClient(sMessage);
+				(*client)->PutClient(":" + m_pUser->GetIRCNick().GetHostMask() +
+					" NOTICE " + m_pUser->GetIRCNick().GetNick() + " :" + sMessage);
 			}
 
 			return HALT;
