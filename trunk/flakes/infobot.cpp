@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2009 flakes @ EFNet
+ * Copyright (C) 2009-2010 flakes @ EFNet
+ * Updated: 15 January 2010
  *
  * Compiling: LIBS="-lpcrecpp -lpcre" ./znc-buildmod infobot.cpp
+ * http://en.znc.in/wiki/Infobot
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -368,7 +370,7 @@ protected:
 
 		/* extract rating */
 		string sTmpRating;
-		RE ratingRE("User Rating.{1,400}(\\d{1,2}(?:\\.\\d{1,2}))\\s*/\\s*10", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE ratingRE("star.{1,100}(\\d{1,2}(?:\\.\\d{1,2}))\\s*/\\s*10", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(ratingRE.PartialMatch(sResponse.c_str(), &sTmpRating))
 		{
