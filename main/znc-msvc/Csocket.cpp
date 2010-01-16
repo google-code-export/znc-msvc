@@ -28,7 +28,7 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* $Revision: 1.118 $
+* $Revision: 1.121 $
 */
 
 #include "stdafx.hpp"
@@ -363,6 +363,7 @@ int GetAddrInfo( const CS_STRING & sHostname, Csock *pSock, CSSockAddr & csSockA
 					bFound = true;
 					break;
 				}
+				pSock->CloseSocksFD();
 			}
 			else if( bTryConnect )
 			{
@@ -621,6 +622,15 @@ Csock::~Csock()
 	FREE_CTX();
 #endif /* HAVE_LIBSSL */
 
+	CloseSocksFD();
+
+	// delete any left over crons
+	for( vector<CCron *>::size_type i = 0; i < m_vcCrons.size(); i++ )
+		CS_Delete( m_vcCrons[i] );
+}
+
+void Csock::CloseSocksFD()
+{
 	if ( m_iReadSock != m_iWriteSock )
 	{
 		if( m_iReadSock >= 0 )
@@ -632,11 +642,8 @@ Csock::~Csock()
 
 	m_iReadSock = CS_INVALID_SOCK;
 	m_iWriteSock = CS_INVALID_SOCK;
-
-	// delete any left over crons
-	for( vector<CCron *>::size_type i = 0; i < m_vcCrons.size(); i++ )
-		CS_Delete( m_vcCrons[i] );
 }
+
 
 void Csock::Dereference()
 {
@@ -2145,9 +2152,10 @@ int Csock::GetAddrInfo( const CS_STRING & sHostname, CSSockAddr & csSockAddr )
 			}
 			m_pCurrAddr = &csSockAddr; // flag its starting
 
+			int iFamily = AF_INET;
 #ifdef HAVE_IPV6
 			// as of ares 1.6.0 if it fails on af_inet6, it falls back to af_inet, this code was here in the previous Csocket version, just adding the comment as a reminder
-			int iFamily = csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY ? AF_INET6 : csSockAddr.GetAFRequire();
+			iFamily = csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY ? AF_INET6 : csSockAddr.GetAFRequire();
 #endif /* HAVE_IPV6 */
 			ares_gethostbyname( m_pARESChannel, sHostname.c_str(), iFamily, AresHostCallback, this );
 		}
@@ -2155,8 +2163,25 @@ int Csock::GetAddrInfo( const CS_STRING & sHostname, CSSockAddr & csSockAddr )
 		{ // this means its finished
 			FreeAres();
 #ifdef HAVE_IPV6
+			if( m_iARESStatus == ARES_SUCCESS && csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY && GetIPv6() )
+			{
+				// this means that ares_host returned an ipv6 host, so try a connect right away
+				if( CreateSocksFD() && Connect( GetBindHost(), true ) )
+				{
+					SetSkipConnect( true );
+				}
+				else if( GetSockError() == ENETUNREACH )
+				{
+					// the Connect() failed, so throw a retry back in with ipv4, and let it process normally
+					CS_DEBUG( "Failed ipv6 connection with PF_UNSPEC, falling back to ipv4" );
+					m_iARESStatus = -1;
+					CloseSocksFD();
+					SetAFRequire( CSSockAddr::RAF_INET );
+					return( GetAddrInfo( sHostname, csSockAddr ) );
+				}
+			}
 #if ARES_VERSION < CREATE_ARES_VER( 1, 5, 3 )
-			if( m_iARESStatus != ARES_SUCCESS && csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY && csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY )
+			if( m_iARESStatus != ARES_SUCCESS && csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY )
 			{ // this is a workaround for ares < 1.5.3 where the builtin retry on failed AF_INET6 isn't there yet
 				CS_DEBUG( "Retry for older version of c-ares with AF_INET only" );
 				// this means we tried previously with AF_INET6 and failed, so force AF_INET and retry
