@@ -9,6 +9,7 @@
 #include "stdafx.hpp"
 #include <getopt.h>
 #include <sys/wait.h>
+#include <conio.h>
 
 static const struct option g_LongOpts[] = {
 	{ "help",			no_argument,	0,	'h' },
@@ -240,7 +241,11 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if(pZNC) delete pZNC;
+	delete pZNC;
+
+#ifdef _DEBUG
+	::_getch();
+#endif
 
 	return iRet;
 }

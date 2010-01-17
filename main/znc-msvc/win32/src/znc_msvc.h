@@ -32,7 +32,6 @@ using std::_cpp_max;
 typedef int mode_t;
 typedef short uid_t;
 typedef short gid_t;
-typedef unsigned int uint;
 
 #define strcasecmp _stricmp
 #define strtoll _strtoi64
