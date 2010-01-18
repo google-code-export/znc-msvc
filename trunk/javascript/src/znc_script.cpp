@@ -249,7 +249,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	}
 	else
 	{
-		jsval jvModArgs = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(m_jsContext, "<TODO>"));
+		jsval jvModArgs = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(m_jsContext, "<:TODO:>"));
 		InvokeEventHandler(ModEv_OnLoad, 1, &jvModArgs, false);
 
 		JS_GC(m_jsContext);
@@ -363,10 +363,10 @@ int CZNCScript::InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, boo
 
 	for(multimap<EModEvId, jsval*>::iterator it = find.first; it != find.second; it++)
 	{
-		jsval jsvRet;
+		jsval jvRet;
 		JSBool bOK;
 
-		bOK = JS_CallFunctionValue(m_jsContext, m_jsGlobalObj, *it->second, argc, argv, &jsvRet);
+		bOK = JS_CallFunctionValue(m_jsContext, m_jsGlobalObj, *it->second, argc, argv, &jvRet);
 
 		if(!bOK)
 		{
@@ -374,9 +374,9 @@ int CZNCScript::InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, boo
 			break;
 		}
 
-		if(bModRet && JSVAL_IS_INT(jsvRet))
+		if(bModRet && JSVAL_IS_INT(jvRet))
 		{
-			int iModRet = JSVAL_TO_INT(jsvRet);
+			int iModRet = JSVAL_TO_INT(jvRet);
 
 			if(iModRet == CModule::HALT || iModRet == CModule::HALTCORE || iModRet == CModule::HALTMODS)
 			{
@@ -395,7 +395,7 @@ bool CZNCScript::IsEventHooked(EModEvId eEvent)
 }
 
 
-bool CZNCScript::RemoveEventHandler(const char* szEventName, const jsval& jsvCallback)
+bool CZNCScript::RemoveEventHandler(const char* szEventName, const jsval& jvCallback)
 {
 	EModEvId uModId = _ModEV_Max;
 
@@ -410,7 +410,7 @@ bool CZNCScript::RemoveEventHandler(const char* szEventName, const jsval& jsvCal
 
 	for(multimap<EModEvId, jsval*>::iterator it = m_eventHandlers.begin(); it != m_eventHandlers.end(); it++)
 	{
-		if(it->first == uModId && *it->second == jsvCallback)
+		if(it->first == uModId && *it->second == jvCallback)
 		{
 			JS_RemoveRoot(m_jsContext, it->second);
 			delete it->second;
@@ -438,11 +438,11 @@ void CZNCScript::ClearEventHandlers()
 /* TIMER HANDLING                                                       */
 /************************************************************************/
 
-int CZNCScript::AddTimer(unsigned int uInterval, bool bRepeat, const jsval& jsvCallback)
+int CZNCScript::AddTimer(unsigned int uInterval, bool bRepeat, const jsval& jvCallback)
 {
 	int iNewId = m_nextTimerId++;
 
-	CJSTimer* pTimer = new CJSTimer(this, uInterval, bRepeat, jsvCallback);
+	CJSTimer* pTimer = new CJSTimer(this, uInterval, bRepeat, jvCallback);
 	m_timers[iNewId] = pTimer;
 	m_pMod->AddTimer(pTimer);
 

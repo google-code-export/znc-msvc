@@ -68,6 +68,7 @@ CJavaScriptMod::~CJavaScriptMod()
 	if(ms_jsRuntime)
 	{
 		JS_DestroyRuntime(ms_jsRuntime);
+		ms_jsRuntime = NULL;
 	}
 
 	if(ms_uNumberOfInstances == 0)

@@ -49,18 +49,18 @@ CModule::EModRet CJavaScriptMod::_OnOneVariableStringArg(EModEvId eEventId, cons
 			continue;
 
 		JSObject* joContainer = pScript->MakeAnonObject();
-		jsval jsvLine = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg));
+		jsval jvLine = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg));
 
-		if(JS_SetProperty(pScript->GetContext(), joContainer, szPropName, &jsvLine))
+		if(JS_SetProperty(pScript->GetContext(), joContainer, szPropName, &jvLine))
 		{
-			jsval jsvTmp = OBJECT_TO_JSVAL(joContainer);
-			EModRet eRet = (EModRet)pScript->InvokeEventHandler(eEventId, 1, &jsvTmp, true);
+			jsval jvTmp = OBJECT_TO_JSVAL(joContainer);
+			EModRet eRet = (EModRet)pScript->InvokeEventHandler(eEventId, 1, &jvTmp, true);
 
-			jsval jsvNewLine;
-			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName, &jsvNewLine) &&
-				JSVAL_IS_STRING(jsvNewLine))
+			jsval jvNewLine;
+			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName, &jvNewLine) &&
+				JSVAL_IS_STRING(jvNewLine))
 			{
-				sArg = CUtil::WideToUtf8(JSVAL_TO_STRING(jsvNewLine));
+				sArg = CUtil::WideToUtf8(JSVAL_TO_STRING(jvNewLine));
 			}
 
 			if(eRet != CONTINUE) return eRet;
@@ -78,8 +78,8 @@ void CJavaScriptMod::_OnOneConstStringArg(EModEvId eEventId, const CString& sArg
 		if(!pScript->IsEventHooked(eEventId))
 			continue;
 
-		jsval jsvLine = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg));
-		pScript->InvokeEventHandler(eEventId, 1, &jsvLine, true);
+		jsval jvLine = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg));
+		pScript->InvokeEventHandler(eEventId, 1, &jvLine, true);
 	}
 }
 
@@ -146,23 +146,23 @@ CModule::EModRet CJavaScriptMod::_OnTwoVariableStringArgs(EModEvId eEventId, con
 			continue;
 
 		JSObject* joContainer = pScript->MakeAnonObject();
-		jsval jsvLine1 = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg1));
-		jsval jsvLine2 = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg2));
+		jsval jvLine1 = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg1));
+		jsval jvLine2 = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), sArg2));
 
-		if(JS_SetProperty(pScript->GetContext(), joContainer, szPropName1, &jsvLine1) &&
-			JS_SetProperty(pScript->GetContext(), joContainer, szPropName2, &jsvLine2))
+		if(JS_SetProperty(pScript->GetContext(), joContainer, szPropName1, &jvLine1) &&
+			JS_SetProperty(pScript->GetContext(), joContainer, szPropName2, &jvLine2))
 		{
-			jsval jsvTmp = OBJECT_TO_JSVAL(joContainer);
-			EModRet eRet = (EModRet)pScript->InvokeEventHandler(eEventId, 1, &jsvTmp, true);
+			jsval jvTmp = OBJECT_TO_JSVAL(joContainer);
+			EModRet eRet = (EModRet)pScript->InvokeEventHandler(eEventId, 1, &jvTmp, true);
 
-			jsval jsvNewLine[2];
-			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName1, &jsvNewLine[0]) &&
-				JSVAL_IS_STRING(jsvNewLine[0]) &&
-				JS_GetProperty(pScript->GetContext(), joContainer, szPropName2, &jsvNewLine[1]) &&
-				JSVAL_IS_STRING(jsvNewLine[2]))
+			jsval jvNewLine[2];
+			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName1, &jvNewLine[0]) &&
+				JSVAL_IS_STRING(jvNewLine[0]) &&
+				JS_GetProperty(pScript->GetContext(), joContainer, szPropName2, &jvNewLine[1]) &&
+				JSVAL_IS_STRING(jvNewLine[2]))
 			{
-				sArg1 = CUtil::WideToUtf8(JSVAL_TO_STRING(jsvNewLine[0]));
-				sArg2 = CUtil::WideToUtf8(JSVAL_TO_STRING(jsvNewLine[1]));
+				sArg1 = CUtil::WideToUtf8(JSVAL_TO_STRING(jvNewLine[0]));
+				sArg2 = CUtil::WideToUtf8(JSVAL_TO_STRING(jvNewLine[1]));
 			}
 
 			if(eRet != CONTINUE) return eRet;
@@ -209,11 +209,11 @@ CModule::EModRet CJavaScriptMod::_OnCNickAndOneVarStringArg(EModEvId eEventId, c
 			jvArgs[1] = OBJECT_TO_JSVAL(joContainer);
 			EModRet eRet = (EModRet)pScript->InvokeEventHandler(eEventId, 2, jvArgs, true);
 
-			jsval jsvNewArg;
-			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName, &jsvNewArg) &&
-				JSVAL_IS_STRING(jsvNewArg))
+			jsval jvNewArg;
+			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName, &jvNewArg) &&
+				JSVAL_IS_STRING(jvNewArg))
 			{
-				sArg = CUtil::WideToUtf8(JSVAL_TO_STRING(jsvNewArg));
+				sArg = CUtil::WideToUtf8(JSVAL_TO_STRING(jvNewArg));
 			}
 
 			if(eRet != CONTINUE) return eRet;
@@ -256,11 +256,11 @@ CModule::EModRet CJavaScriptMod::_OnCNickAndCChanAndOneVarStringArg(EModEvId eEv
 			jvArgs[2] = OBJECT_TO_JSVAL(joContainer);
 			EModRet eRet = (EModRet)pScript->InvokeEventHandler(eEventId, 3, jvArgs, true);
 
-			jsval jsvNewArg;
-			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName, &jsvNewArg) &&
-				JSVAL_IS_STRING(jsvNewArg))
+			jsval jvNewArg;
+			if(JS_GetProperty(pScript->GetContext(), joContainer, szPropName, &jvNewArg) &&
+				JSVAL_IS_STRING(jvNewArg))
 			{
-				sArg = CUtil::WideToUtf8(JSVAL_TO_STRING(jsvNewArg));
+				sArg = CUtil::WideToUtf8(JSVAL_TO_STRING(jvNewArg));
 			}
 
 			if(eRet != CONTINUE) return eRet;
