@@ -1,0 +1,118 @@
+ZNC.SendMessage(string to_nick_or_chan, string message)
+ZNC.SendNotice(string to_nick_or_chan, string message)
+
+ZNC.PutModule(string message[, string module_name])
+ZNC.PutIRC(string line)
+ZNC.PutUser(string line)
+ZNC.AddEventHandler(string event_name, function callback)
+ZNC.RemoveEventHandler(string event_name, function callback)
+
+string ZNC.GetVersion()
+string ZNC.GetTag([include_version = true])
+string ZNC.GetUptime()
+number ZNC.TimeStarted() // unix timestamp
+
+int ZNC.SetTimeout(int delay_in_seconds, function callback)
+int ZNC.SetInterval(int delay_in_seconds, function callback)
+DIFFERENT FROM THE "WEB" VERSIONS!
+ZNC.ClearTimeout(int id)
+ZNC.ClearInterval(int id)
+
+string MD5(string)
+	MD5("") = "d41d8cd98f00b204e9800998ecf8427e"
+string SHA1(string) (only if ZNC has been compiled with OpenSSL)
+string SHA256(string)
+
+bool WildCmp(glob_wildcard_mask, string)
+
+Constants:
+	ZNC.CONTINUE / ZNC.HALT / ZNC.HALTCORE / ZNC.HALTMODS
+	ZNC.VERSION_MAJOR / ZNC.VERSION_MINOR
+
+Nick
+	string GetName()
+	string GetIdent()
+	string GetHostMask()
+	string GetPermStr()
+	bool HasPerm(string char) char = @ or + and so on
+
+	properties (read+write):
+	string nick
+	string ident
+	string host
+
+Chan
+	string GetName()
+
+Events:
+	void OnLoad(string args)
+
+	void OnPreRehash()
+	void OnPostRehash()
+	void OnIRCDisconnected()
+	EModRet OnIRCConnecting()
+	void OnIRCConnected()
+	EModRet OnIRCRegistration(obj)
+		string obj.pass, obj.nick, obj.ident, obj.realName
+		read+modify
+
+	void OnClientLogin()
+	void OnClientDisconnect()
+
+	EModRet OnRaw(obj) | obj.line read+write
+	EModRet OnBroadcast(obj) | obj.message read+write
+	EModRet OnStatusCommand(obj) | obj.command read+write
+	EModRet OnUserRaw(obj) | obj.line read+write
+	EModRet OnUserTopicRequest(obj) | obj.channel read+write
+
+	void OnModNotice(message)
+	void OnModCTCP(message)
+	void OnModCommand(message)
+
+	EModRet OnUserCTCPReply(obj)
+	EModRet OnUserCTCP(obj)
+	EModRet OnUserAction(obj)
+	EModRet OnUserMsg(obj)
+	EModRet OnUserNotice(obj)
+		each: obj.target, obj.message both read+write
+
+	EModRet OnUserJoin(obj) | obj.channel, obj.key both read+write
+	EModRet OnUserPart(obj) | obj.channel, obj.message both read+write
+	EModRet OnUserTopic(obj) | obj.channel, obj.topic both read+write
+
+	void OnQuit(nick nick, string message, array-of-chan chans)
+	void OnNick(nick nick, string newNick, array-of-chan chans)
+	void OnKick(nick nick, string opNick, chan channel, string message)
+	void OnJoin(nick nick, chan channel)
+	void OnPart(nick nick, chan channel)
+
+	EModRet OnCTCPReply(nick, obj)
+	EModRet OnPrivCTCP(nick, obj)
+	EModRet OnPrivAction(nick, obj)
+	EModRet OnPrivMsg(nick, obj)
+	EModRet OnPrivNotice(nick, obj)
+		each: const nick obj, obj.message read+write
+
+	void OnChanPermission(nick OpNick, nick Nick, chan Chan, string modeChar, bool Added, bool NoChange)
+	void OnOp(nick OpNick, nick Nick, chan Chan, bool NoChange)
+	void OnDeop(nick OpNick, nick Nick, chan Chan, bool NoChange)
+	void OnVoice(nick OpNick, nick Nick, chan Chan, bool NoChange)
+	void OnDevoice(nick OpNick, nick Nick, chan Chan, bool NoChange)
+	void OnRawMode(nick OpNick, chan Chan, const string modes, string args)
+	void OnMode(const CNick& OpNick, CChan& Channel, char uMode, const CString& sArg, bool bAdded, bool bNoChange);
+
+ToDo:
+
+	- Finish CChan
+	- GetUser() + user class
+	- CTable class
+	- Loadmod/...
+	- module arguments
+	- remember loaded scripts
+	- StoreObject / RetrieveObject
+
+	- rewrite modules in JS
+
+	- include command
+	- HttpRequest
+
