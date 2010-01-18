@@ -57,12 +57,12 @@ public:
 
 	const CString& GetName() const { return m_sName; }
 
-	jsval* StoreEventHandler(const char* szEventName, const jsval& jsvCallback);
+	jsval* StoreEventHandler(const char* szEventName, const jsval& jvCallback);
 	int InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, bool bModRet);
 	bool IsEventHooked(EModEvId eEvent);
-	bool RemoveEventHandler(const char* szEventName, const jsval& jsvCallback);
+	bool RemoveEventHandler(const char* szEventName, const jsval& jvCallback);
 
-	int AddTimer(unsigned int uInterval, bool bRepeat, const jsval& jsvCallback);
+	int AddTimer(unsigned int uInterval, bool bRepeat, const jsval& jvCallback);
 	void RunTimerProc(CTimer *pTimer, jsval *pCallback);
 	void DeleteExpiredTimer(CTimer *pTimer);
 	bool RemoveTimer(int iTimerId);

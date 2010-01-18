@@ -136,13 +136,13 @@ _ZNCJSFUNC(AddEventHandler)
 
 	GET_SCRIPT(pScript);
 
-	jsval* bStored = pScript->StoreEventHandler(szEvent, argv[1]);
+	jsval* jvStored = pScript->StoreEventHandler(szEvent, argv[1]);
 
-	if(bStored)
+	if(jvStored != NULL)
 	{
-		if(JS_AddRoot(cx, bStored))
+		if(JS_AddRoot(cx, jvStored))
 		{
-			*rval = BOOLEAN_TO_JSVAL(bStored != NULL);
+			*rval = BOOLEAN_TO_JSVAL(JS_TRUE);
 
 			return JS_TRUE;
 		}
