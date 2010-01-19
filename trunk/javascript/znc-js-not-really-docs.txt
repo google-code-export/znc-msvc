@@ -93,6 +93,14 @@ Events:
 	EModRet OnPrivNotice(nick, obj)
 		each: const nick obj, obj.message read+write
 
+	EModRet OnChanMsg(nick, channel, obj)
+	EModRet OnChanCTCP(nick, channel, obj)
+	EModRet OnChanAction(nick, channel, obj)
+	EModRet OnChanNotice(nick, channel, obj)
+		each: obj.message read/write
+	EModRet OnTopic(nick, channel, obj)
+		obj.topic read/write
+
 	void OnChanPermission(nick OpNick, nick Nick, chan Chan, string modeChar, bool Added, bool NoChange)
 	void OnOp(nick OpNick, nick Nick, chan Chan, bool NoChange)
 	void OnDeop(nick OpNick, nick Nick, chan Chan, bool NoChange)
@@ -103,8 +111,8 @@ Events:
 
 ToDo:
 
-	- Finish CChan
-	- GetUser() + user class
+	- Finish chan class
+	- Finish user class
 	- CTable class
 	- Loadmod/...
 	- module arguments

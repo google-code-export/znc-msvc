@@ -33,6 +33,7 @@ public:
 	_ZNCJSFUNC_H(SetInterval);
 	_ZNCJSFUNC_H(SetTimeout);
 	_ZNCJSFUNC_H(ClearIntervalOrTimeout);
+	_ZNCJSFUNC_H(GetUser);
 
 	/* (global) */
 	_ZNCJSFUNC_H(MD5);
@@ -52,6 +53,9 @@ public:
 
 	/* Chan */
 	_ZNCJSFUNC_H(Chan_GetName);
+
+	/* User */
+	_ZNCJSFUNC_H(User_GetName);
 };
 
 #define _ZNCJSFUNC(FUNC_NAME) JSBool CZNCScriptFuncs::Script_##FUNC_NAME(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)

@@ -17,13 +17,6 @@
 using namespace std;
 
 
-extern JSClass s_global_class;
-extern JSFunctionSpec s_global_functions[];
-extern JSClass s_znc_class;
-extern JSFunctionSpec s_znc_functions[];
-extern JSPropertySpec s_znc_properties[];
-
-
 /************************************************************************/
 /* CONSTRUCTOR                                                          */
 /************************************************************************/
@@ -84,32 +77,20 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 	JS_SetErrorReporter(m_jsContext, ScriptErrorCallback);
 
-	m_jsGlobalObj = JS_NewObject(m_jsContext, &s_global_class, NULL, NULL);
-	if(!m_jsGlobalObj)
+	if(!SetUpGlobalClasses(srErrorMessage))
 	{
-		srErrorMessage = "Creating the global object failed!";
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
 	}
 
-	if(!JS_InitStandardClasses(m_jsContext, m_jsGlobalObj))
+	if(!SetUpUserObject())
 	{
-		srErrorMessage = "Adding the standard classes to the global object failed!";
+		srErrorMessage = "Unable to create user object.";
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
 	}
-
-	JS_DefineFunctions(m_jsContext, m_jsGlobalObj, s_global_functions);
-
-	JSObject* jsoZNC = JS_NewObject(m_jsContext, &s_znc_class, NULL, NULL);
-	JS_DefineFunctions(m_jsContext, jsoZNC, s_znc_functions);
-	JS_DefineProperties(m_jsContext, jsoZNC, s_znc_properties);
-	jsval jvZNCNamedObj = OBJECT_TO_JSVAL(jsoZNC);
-
-	JS_DefineProperty(m_jsContext, m_jsGlobalObj, "ZNC", jvZNCNamedObj,
-		NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
 
 	JS_SetBranchCallback(m_jsContext, ScriptBranchCallback);
 
@@ -119,6 +100,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	if(!cFile.Exists() || !cFile.Open())
 	{
 		srErrorMessage = "Opening the script file [" + m_sFilePath + "] failed.";
+		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
@@ -175,6 +157,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	if(!szBuf)
 	{
 		srErrorMessage = "The script file seems to be empty.";
+		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
@@ -225,8 +208,11 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 			m_jsScript = NULL;
 		}
 
+		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
+
+		return false;
 	}
 
 	if(!JS_ExecuteScript(m_jsContext, m_jsGlobalObj, m_jsScript, &jvRet))
@@ -239,6 +225,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		ClearEventHandlers();
 		// and the same thing for timers:
 		ClearTimers();
+
+		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
 
 		JS_GC(m_jsContext); // invoke other constructors
 
@@ -533,6 +521,7 @@ CZNCScript::~CZNCScript()
 	{
 		ClearTimers();
 		ClearEventHandlers();
+		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
 		JS_RemoveRoot(m_jsContext, &m_jsScriptObj);
 		JS_DestroyContext(m_jsContext);
 	}

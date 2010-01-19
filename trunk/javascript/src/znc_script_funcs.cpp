@@ -378,3 +378,25 @@ _ZNCJSFUNC(WildCmp)
 
 	return JS_TRUE;
 }
+
+
+_ZNCJSFUNC(GetUser)
+{
+	GET_SCRIPT(pScript);
+
+	*rval = *pScript->GetJSUser();
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(User_GetName)
+{
+	GET_SCRIPT(pScript);
+
+	*rval = STRING_TO_JSVAL(
+		CUtil::MsgCpyToJSStr(cx, pScript->GetUser()->GetUserName())
+	);
+
+	return JS_TRUE;
+}

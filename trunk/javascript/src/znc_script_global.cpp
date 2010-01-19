@@ -21,14 +21,14 @@ using namespace std;
 /* GLOBAL CLASS                                                         */
 /************************************************************************/
 
-JSClass s_global_class = {
+static JSClass s_global_class = {
 	"znc_global_class", JSCLASS_GLOBAL_FLAGS,
 	JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 	JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-JSFunctionSpec s_global_functions[] = {
+static JSFunctionSpec s_global_functions[] = {
 	JS_FS("MD5",			ZNCJSFUNC_NAME(MD5),					1, 0, 0),
 #ifdef HAVE_LIBSSL
 	JS_FS("SHA1",			ZNCJSFUNC_NAME(SHA1),					1, 0, 0),
@@ -45,14 +45,14 @@ JSFunctionSpec s_global_functions[] = {
 
 JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 
-JSClass s_znc_class = {
-	"znc_class", JSCLASS_GLOBAL_FLAGS,
+static JSClass s_znc_class = {
+	"znc_class", 0,
 	JS_PropertyStub, JS_PropertyStub, znc_class_get_prop, JS_PropertyStub,
 	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
 	JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-JSFunctionSpec s_znc_functions[] = {
+static JSFunctionSpec s_znc_functions[] = {
 	JS_FS("PutModule",			ZNCJSFUNC_NAME(PutModule),			2, 0, 0),
 	JS_FS("PutIRC",				ZNCJSFUNC_NAME(PutIRC),				1, 0, 0),
 	JS_FS("PutUser",			ZNCJSFUNC_NAME(PutUser),			1, 0, 0),
@@ -68,6 +68,7 @@ JSFunctionSpec s_znc_functions[] = {
 	JS_FS("ClearTimeout",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0, 0),
 	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		2, 0, 0),
 	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			2, 0, 0),
+	JS_FS("GetUser",			ZNCJSFUNC_NAME(GetUser),			0, 0, 0),
 	JS_FS_END
 };
 
@@ -77,7 +78,7 @@ enum ZNCProperties
 	PROP_CONST_CONTINUE, PROP_CONST_HALT, PROP_CONST_HALTCORE, PROP_CONST_HALTMODS
 };
 
-JSPropertySpec s_znc_properties[] = {
+static JSPropertySpec s_znc_properties[] = {
 	{"VERSION_MAJOR",	PROP_VERSION_MAJOR,		JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_ENUMERATE},
 	{"VERSION_MINOR",	PROP_VERSION_MINOR,		JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_ENUMERATE},
 	{"CONTINUE",		PROP_CONST_CONTINUE,	JSPROP_PERMANENT | JSPROP_READONLY},
@@ -87,7 +88,8 @@ JSPropertySpec s_znc_properties[] = {
 	{0}
 };
 
-JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+
+static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
 	if(JSVAL_IS_INT(id))
 	{
@@ -104,3 +106,33 @@ JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 
 	return JS_TRUE;
 }
+
+
+bool CZNCScript::SetUpGlobalClasses(CString& srErrorMessage)
+{
+	m_jsGlobalObj = JS_NewObject(m_jsContext, &s_global_class, NULL, NULL);
+	if(!m_jsGlobalObj)
+	{
+		srErrorMessage = "Creating the global object failed!";
+		return false;
+	}
+
+	if(!JS_InitStandardClasses(m_jsContext, m_jsGlobalObj))
+	{
+		srErrorMessage = "Adding the standard classes to the global object failed!";
+		return false;
+	}
+
+	JS_DefineFunctions(m_jsContext, m_jsGlobalObj, s_global_functions);
+
+	JSObject* jsoZNC = JS_NewObject(m_jsContext, &s_znc_class, NULL, NULL);
+	JS_DefineFunctions(m_jsContext, jsoZNC, s_znc_functions);
+	JS_DefineProperties(m_jsContext, jsoZNC, s_znc_properties);
+	jsval jvZNCNamedObj = OBJECT_TO_JSVAL(jsoZNC);
+
+	JS_DefineProperty(m_jsContext, m_jsGlobalObj, "ZNC", jvZNCNamedObj,
+		NULL, NULL, JSPROP_READONLY | JSPROP_PERMANENT);
+
+	return true;
+}
+
