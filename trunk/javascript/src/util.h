@@ -24,6 +24,10 @@ public:
 	static JSString* MsgCpyToJSStr(JSContext* ctx, const CString& sString);
 };
 
-extern "C" int g_utf8_validate(const char *str, size_t max_len, const char **end);
+extern "C"
+{
+	int g_utf8_validate(const char *str, size_t max_len, const char **end);
+	char *g_utf8_find_next_char(const char *p, const char *end = NULL);
+}
 
 #endif /* !_UTIL_H */

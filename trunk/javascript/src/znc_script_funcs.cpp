@@ -68,7 +68,7 @@ _ZNCJSFUNC(PutIRC)
 }
 
 
-_ZNCJSFUNC(SendMessage)
+static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
 	char* szTo = NULL;
 	char* szMsg = NULL;
@@ -77,14 +77,60 @@ _ZNCJSFUNC(SendMessage)
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
-	const CString sTo(szTo), sMsg(szMsg);
 	CUser* pUser = pScript->GetUser();
+	const CString sTo(szTo), sMsg(szMsg);
 
-	bool bSent = pUser->PutIRC("PRIVMSG " + sTo + " :" + sMsg);
+	bool bToChan = pUser->IsChan(sTo);
+	bool bSent = false;
+	// split + ellipses messages exceeding 400 bytes:
+	// we need to take into account possible UTF-8 multibyte characters.
+	// this can be slowish, so we skip it if possible:
 
-	if(bSent && pUser->IsChan(sTo))
+	if(sMsg.size() <= 400) // unit: bytes, not characters!
 	{
-		pUser->PutUser(":" + pUser->GetIRCNick().GetHostMask() + " PRIVMSG " + sTo + " :" + sMsg);
+		bSent = pUser->PutIRC(sType + " " + sTo + " :" + sMsg);
+
+		if(bSent && bToChan)
+		{
+			pUser->PutUser(":" + pUser->GetIRCNick().GetHostMask() + " " + sType + " " + sTo + " :" + sMsg);
+		}
+	}
+	else
+	{
+		char *szMsgCopy = strdup(sMsg.c_str());
+		char *p = szMsgCopy;
+		size_t uPos = 0;
+
+		do 
+		{
+			// IRC of course allows lines up to 512 bytes, but that includes new lines
+			// and PRIVMSG plus the target name, so we assume 400 as max "payload" length...
+
+			int uBytes = 0;
+			while(*p && uBytes < 400)
+			{
+				char *old_p = p;
+				p = g_utf8_find_next_char(p, NULL);
+				uBytes += (p - old_p);
+			}
+
+			CString sLine = sMsg.substr(uPos, uBytes);
+
+			if(*p) sLine += "..."; // will be continued...
+			if(uPos > 0) sLine = "..." + sLine; // ...continuation
+
+			uPos += uBytes;
+
+			bSent = pUser->PutIRC(sType + " " + sTo + " :" + sLine);
+
+			if(bSent && bToChan)
+			{
+				pUser->PutUser(":" + pUser->GetIRCNick().GetHostMask() + " " + sType + " " + sTo + " :" + sLine);
+			}
+
+		} while(bSent && *p);
+
+		free(szMsgCopy);
 	}
 
 	*rval = BOOLEAN_TO_JSVAL(bSent);
@@ -92,29 +138,14 @@ _ZNCJSFUNC(SendMessage)
 	return JS_TRUE;
 }
 
+_ZNCJSFUNC(SendMessage)
+{
+	return _SendMsgOrNotice("PRIVMSG", cx, obj, argc, argv, rval);
+}
 
 _ZNCJSFUNC(SendNotice)
 {
-	char* szTo = NULL;
-	char* szMsg = NULL;
-
-	if(!JS_ConvertArguments(cx, argc, argv, "ss", &szTo, &szMsg))
-		return JS_FALSE;
-
-	GET_SCRIPT(pScript);
-	const CString sTo(szTo), sMsg(szMsg);
-	CUser* pUser = pScript->GetUser();
-
-	bool bSent = pUser->PutIRC("NOTICE " + sTo + " :" + sMsg);
-
-	if(bSent && pUser->IsChan(sTo))
-	{
-		pUser->PutUser(":" + pUser->GetIRCNick().GetHostMask() + " NOTICE " + sTo + " :" + sMsg);
-	}
-
-	*rval = BOOLEAN_TO_JSVAL(bSent);
-
-	return JS_TRUE;
+	return _SendMsgOrNotice("NOTICE", cx, obj, argc, argv, rval);
 }
 
 

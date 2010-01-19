@@ -19,6 +19,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <stdio.h>
 #include <assert.h>
 
 #define gchar char
@@ -46,6 +47,7 @@
 	(((Char) & 0xFFFFF800) != 0xD800) &&     \
 	((Char) < 0xFDD0 || (Char) > 0xFDEF) &&  \
 	((Char) & 0xFFFE) != 0xFFFE)
+
 
 static const gchar *
 fast_validate (const char *str)
@@ -236,3 +238,34 @@ g_utf8_validate (const char   *str,
   else
     return TRUE;
 }
+
+/**
+* g_utf8_find_next_char:
+* @p: a pointer to a position within a UTF-8 encoded string
+* @end: a pointer to the byte following the end of the string,
+* or %NULL to indicate that the string is nul-terminated.
+*
+* Finds the start of the next UTF-8 character in the string after @p.
+*
+* @p does not have to be at the beginning of a UTF-8 character. No check
+* is made to see if the character found is actually valid other than
+* it starts with an appropriate byte.
+* 
+* Return value: a pointer to the found character or %NULL
+**/
+gchar *
+g_utf8_find_next_char (const gchar *p,
+					   const gchar *end)
+{
+	if (*p)
+	{
+		if (end)
+			for (++p; p < end && (*p & 0xc0) == 0x80; ++p)
+				;
+		else
+			for (++p; (*p & 0xc0) == 0x80; ++p)
+				;
+	}
+	return (p == end) ? NULL : (gchar *)p;
+}
+
