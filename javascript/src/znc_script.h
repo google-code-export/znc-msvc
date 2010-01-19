@@ -33,12 +33,17 @@ protected:
 	JSScript *m_jsScript;
 	JSObject *m_jsScriptObj;
 
+	jsval m_jvUserObj;
+
 	std::multimap<EModEvId, jsval*> m_eventHandlers;
 	int m_nextTimerId;
 	map<int, CJSTimer*> m_timers;
 
 	uint64_t m_uBranchCallbackCount;
 	uint64_t m_uBranchCallbackTime;
+
+	bool SetUpGlobalClasses(CString& srErrorMessage);
+	bool SetUpUserObject();
 
 	void ClearEventHandlers();
 	void ClearTimers();
@@ -54,6 +59,7 @@ public:
 	CZNC* GetZNC() const { return m_pZNC; }
 	CJavaScriptMod* GetMod() const { return m_pMod; }
 	CUser* GetUser() const { return m_pUser; }
+	jsval* GetJSUser() { return &m_jvUserObj; }
 
 	const CString& GetName() const { return m_sName; }
 
