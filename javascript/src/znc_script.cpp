@@ -135,11 +135,11 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		uBufLen = 1024;
 		szBuf = (unsigned char*)malloc(uBufLen);
 		unsigned char* p = szBuf;
-		unsigned char tempBuf[100];
+		unsigned char tempBuf[1000];
 		while(size_t uBytesRead = cFile.Read((char*)&tempBuf, sizeof(tempBuf)))
 		{
 			size_t uOff = (p - szBuf);
-			if(uOff + uBytesRead > uBufLen)
+			if(uOff + uBytesRead >= uBufLen)
 			{
 				uBufLen = uBufLen + uBytesRead + 1024;
 				szBuf = (unsigned char*)realloc(szBuf, uBufLen);
@@ -149,6 +149,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 			p += uBytesRead;
 		}
 		*(uint32_t*)p = 0; // we definitely have 4 bytes left since we added 1024 above.
+		// we use 4 bytes since sizeof(wchar_t) may be 4. Just to be sure.
 		uBufLen = (p - szBuf);
 	}
 
@@ -171,9 +172,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 	if(bUtf16)
 	{
-		//bOk = JS_EvaluateUCScript(m_jsContext, m_jsGlobalObj,
-		//	(jschar*)szBuf, uBufLen / sizeof(jschar), m_sName.c_str(), 0, &jsvRet);
-		m_jsScript = JS_CompileUCScript(m_jsContext, m_jsGlobalObj, (jschar*)szBuf, uBufLen / sizeof(jschar), m_sName.c_str(), 0);
+		m_jsScript = JS_CompileUCScript(m_jsContext, m_jsGlobalObj,
+			(jschar*)szBuf, uBufLen / sizeof(jschar), m_sName.c_str(), 0);
 	}
 	else if(bUtf8 || g_utf8_validate((char*)szBuf, uBufLen, NULL))
 	{
@@ -181,17 +181,12 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		const jschar* jwcScript = CUtil::MsgCpyToWideEx(CString().append((char*)szBuf, uBufLen), uScriptCharCount);
 
 		m_jsScript = JS_CompileUCScript(m_jsContext, m_jsGlobalObj, jwcScript, uScriptCharCount, m_sName.c_str(), 0);
-		//bOk = JS_EvaluateUCScript(m_jsContext, m_jsGlobalObj,
-		//	jwcScript, uScriptCharCount, m_sName.c_str(), 0, &jsvRet);
 	}
 	else
 	{
 		srErrorMessage = "WARNING: The script file's encoding is neither ANSI, nor UTF-8, nor UTF-16 (LE+BOM).";
 
 		m_jsScript = JS_CompileScript(m_jsContext, m_jsGlobalObj, (char*)szBuf, uBufLen, m_sName.c_str(), 0);
-
-		//bOk = JS_EvaluateScript(m_jsContext, m_jsGlobalObj,
-		//	(char*)szBuf, uBufLen, m_sName.c_str(), 0, &jsvRet);
 	}
 
 	free(szBuf); szBuf = 0;

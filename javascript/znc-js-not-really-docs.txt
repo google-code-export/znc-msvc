@@ -1,5 +1,7 @@
 ZNC.SendMessage(string to_nick_or_chan, string message)
 ZNC.SendNotice(string to_nick_or_chan, string message)
+	messages longer than 400 bytes in their UTF-8 representation
+	will automatically be split.
 
 ZNC.PutModule(string message[, string module_name])
 ZNC.PutIRC(string line)
