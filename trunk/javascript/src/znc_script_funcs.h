@@ -34,6 +34,8 @@ public:
 	_ZNCJSFUNC_H(SetTimeout);
 	_ZNCJSFUNC_H(ClearIntervalOrTimeout);
 	_ZNCJSFUNC_H(GetUser);
+	_ZNCJSFUNC_H(StoreString);
+	_ZNCJSFUNC_H(RetrieveString);
 
 	/* (global) */
 	_ZNCJSFUNC_H(MD5);

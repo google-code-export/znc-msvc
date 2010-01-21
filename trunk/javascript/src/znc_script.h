@@ -22,6 +22,7 @@ class CZNCScript
 protected:
 	CString m_sName;
 	CString m_sFilePath;
+	CString m_sArguments;
 
 	CZNC* m_pZNC;
 	CJavaScriptMod* m_pMod;
@@ -41,6 +42,8 @@ protected:
 
 	uint64_t m_uBranchCallbackCount;
 	uint64_t m_uBranchCallbackTime;
+
+	MCString m_mssRegistry;
 
 	bool SetUpGlobalClasses(CString& srErrorMessage);
 	bool SetUpUserObject();
@@ -62,6 +65,7 @@ public:
 	jsval* GetJSUser() { return &m_jvUserObj; }
 
 	const CString& GetName() const { return m_sName; }
+	const CString& GetArguments() const { return m_sArguments; }
 
 	jsval* StoreEventHandler(const char* szEventName, const jsval& jvCallback);
 	int InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, bool bModRet);
@@ -77,6 +81,13 @@ public:
 	JSObject* MakeAnonObject() const;
 	JSObject* MakeNickObject(const CNick* pNick) const;
 	JSObject* MakeChanObject(const CChan& Chan) const;
+
+	bool LoadRegistry();
+	bool SaveRegistry();
+	bool SetNV(const CString& sName, const CString& sValue, bool bWriteToDisk = true);
+	CString GetNV(const CString& sName);
+	bool DelNV(const CString& sName, bool bWriteToDisk = true);
+	bool ClearNV(bool bWriteToDisk = true);
 };
 
 #endif /* !_ZNC_JS_SCRIPT_H */

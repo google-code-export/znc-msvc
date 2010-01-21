@@ -223,7 +223,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
 
-		JS_GC(m_jsContext); // invoke other constructors
+		JS_GC(m_jsContext); // invoke other destructors
 
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
@@ -232,6 +232,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	}
 	else
 	{
+		LoadRegistry();
+
 		jsval jvModArgs = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(m_jsContext, "<:TODO:>"));
 		InvokeEventHandler(ModEv_OnLoad, 1, &jvModArgs, false);
 
@@ -493,6 +495,66 @@ void CZNCScript::ClearTimers()
 	}
 
 	m_timers.clear();
+}
+
+
+/************************************************************************/
+/* NV / REGISTRY STUFF                                                  */
+/************************************************************************/
+
+bool CZNCScript::LoadRegistry()
+{
+	return (m_mssRegistry.ReadFromDisk(m_pMod->GetSavePath() + "/" + m_sName + ".registry", 0600) == MCString::MCS_SUCCESS);
+}
+
+
+bool CZNCScript::SaveRegistry()
+{
+	return (m_mssRegistry.WriteToDisk(m_pMod->GetSavePath() + "/" + m_sName + ".registry", 0600) == MCString::MCS_SUCCESS);
+}
+
+
+bool CZNCScript::SetNV(const CString& sName, const CString& sValue, bool bWriteToDisk)
+{
+	m_mssRegistry[sName] = sValue;
+
+	if(bWriteToDisk)
+		return SaveRegistry();
+	else
+		return true;
+}
+
+
+CString CZNCScript::GetNV(const CString& sName)
+{
+	MCString::iterator it = m_mssRegistry.find(sName);
+
+	if(it != m_mssRegistry.end())
+		return it->second;
+	else
+		return "";
+}
+
+
+bool CZNCScript::DelNV(const CString& sName, bool bWriteToDisk)
+{
+	m_mssRegistry.erase(sName);
+
+	if(bWriteToDisk)
+		return SaveRegistry();
+	else
+		return true;
+}
+
+
+bool CZNCScript::ClearNV(bool bWriteToDisk)
+{
+	m_mssRegistry.clear();
+
+	if(bWriteToDisk)
+		return SaveRegistry();
+	else
+		return true;
 }
 
 

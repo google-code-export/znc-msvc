@@ -20,6 +20,9 @@ DIFFERENT FROM THE "WEB" VERSIONS!
 ZNC.ClearTimeout(int id)
 ZNC.ClearInterval(int id)
 
+ZNC.StoreString(name, value)
+ZNC.RetrieveString(name)
+
 string MD5(string)
 	MD5("") = "d41d8cd98f00b204e9800998ecf8427e"
 string SHA1(string) (only if ZNC has been compiled with OpenSSL)
@@ -119,7 +122,9 @@ ToDo:
 	- Loadmod/...
 	- module arguments
 	- remember loaded scripts
-	- StoreObject / RetrieveObject
+	- StoreString / RetrieveString
+	- _ImportNativeConfig
+	- _StoreNativeConfig
 
 	- rewrite modules in JS
 

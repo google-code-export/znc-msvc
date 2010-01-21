@@ -16,6 +16,9 @@
 int CJavaScriptMod::ms_uNumberOfInstances = 0;
 JSRuntime* CJavaScriptMod::ms_jsRuntime = NULL;
 
+/************************************************************************/
+/* CONSTRUCTOR / INITIALIZERS                                           */
+/************************************************************************/
 
 MODCONSTRUCTOR(CJavaScriptMod::CJavaScriptMod)
 {
@@ -44,17 +47,114 @@ bool CJavaScriptMod::OnLoad(const CString& sArgs, CString& sMessage)
 	/* warning: when a script is loaded from here, error messages to PutModule
 		will most probably get lost during ZNC startup */
 
+	LoadFromDisk();
+
 	return true;
 }
 
 
+/************************************************************************/
+/* User command handling                                                */
+/************************************************************************/
+
 void CJavaScriptMod::OnModCommand(const CString& sCommand)
 {
-	CString sError;
-	CZNCScript *scr = new CZNCScript(this, "print", "Y:/Dev/js-1.8.0/js/src/Y2.js");
-	if(scr->LoadScript(sError)) m_scripts.insert(scr); else delete scr;
+
 }
 
+
+/************************************************************************/
+/* CONFIG UTILS                                                         */
+/************************************************************************/
+
+void CJavaScriptMod::SaveToDisk()
+{
+	CString sModules;
+
+	for(set<CZNCScript*>::const_iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	{
+		sModules += (*it)->GetName();
+		sModules += ":";
+		sModules += (*it)->GetArguments();
+		sModules += "\n";
+	}
+
+	SetNV("activeModules", sModules);
+
+	// save other stuff...
+}
+
+
+void CJavaScriptMod::LoadFromDisk()
+{
+	CString sModules = GetNV("activeModules");
+	VCString vsModules;
+
+	sModules.Split("\n", vsModules, false);
+
+	for(VCString::const_iterator it = vsModules.begin(); it != vsModules.end(); it++)
+	{
+		const CString sMod = (*it).Token(0, false, ":");
+		const CString sArgs = (*it).Token(1, true, ":");
+		CString sError;
+
+		if(!LoadModule(sMod, sArgs, sError))
+		{
+			PutStatus("Unable to load [" + sMod + ".js] [" + sError + "].");
+		}
+	}
+
+	// load other stuff...
+}
+
+
+/************************************************************************/
+/* SCRIPT BUSINESS                                                      */
+/************************************************************************/
+
+bool CJavaScriptMod::LoadModule(const CString& sName, const CString& sArgs, CString& srErrorMessage)
+{
+	if(sName.empty())
+	{
+		srErrorMessage = "Usage: LoadMod <module> [args]";
+		return false;
+	}
+
+	if(sName.find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyz_-.") != CString::npos)
+	{
+		srErrorMessage = "Module names can only contain 0-9, a-z, _ and -.";
+		return false;
+	}
+
+	CString sModPath, sTmp;
+
+	if (!CModules::FindModPath(sName + ".js", sModPath, sTmp))
+	{
+		srErrorMessage = "No such module";
+	}
+	else
+	{
+		CZNCScript *pScript = new CZNCScript(this, sName, sModPath);
+
+		if(pScript->LoadScript(srErrorMessage))
+		{
+			m_scripts.insert(pScript);
+
+			return true;
+		}
+		else 
+		{
+			delete pScript;
+		}
+	}
+
+	return false;
+}
+
+
+/************************************************************************/
+/* CLEANUP / DESTRUCTOR                                                 */
+/************************************************************************/
 
 CJavaScriptMod::~CJavaScriptMod()
 {
@@ -76,5 +176,6 @@ CJavaScriptMod::~CJavaScriptMod()
 		JS_ShutDown();
 	}
 }
+
 
 MODULEDEFS(CJavaScriptMod, "Makes ZNC scriptable with JavaScript!")

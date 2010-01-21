@@ -104,14 +104,16 @@ static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *ob
 		do 
 		{
 			// IRC of course allows lines up to 512 bytes, but that includes new lines
-			// and PRIVMSG plus the target name, so we assume 400 as max "payload" length...
+			// and PRIVMSG plus the target name, so we assume about 400 bytes as max "payload" length...
 
 			int uBytes = 0;
 			while(*p && uBytes < 400)
 			{
 				char *old_p = p;
+				// we assume that SpiderMonkey returns a valid UTF-8 string...
 				p = g_utf8_find_next_char(p, NULL);
 				uBytes += (p - old_p);
+				if(uBytes > 6) { *old_p = 0; break; } // ...but one can never be too sure.
 			}
 
 			CString sLine = sMsg.substr(uPos, uBytes);
@@ -431,3 +433,37 @@ _ZNCJSFUNC(User_GetName)
 
 	return JS_TRUE;
 }
+
+
+_ZNCJSFUNC(StoreString)
+{
+	char* szName;
+	char* szValue;
+
+	if(!JS_ConvertArguments(cx, argc, argv, "ss", &szName, &szValue))
+		return JS_FALSE;
+
+	GET_SCRIPT(pScript);
+
+	*rval = BOOLEAN_TO_JSVAL(pScript->SetNV(szName, szValue));
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(RetrieveString)
+{
+	char* szName;
+
+	if(!JS_ConvertArguments(cx, argc, argv, "s", &szName))
+		return JS_FALSE;
+
+	GET_SCRIPT(pScript);
+
+	*rval = STRING_TO_JSVAL(
+		CUtil::MsgCpyToJSStr(cx, pScript->GetNV(szName))
+	);
+
+	return JS_TRUE;
+}
+
