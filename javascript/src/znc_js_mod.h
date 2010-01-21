@@ -85,6 +85,10 @@ protected:
 	static JSRuntime* ms_jsRuntime;
 	static int ms_uNumberOfInstances;
 
+	bool LoadModule(const CString& sName, const CString& sArgs, CString& srErrorMessage);
+	void SaveToDisk();
+	void LoadFromDisk();
+
 	// module call-in wrappers:
 	EModRet InvokeNoArgScriptCallbacks(EModEvId eEvent, bool bModRet);
 	EModRet _OnOneVariableStringArg(EModEvId, const char*, CString&);

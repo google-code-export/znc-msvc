@@ -56,19 +56,26 @@ static JSFunctionSpec s_znc_functions[] = {
 	JS_FS("PutModule",			ZNCJSFUNC_NAME(PutModule),			2, 0, 0),
 	JS_FS("PutIRC",				ZNCJSFUNC_NAME(PutIRC),				1, 0, 0),
 	JS_FS("PutUser",			ZNCJSFUNC_NAME(PutUser),			1, 0, 0),
+	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		2, 0, 0),
+	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			2, 0, 0),
+
+	JS_FS("GetUser",			ZNCJSFUNC_NAME(GetUser),			0, 0, 0),
+	JS_FS("StoreString",		ZNCJSFUNC_NAME(StoreString),		2, 0, 0),
+	JS_FS("RetrieveString",		ZNCJSFUNC_NAME(RetrieveString),		1, 0, 0),
+
 	JS_FS("AddEventHandler",	ZNCJSFUNC_NAME(AddEventHandler),	2, 0, 0),
 	JS_FS("RemoveEventHandler",	ZNCJSFUNC_NAME(RemoveEventHandler), 2, 0, 0),
+
 	JS_FS("GetTag",				ZNCJSFUNC_NAME(GetTag),				1, 0, 0),
 	JS_FS("GetVersion",			ZNCJSFUNC_NAME(GetVersion),			0, 0, 0),
 	JS_FS("GetUptime",			ZNCJSFUNC_NAME(GetUptime),			0, 0, 0),
 	JS_FS("TimeStarted",		ZNCJSFUNC_NAME(TimeStarted),		0, 0, 0),
+
 	JS_FS("SetInterval",		ZNCJSFUNC_NAME(SetInterval),		2, 0, 0),
 	JS_FS("SetTimeout",			ZNCJSFUNC_NAME(SetTimeout),			2, 0, 0),
 	JS_FS("ClearInterval",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0, 0),
 	JS_FS("ClearTimeout",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0, 0),
-	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		2, 0, 0),
-	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			2, 0, 0),
-	JS_FS("GetUser",			ZNCJSFUNC_NAME(GetUser),			0, 0, 0),
+
 	JS_FS_END
 };
 
@@ -81,6 +88,7 @@ enum ZNCProperties
 static JSPropertySpec s_znc_properties[] = {
 	{"VERSION_MAJOR",	PROP_VERSION_MAJOR,		JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_ENUMERATE},
 	{"VERSION_MINOR",	PROP_VERSION_MINOR,		JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_ENUMERATE},
+
 	{"CONTINUE",		PROP_CONST_CONTINUE,	JSPROP_PERMANENT | JSPROP_READONLY},
 	{"HALT",			PROP_CONST_HALT,		JSPROP_PERMANENT | JSPROP_READONLY},
 	{"HALTCORE",		PROP_CONST_HALTCORE,	JSPROP_PERMANENT | JSPROP_READONLY},

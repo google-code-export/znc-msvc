@@ -85,8 +85,37 @@ void CJavaScriptMod::_OnOneConstStringArg(EModEvId eEventId, const CString& sArg
 
 CModule::EModRet CJavaScriptMod::OnRaw(CString& sLine) { return _OnOneVariableStringArg(ModEv_OnRaw, "line", sLine); }
 CModule::EModRet CJavaScriptMod::OnBroadcast(CString& sMessage) { return _OnOneVariableStringArg(ModEv_OnBroadcast, "message", sMessage); }
-CModule::EModRet CJavaScriptMod::OnStatusCommand(CString& sCommand) { return _OnOneVariableStringArg(ModEv_OnStatusCommand, "command", sCommand); }
 CModule::EModRet CJavaScriptMod::OnUserTopicRequest(CString& sChannel) { return _OnOneVariableStringArg(ModEv_OnUserTopicRequest, "channel", sChannel); }
+
+CModule::EModRet CJavaScriptMod::OnStatusCommand(CString& sCommand)
+{
+	if(!m_pUser->DenyLoadMod())
+	{
+		const CString sCmd = sCommand.Token(0).AsUpper();
+		CString sMod = sCommand.Token(1);
+
+		if((sCmd.Equals("LOADMOD") || sCmd.Equals("LOADMODULE")) && sMod.TrimSuffix(".js"))
+		{
+			CString sArgs = sCommand.Token(2, true);
+			CString sError;
+
+			if(!LoadModule(sMod, sArgs, sError))
+			{
+				PutStatus("Unable to load [" + sMod + ".js] [" + sError + "].");
+			}
+			else
+			{
+				PutStatus("Successfully loaded " + sMod + ".js!");
+				SaveToDisk();
+			}
+
+			return HALT;
+		}
+	}
+
+	return _OnOneVariableStringArg(ModEv_OnStatusCommand, "command", sCommand);
+}
+
 
 CModule::EModRet CJavaScriptMod::OnUserRaw(CString& sLine)
 {
