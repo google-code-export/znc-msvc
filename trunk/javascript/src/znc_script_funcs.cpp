@@ -113,7 +113,7 @@ static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *ob
 				// we assume that SpiderMonkey returns a valid UTF-8 string...
 				p = g_utf8_find_next_char(p, NULL);
 				uBytes += (p - old_p);
-				if(uBytes > 6) { *old_p = 0; break; } // ...but one can never be too sure.
+				if(uBytes > 6) { *old_p = 0; p = old_p; break; } // ...but one can never be too sure.
 			}
 
 			CString sLine = sMsg.substr(uPos, uBytes);
