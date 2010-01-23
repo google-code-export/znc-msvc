@@ -54,6 +54,13 @@ CFile::~CFile() {
 }
 
 void CFile::SetFileName(const CString& sLongName) {
+#ifdef _WIN32
+	// :TODO: Convert filenames to Unicode. See Issue 1.
+	m_sLongName = sLongName.Replace_n("/", "\\");
+	m_sLongName.TrimRight("\\");
+
+	m_sShortName = PathFindFileName(m_sLongName.c_str());
+#else
 	m_sLongName = sLongName;
 
 	m_sShortName = sLongName;
@@ -63,6 +70,7 @@ void CFile::SetFileName(const CString& sLongName) {
 	if (uPos != CString::npos) {
 		m_sShortName = m_sShortName.substr(uPos +1);
 	}
+#endif
 }
 
 bool CFile::IsDir(const CString& sLongName, bool bUseLstat) {
@@ -89,9 +97,17 @@ bool CFile::IsFifo(bool bUseLstat) const { return CFile::IsFifo(m_sLongName, bUs
 bool CFile::IsLnk(bool bUseLstat) const { return CFile::IsLnk(m_sLongName, bUseLstat); }
 bool CFile::IsSock(bool bUseLstat) const { return CFile::IsSock(m_sLongName, bUseLstat); }
 
+#ifdef _WIN32
+// FUCKING WINAPI DOES NOT RETURN TIMESTAMPS IF THE STRUCT HAS NOT BEEN NULLED
+// FUCK YOU, BILL GATES, FUCK YOU!!
+#define DECLARE_STAT_STRUCT(VARNAME) struct stat VARNAME; memset(&VARNAME, 0, sizeof(struct stat))
+#else
+#define DECLARE_STAT_STRUCT(VARNAME) struct stat VARNAME
+#endif
+
 // for gettin file types, using fstat instead
 bool CFile::FType(const CString sFileName, EFileTypes eType, bool bUseLstat) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 
 	if (!bUseLstat) {
 		if (stat(sFileName.c_str(), &st) != 0) {
@@ -137,12 +153,12 @@ time_t CFile::GetCTime() const { return CFile::GetCTime(m_sLongName); }
 uid_t CFile::GetUID() const { return CFile::GetUID(m_sLongName); }
 gid_t CFile::GetGID() const { return CFile::GetGID(m_sLongName); }
 bool CFile::Exists(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	return (stat(sFile.c_str(), &st) == 0);
 }
 
 off_t CFile::GetSize(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	if (stat(sFile.c_str(), &st) != 0) {
 		return 0;
 	}
@@ -151,31 +167,28 @@ off_t CFile::GetSize(const CString& sFile) {
 }
 
 time_t CFile::GetATime(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	return (stat(sFile.c_str(), &st) != 0) ? 0 : st.st_atime;
 }
 
 time_t CFile::GetMTime(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	return (stat(sFile.c_str(), &st) != 0) ? 0 : st.st_mtime;
 }
 
 time_t CFile::GetCTime(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	return (stat(sFile.c_str(), &st) != 0) ? 0 : st.st_ctime;
 }
 
 uid_t CFile::GetUID(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	return (stat(sFile.c_str(), &st) != 0) ? -1 : (int) st.st_uid;
 }
 
 gid_t CFile::GetGID(const CString& sFile) {
-	struct stat st;
+	DECLARE_STAT_STRUCT(st);
 	return (stat(sFile.c_str(), &st) != 0) ? -1 : (int) st.st_gid;
-}
-int CFile::GetInfo(const CString& sFile, struct stat& st) {
-	return stat(sFile.c_str(), &st);
 }
 
 //

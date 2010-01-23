@@ -81,7 +81,6 @@ public:
 	static time_t GetCTime(const CString& sFile);
 	static uid_t GetUID(const CString& sFile);
 	static gid_t GetGID(const CString& sFile);
-	static int GetInfo(const CString& sFile, struct stat& st);
 
 	//
 	// Functions to manipulate the file on the filesystem
@@ -201,7 +200,9 @@ public:
 
 	size_t FillByWildcard(const CString& sDir, const CString& sWildcard) {
 		CleanUp();
-		DIR* dir = opendir((sDir.empty()) ? "." : sDir.c_str());
+		CString sPath(sDir);
+		if(sPath.empty()) sPath = ".";
+		DIR* dir = opendir(sPath.c_str();
 
 		if (!dir) {
 			return 0;
@@ -217,7 +218,8 @@ public:
 				continue;
 			}
 
-			CFile *file = new CFile(sDir + (sDir[sDir.size() - 1] == '/' ? "" : "/") + de->d_name/*, this*/);	// @todo need to pass pointer to 'this' if we want to do Sort()
+			CFile *file = new CFile(sPath + (sPath[sPath.size() - 1] == '/' ? "" : "/") + de->d_name
+				/*, this*/);	// @todo need to pass pointer to 'this' if we want to do Sort()
 			push_back(file);
 		}
 
