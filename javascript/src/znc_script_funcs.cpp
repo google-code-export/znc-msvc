@@ -72,8 +72,9 @@ static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *ob
 {
 	char* szTo = NULL;
 	char* szMsg = NULL;
+	JSBool bAutoSplit = JS_TRUE;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "ss", &szTo, &szMsg))
+	if(!JS_ConvertArguments(cx, argc, argv, "ss/b", &szTo, &szMsg, &bAutoSplit))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
@@ -86,7 +87,7 @@ static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *ob
 	// we need to take into account possible UTF-8 multibyte characters.
 	// this can be slowish, so we skip it if possible:
 
-	if(sMsg.size() <= 400) // unit: bytes, not characters!
+	if(bAutoSplit || sMsg.size() <= 400) // unit: bytes, not characters!
 	{
 		bSent = pUser->PutIRC(sType + " " + sTo + " :" + sMsg);
 

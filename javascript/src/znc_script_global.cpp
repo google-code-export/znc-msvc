@@ -56,8 +56,8 @@ static JSFunctionSpec s_znc_functions[] = {
 	JS_FS("PutModule",			ZNCJSFUNC_NAME(PutModule),			2, 0, 0),
 	JS_FS("PutIRC",				ZNCJSFUNC_NAME(PutIRC),				1, 0, 0),
 	JS_FS("PutUser",			ZNCJSFUNC_NAME(PutUser),			1, 0, 0),
-	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		2, 0, 0),
-	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			2, 0, 0),
+	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		3, 0, 0),
+	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			3, 0, 0),
 
 	JS_FS("GetUser",			ZNCJSFUNC_NAME(GetUser),			0, 0, 0),
 	JS_FS("StoreString",		ZNCJSFUNC_NAME(StoreString),		2, 0, 0),
