@@ -1,5 +1,5 @@
-ZNC.SendMessage(string to_nick_or_chan, string message)
-ZNC.SendNotice(string to_nick_or_chan, string message)
+ZNC.SendMessage(string to_nick_or_chan, string message[, auto_split = true])
+ZNC.SendNotice(string to_nick_or_chan, string message[, auto_split = true])
 	messages longer than 400 bytes in their UTF-8 representation
 	will automatically be split.
 
