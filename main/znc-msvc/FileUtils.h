@@ -202,7 +202,7 @@ public:
 		CleanUp();
 		CString sPath(sDir);
 		if(sPath.empty()) sPath = ".";
-		DIR* dir = opendir(sPath.c_str();
+		DIR* dir = opendir(sPath.c_str());
 
 		if (!dir) {
 			return 0;
@@ -218,8 +218,8 @@ public:
 				continue;
 			}
 
-			CFile *file = new CFile(sPath + (sPath[sPath.size() - 1] == '/' ? "" : "/") + de->d_name
-				/*, this*/);	// @todo need to pass pointer to 'this' if we want to do Sort()
+			CFile *file = new CFile(sPath + (sPath[sPath.size() - 1] == '/' ? "" : "/") + de->d_name/*, this*/);
+				// @todo need to pass pointer to 'this' if we want to do Sort()
 			push_back(file);
 		}
 
