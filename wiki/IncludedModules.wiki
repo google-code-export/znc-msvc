@@ -13,16 +13,17 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="blue">autovoice</font>
   * <font color="green">away</font>
   * <font color="green">awaynick</font>
-  * <font color="blue">blockuser</font>
   * <font color="orange">block_lagchk</font>
   * <font color="orange">block_motd</font>
+  * <font color="orange">blockserver</font>
   * <font color="orange">blockuser</font>
   * <font color="blue">buffextras</font>
   * <font color="orange">certauth</font>
   * <font color="orange">certchecker</font>
   * <font color="green">chansaver</font>
+  * <font color="green">clientnotify</font>
   * <font color="orange">clientpart</font>
-  * <font color="blue">connect_throttle</font>
+  * <font color="orange">colloquy</font>
   * <font color="green">crypt</font>
   * <font color="blue">ctcpflood</font>
   * <font color="blue">discon_kick</font>
@@ -33,6 +34,7 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="blue">fixfreenode</font>
   * <font color="orange">flooddetach</font>
   * <font color="orange">highlightattach</font>
+  * identserver
   * <font color="green">imapauth</font>
   * <font color="green">keepnick</font>
   * <font color="green">kickrejoin</font>
@@ -48,7 +50,6 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="green">perform</font>
   * <font color="orange">prowl</font>
   * <font color="green">q</font>
-  * <font color="orange">qauth</font>
   * <font color="green">raw</font>
   * <font color="orange">rawlog</font>
   * <font color="blue">route_replies</font>
@@ -57,9 +58,10 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="blue">send_raw</font>
   * <font color="green">simple_away</font>
   * <font color="green">stickychan</font>
+  * <font color="orange">twitter</font>
   * <font color="green">watch</font>
-  * <font color="green">webadmin</font>
   * <font color="orange">watch_only_detached</font>
+  * <font color="green">webadmin</font>
 
 Available separately: [ModSkypeSetup modskype] (for Windows only).
 
@@ -71,4 +73,3 @@ Available separately: [ModSkypeSetup modskype] (for Windows only).
   * <font color="green">shell</font>
   * <font color="blue">modtcl</font>
   * <font color="orange">uptime</font>
-  * <font color="orange">prowl</font>
