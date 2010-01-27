@@ -314,12 +314,12 @@ inline void TFD_ZERO( fd_set *set )
 	FD_ZERO( set );
 }
 
-inline void TFD_SET( int iSock, fd_set *set )
+inline void TFD_SET( cs_sock_t iSock, fd_set *set )
 {
 	FD_SET( iSock, set );
 }
 
-inline bool TFD_ISSET( int iSock, fd_set *set )
+inline bool TFD_ISSET( cs_sock_t iSock, fd_set *set )
 {
 	if ( FD_ISSET( iSock, set ) )
 		return( true );
@@ -327,7 +327,7 @@ inline bool TFD_ISSET( int iSock, fd_set *set )
 	return( false );
 }
 
-inline void TFD_CLR( int iSock, fd_set *set )
+inline void TFD_CLR( cs_sock_t iSock, fd_set *set )
 {
 	FD_CLR( iSock, set );
 }
@@ -535,7 +535,7 @@ public:
 	virtual bool Listen( u_short iPort, int iMaxConns = SOMAXCONN, const CS_STRING & sBindHost = "", u_int iTimeout = 0 );
 
 	//! Accept an inbound connection, this is used internally
-	virtual int Accept( CS_STRING & sHost, u_short & iRPort );
+	virtual cs_sock_t Accept( CS_STRING & sHost, u_short & iRPort );
 
 	//! Accept an inbound SSL connection, this is used internally and called after Accept
 	virtual bool AcceptSSL();
@@ -654,7 +654,7 @@ public:
 
 	//! sets the max buffered threshold when EnableReadLine() is enabled
 	void SetMaxBufferThreshold( u_int iThreshold );
-	u_int GetMaxBufferThreshold() const;
+	size_t GetMaxBufferThreshold() const;
 
 	//! Returns the connection type from enum eConnType
 	int GetType() const;
@@ -777,9 +777,9 @@ public:
 	* @param iBytes the amount of bytes we can write
 	* @param iMilliseconds the amount of time we have to rate to iBytes
 	*/
-	virtual void SetRate( u_int iBytes, unsigned long long iMilliseconds );
+	virtual void SetRate( size_t iBytes, unsigned long long iMilliseconds );
 
-	u_int GetRateBytes();
+	size_t GetRateBytes();
 	unsigned long long GetRateTime();
 	//! This has a garbage collecter, and is used internall to call the jobs
 	virtual void Cron();
@@ -1004,7 +1004,8 @@ private:
 	ECloseType	m_eCloseType;
 
 	unsigned long long	m_iMaxMilliSeconds, m_iLastSendTime, m_iBytesRead, m_iBytesWritten, m_iStartTime;
-	unsigned int		m_iMaxBytes, m_iLastSend, m_iMaxStoredBufferLength, m_iTimeoutType;
+	size_t			m_iMaxBytes, m_iLastSend, m_iMaxStoredBufferLength;
+	u_int			m_iTimeoutType;
 
 	CSSockAddr 		m_address, m_bindhost;
 	bool			m_bIsIPv6, m_bSkipConnect;
@@ -1365,7 +1366,7 @@ public:
 			AddSock( pcSock, cListen.GetSockName() );
 			if( ( piRandPort ) && ( cListen.GetPort() == 0 ) )
 			{
-				int iSock = pcSock->GetSock();
+				cs_sock_t iSock = pcSock->GetSock();
 
 				if ( iSock < 0 )
 				{
@@ -2083,7 +2084,7 @@ private:
 				{
 					CS_STRING sHost;
 					u_short port;
-					int inSock = pcSock->Accept( sHost, port );
+					cs_sock_t inSock = pcSock->Accept( sHost, port );
 
 					if ( inSock != -1 )
 					{

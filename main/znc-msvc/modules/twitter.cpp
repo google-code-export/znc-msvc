@@ -5,9 +5,8 @@
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  */
-#include "stdafx.hpp"
-#define REQUIRESSL
 
+#include "stdafx.hpp"
 #include "main.h"
 #include "znc.h"
 #include "Chan.h"
