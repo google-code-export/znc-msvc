@@ -1,4 +1,4 @@
-(/** @file
+/** @file
 *
 *    Copyright (c) 1999-2009 Jim Hull <imaginos@imaginos.net>
 *    All rights reserved
@@ -994,14 +994,14 @@ bool Csock::Listen( u_short iPort, int iMaxConns, const CS_STRING & sBindHost, u
 	return( true );
 }
 
-int Csock::Accept( CS_STRING & sHost, u_short & iRPort )
+cs_sock_t Csock::Accept( CS_STRING & sHost, u_short & iRPort )
 {
-	int iSock = -1;
+	cs_sock_t iSock = -1;
 	if( !GetIPv6() )
 	{
 		struct sockaddr_in client;
 		socklen_t clen = sizeof( client );
-		iSock = (int)( accept( m_iReadSock, (struct sockaddr *) &client, &clen ) );
+		iSock = accept( m_iReadSock, (struct sockaddr *) &client, &clen );
 		if( iSock != -1 )
 		{
 			getpeername( iSock, (struct sockaddr *) &client, &clen );
@@ -1015,7 +1015,7 @@ int Csock::Accept( CS_STRING & sHost, u_short & iRPort )
 		char straddr[INET6_ADDRSTRLEN];
 		struct sockaddr_in6 client;
 		socklen_t clen = sizeof( client );
-		iSock = (int)( accept( m_iReadSock, (struct sockaddr *) &client, &clen ) );
+		iSock = accept( m_iReadSock, (struct sockaddr *) &client, &clen );
 		if( iSock != -1 )
 		{
 			getpeername( iSock, (struct sockaddr *) &client, &clen );
@@ -1415,7 +1415,7 @@ bool Csock::Write( const char *data, size_t len )
 		if ( m_sSSLBuffer.empty() ) // on retrying to write data, ssl wants the data in the SAME spot and the SAME size
 			m_sSSLBuffer.append( m_sSend.data(), iBytesToSend );
 
-		int iErr = SSL_write( m_ssl, m_sSSLBuffer.data(), m_sSSLBuffer.length() );
+		int iErr = SSL_write( m_ssl, m_sSSLBuffer.data(), (int)m_sSSLBuffer.length() );
 
 		if ( ( iErr < 0 ) && ( GetSockError() == ECONNREFUSED ) )
 		{
@@ -1576,7 +1576,7 @@ CS_STRING Csock::GetLocalIP()
 	if ( !m_sLocalIP.empty() )
 		return( m_sLocalIP );
 
-	int iSock = GetSock();
+	cs_sock_t iSock = GetSock();
 
 	if ( iSock < 0 )
 		return( "" );
@@ -1610,7 +1610,7 @@ CS_STRING Csock::GetRemoteIP()
 	if ( !m_sRemoteIP.empty() )
 		return( m_sRemoteIP );
 
-	int iSock = GetSock();
+	cs_sock_t iSock = GetSock();
 
 	if ( iSock < 0 )
 	{
@@ -1750,7 +1750,7 @@ void Csock::PushBuff( const char *data, int len, bool bStartAtZero )
 CS_STRING & Csock::GetInternalReadBuffer() { return( m_sbuffer ); }
 CS_STRING & Csock::GetInternalWriteBuffer() { return( m_sSend ); }
 void Csock::SetMaxBufferThreshold( u_int iThreshold ) { m_iMaxStoredBufferLength = iThreshold; }
-u_int Csock::GetMaxBufferThreshold() const { return( m_iMaxStoredBufferLength ); }
+size_t Csock::GetMaxBufferThreshold() const { return( m_iMaxStoredBufferLength ); }
 int Csock::GetType() const { return( m_iConnType ); }
 void Csock::SetType( int iType ) { m_iConnType = iType; }
 const CS_STRING & Csock::GetSockName() const { return( m_sSockName ); }
@@ -1789,7 +1789,7 @@ u_short Csock::GetRemotePort()
 	if ( m_iRemotePort > 0 )
 		return( m_iRemotePort );
 
-	int iSock = GetSock();
+	cs_sock_t iSock = GetSock();
 
 	if ( iSock >= 0 )
 	{
@@ -1819,7 +1819,7 @@ u_short Csock::GetLocalPort()
 	if ( m_iLocalPort > 0 )
 		return( m_iLocalPort );
 
-	int iSock = GetSock();
+	cs_sock_t iSock = GetSock();
 
 	if ( iSock >= 0 )
 	{
@@ -2030,13 +2030,13 @@ void Csock::SetRequiresClientCert( bool bRequiresCert ) { m_iRequireClientCertFl
 void Csock::SetParentSockName( const CS_STRING & sParentName ) { m_sParentName = sParentName; }
 const CS_STRING & Csock::GetParentSockName() { return( m_sParentName ); }
 
-void Csock::SetRate( u_int iBytes, unsigned long long iMilliseconds )
+void Csock::SetRate( size_t iBytes, unsigned long long iMilliseconds )
 {
 	m_iMaxBytes = iBytes;
 	m_iMaxMilliSeconds = iMilliseconds;
 }
 
-u_int Csock::GetRateBytes() { return( m_iMaxBytes ); }
+size_t Csock::GetRateBytes() { return( m_iMaxBytes ); }
 unsigned long long Csock::GetRateTime() { return( m_iMaxMilliSeconds ); }
 
 void Csock::Cron()

@@ -145,7 +145,6 @@ $(MAKDIR)\partyline.dll \
 $(MAKDIR)\perform.dll \
 $(MAKDIR)\prowl.dll \
 $(MAKDIR)\q.dll \
-$(MAKDIR)\qauth.dll \
 $(MAKDIR)\raw.dll \
 $(MAKDIR)\rawlog.dll \
 $(MAKDIR)\route_replies.dll \
@@ -207,7 +206,6 @@ $(MAKDIR)\partyline.obj \
 $(MAKDIR)\perform.obj \
 $(MAKDIR)\prowl.obj \
 $(MAKDIR)\q.obj \
-$(MAKDIR)\qauth.obj \
 $(MAKDIR)\raw.obj \
 $(MAKDIR)\rawlog.obj \
 $(MAKDIR)\route_replies.obj \
