@@ -1,6 +1,14 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2010-01-27 (0.079-r 1722) ==
+  * Updated to official SVN revision 1722, lots of changes & fixes. Thanks!
+  * Updated colloquy module from [http://github.com/wired/colloquypush/raw/master/znc/colloquy.cpp here]
+  * Use c-ares DLLs instead of static libs (revision 194, credit: laszlo.tamas.szabo)
+  * Fixed fix_lagchk module
+  * Removed "qauth" module, "q" does its job
+  * Awaiting your feedback!
+
 == 2009-12-21 (0.079-r 1685) (x86 only) ==
   * Updated to official SVN revision 1685
   * Worked around c-ares crash bug, issue 22 for details
