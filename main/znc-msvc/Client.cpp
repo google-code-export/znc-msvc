@@ -114,11 +114,6 @@ void CClient::ReadLine(const CString& sData) {
 			}
 			return;		// Don't forward this msg.  ZNC will handle nick changes until auth is complete
 		}
-
-		if (!m_pIRCSock) {
-			// No need to forward it
-			return;
-		}
 	} else if (sCommand.Equals("USER")) {
 		if (!IsAttached()) {
 			if (m_sUser.empty()) {
@@ -192,7 +187,7 @@ void CClient::ReadLine(const CString& sData) {
 		// If the client meant to ping us or we can be sure the server
 		// won't answer the ping (=no server connected) -> PONG back.
 		// else: It's the server's job to send a PONG.
-		if (sTarget.Equals("irc.znc.in") || !m_pIRCSock) {
+		if (sTarget.Equals("irc.znc.in") || !GetIRCSock()) {
 			PutClient("PONG " + sLine.substr(5));
 			return;
 		}
@@ -338,7 +333,7 @@ void CClient::ReadLine(const CString& sData) {
 		// make sense. Comment this out and wait for complaints.
 #if 0
 		if (sMsg.WildCmp("DCC * (*)")) {
-			sMsg = "DCC " + sLine.Token(3) + " (" + ((m_pIRCSock) ? m_pIRCSock->GetLocalIP() : GetLocalIP()) + ")";
+			sMsg = "DCC " + sLine.Token(3) + " (" + ((GetIRCSock()) ? GetIRCSock()->GetLocalIP() : GetLocalIP()) + ")";
 		}
 #endif
 
@@ -356,7 +351,7 @@ void CClient::ReadLine(const CString& sData) {
 		}
 #endif
 
-		if (!m_pIRCSock) {
+		if (!GetIRCSock()) {
 			// Some lagmeters do a NOTICE to their own nick, ignore those.
 			if (!sTarget.Equals(m_sNick))
 				PutStatus("Your notice to [" + sTarget + "] got lost, "
@@ -543,7 +538,7 @@ void CClient::ReadLine(const CString& sData) {
 
 		MODULECALL(OnUserMsg(sTarget, sMsg), m_pUser, this, return);
 
-		if (!m_pIRCSock) {
+		if (!GetIRCSock()) {
 			// Some lagmeters do a PRIVMSG to their own nick, ignore those.
 			if (!sTarget.Equals(m_sNick))
 				PutStatus("Your message to [" + sTarget + "] got lost, "
@@ -581,6 +576,14 @@ void CClient::ReadLine(const CString& sData) {
 
 void CClient::SetNick(const CString& s) {
 	m_sNick = s;
+}
+
+const CIRCSock* CClient::GetIRCSock() const {
+	return m_pUser->GetIRCSock();
+}
+
+CIRCSock* CClient::GetIRCSock() {
+	return m_pUser->GetIRCSock();
 }
 
 void CClient::StatusCTCP(const CString& sLine) {
@@ -704,7 +707,6 @@ void CClient::AcceptLogin(CUser& User) {
 
 	SetSockName("USR::" + m_pUser->GetUserName());
 
-	m_pIRCSock = (CIRCSock*) CZNC::Get().FindSockByName("IRC::" + m_pUser->GetUserName());
 	m_pUser->UserConnected(this);
 
 	SendMotd();
@@ -730,8 +732,6 @@ void CClient::Disconnected() {
 		m_pUser->UserDisconnected(this);
 	}
 
-	m_pIRCSock = NULL;
-
 	MODULECALL(OnClientDisconnect(), m_pUser, this, );
 }
 
@@ -743,24 +743,13 @@ void CClient::ReachedMaxBuffer() {
 	Close();
 }
 
-void CClient::IRCConnected(CIRCSock* pIRCSock) {
-	m_pIRCSock = pIRCSock;
-}
-
 void CClient::BouncedOff() {
 	PutStatusNotice("You are being disconnected because another user just authenticated as you.");
-	m_pIRCSock = NULL;
 	Close(Csock::CLT_AFTERWRITE);
 }
 
-void CClient::IRCDisconnected() {
-	m_pIRCSock = NULL;
-}
-
 void CClient::PutIRC(const CString& sLine) {
-	if (m_pIRCSock) {
-		m_pIRCSock->PutIRC(sLine);
-	}
+	m_pUser->PutIRC(sLine);
 }
 
 void CClient::PutClient(const CString& sLine) {
@@ -809,16 +798,16 @@ void CClient::PutModule(const CString& sModule, const CString& sLine) {
 CString CClient::GetNick(bool bAllowIRCNick) const {
 	CString sRet;
 
-	if ((bAllowIRCNick) && (IsAttached()) && (m_pIRCSock)) {
-		sRet = m_pIRCSock->GetNick();
+	if ((bAllowIRCNick) && (IsAttached()) && (GetIRCSock())) {
+		sRet = GetIRCSock()->GetNick();
 	}
 
 	return (sRet.empty()) ? m_sNick : sRet;
 }
 
 CString CClient::GetNickMask() const {
-	if (m_pIRCSock && m_pIRCSock->IsAuthed()) {
-		return m_pIRCSock->GetNickMask();
+	if (GetIRCSock() && GetIRCSock()->IsAuthed()) {
+		return GetIRCSock()->GetNickMask();
 	}
 
 	CString sHost = m_pUser->GetVHost();

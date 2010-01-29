@@ -28,7 +28,7 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 *
-* $Revision: 1.221 $
+* $Revision: 1.222 $
 */
 
 // note to compile with win32 need to link to winsock2, using gcc its -lws2_32
@@ -1368,7 +1368,7 @@ public:
 			{
 				cs_sock_t iSock = pcSock->GetSock();
 
-				if ( iSock < 0 )
+				if ( iSock == CS_INVALID_SOCK )
 				{
 					CS_DEBUG( "Failed to attain a valid file descriptor" );
 					pcSock->Close();
@@ -2086,7 +2086,7 @@ private:
 					u_short port;
 					cs_sock_t inSock = pcSock->Accept( sHost, port );
 
-					if ( inSock != -1 )
+					if ( inSock != CS_INVALID_SOCK )
 					{
 						if ( T::TMO_ACCEPT & pcSock->GetTimeoutType() )
 							pcSock->ResetTimer();	// let them now it got dinged
