@@ -86,6 +86,7 @@ protected:
 	static int ms_uNumberOfInstances;
 
 	bool LoadModule(const CString& sName, const CString& sArgs, CString& srErrorMessage);
+	bool UnLoadModule(const CString& sName, CString& srErrorMessage);
 	void SaveToDisk();
 	void LoadFromDisk();
 

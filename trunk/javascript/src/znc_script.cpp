@@ -105,6 +105,11 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		m_jsContext = NULL;
 		return false;
 	}
+	else
+	{
+		// make sure we got the registry strings ready & available.
+		LoadRegistry();
+	}
 
 	bool bUtf16 = false, bUtf8 = false;
 	unsigned char* szBuf = NULL;
@@ -232,8 +237,6 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	}
 	else
 	{
-		LoadRegistry();
-
 		jsval jvModArgs = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(m_jsContext, "<:TODO:>"));
 		InvokeEventHandler(ModEv_OnLoad, 1, &jvModArgs, false);
 

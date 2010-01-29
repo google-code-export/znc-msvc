@@ -111,6 +111,22 @@ CModule::EModRet CJavaScriptMod::OnStatusCommand(CString& sCommand)
 
 			return HALT;
 		}
+		else if((sCmd.Equals("UNLOADMOD") || sCmd.Equals("UNLOADMODULE")) && sMod.TrimSuffix(".js"))
+		{
+			CString sError;
+
+			if(!UnLoadModule(sMod, sError))
+			{
+				PutStatus("Unable to unload [" + sMod + ".js] [" + sError + "].");
+			}
+			else
+			{
+				PutStatus("Successfully unloaded " + sMod + ".js!");
+				SaveToDisk();
+			}
+
+			return HALT;
+		}
 	}
 
 	return _OnOneVariableStringArg(ModEv_OnStatusCommand, "command", sCommand);

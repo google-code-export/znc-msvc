@@ -119,10 +119,8 @@ ToDo:
 	- Finish chan class
 	- Finish user class
 	- CTable class
-	- Loadmod/...
+	- listmods
 	- module arguments
-	- remember loaded scripts
-	- StoreString / RetrieveString
 	- _ImportNativeConfig
 	- _StoreNativeConfig
 
