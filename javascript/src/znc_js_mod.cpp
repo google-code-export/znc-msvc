@@ -109,7 +109,7 @@ void CJavaScriptMod::LoadFromDisk()
 
 
 /************************************************************************/
-/* SCRIPT BUSINESS                                                      */
+/* SCRIPT LOADING BUSINESS                                              */
 /************************************************************************/
 
 bool CJavaScriptMod::LoadModule(const CString& sName, const CString& sArgs, CString& srErrorMessage)
@@ -124,6 +124,15 @@ bool CJavaScriptMod::LoadModule(const CString& sName, const CString& sArgs, CStr
 	{
 		srErrorMessage = "Module names can only contain 0-9, a-z, _ and -.";
 		return false;
+	}
+
+	for(set<CZNCScript*>::const_iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	{
+		if((*it)->GetName() == sName)
+		{
+			srErrorMessage = "A module of this name has already been loaded.";
+			return false;
+		}
 	}
 
 	CString sModPath, sTmp;
@@ -148,6 +157,22 @@ bool CJavaScriptMod::LoadModule(const CString& sName, const CString& sArgs, CStr
 		}
 	}
 
+	return false;
+}
+
+
+bool CJavaScriptMod::UnLoadModule(const CString& sName, CString& srErrorMessage)
+{
+	for(set<CZNCScript*>::const_iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+	{
+		if((*it)->GetName() == sName)
+		{
+			m_scripts.erase(it);
+			return true;
+		}
+	}
+
+	srErrorMessage = "A module of this name is not loaded.";
 	return false;
 }
 
