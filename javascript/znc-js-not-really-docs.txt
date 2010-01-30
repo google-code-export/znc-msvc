@@ -119,7 +119,6 @@ ToDo:
 	- Finish chan class
 	- Finish user class
 	- CTable class
-	- listmods
 	- module arguments
 	- _ImportNativeConfig
 	- _StoreNativeConfig
