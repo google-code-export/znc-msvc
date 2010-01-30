@@ -59,7 +59,27 @@ bool CJavaScriptMod::OnLoad(const CString& sArgs, CString& sMessage)
 
 void CJavaScriptMod::OnModCommand(const CString& sCommand)
 {
+	const CString sCmd = sCommand.Token(0);
 
+	if(sCmd.Equals("LISTMODS") || sCmd.Equals("LISTSCRIPTS"))
+	{
+		CTable tMods;
+		tMods.AddColumn("Name");
+		tMods.AddColumn("Arguments");
+
+		for(set<CZNCScript*>::const_iterator it = m_scripts.begin(); it != m_scripts.end(); it++)
+		{
+			tMods.AddRow();
+			tMods.SetCell("Name", (*it)->GetName());
+			tMods.SetCell("Arguments", (*it)->GetArguments());
+		}
+
+		PutModule(tMods);
+	}
+	else
+	{
+		PutModule("Command not understood. Please note that you can't execute any JavaScript commands from IRC.");
+	}
 }
 
 
