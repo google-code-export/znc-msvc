@@ -1,6 +1,7 @@
 =What are you looking for?=
 
   * Help setting up ZNC on Windows: StarterGuide
+  * How to run ZNC as a service: ServiceSetup
 
   * Help setting up modskype: ModSkypeSetup<br />_modskype turns a ZNC account into a bot that relays messages between IRC channels and Skype chat rooms._
 
