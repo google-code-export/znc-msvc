@@ -239,7 +239,7 @@ public:
 	// Flags
 	void SetFlag(unsigned int u) { m_uFlags |= u; }
 	void UnsetFlag(unsigned int u) { m_uFlags &= ~u; }
-	bool HasFlag(unsigned int u) const { return m_uFlags & u; }
+	bool HasFlag(unsigned int u) const { return (m_uFlags & u) != 0; }
 
 	enum EFlags {
 		Disabled     = 1 << 0,
@@ -282,7 +282,7 @@ private:
 class CColloquyMod : public CModule {
 protected:
 	int m_idleAfterMinutes;
-	int m_lastActivity;
+	time_t m_lastActivity;
 	int m_debug;
 	int m_nightHoursStart;
 	int m_nightHoursEnd;
