@@ -178,7 +178,16 @@ int main(int argc, char** argv) {
 	}
 
 	if (!pZNC->ParseConfig(sConfig)) {
-		CUtils::PrintError("Unrecoverable config error.");
+		if(argc < 2)
+		{
+			CUtils::PrintMessage("\n");
+			CUtils::PrintMessage("Press any key to continue...");
+			_getch();
+		}
+		else
+		{
+			CUtils::PrintError("Unrecoverable config error.");
+		}
 		delete pZNC;
 		return 1;
 	}
