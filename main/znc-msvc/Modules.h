@@ -159,42 +159,6 @@ private:
 	FPTimer_t	m_pFBCallback;
 };
 
-class ZNC_API CSocket : public CZNCSock {
-public:
-	CSocket(CModule* pModule);
-	CSocket(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout = 60);
-	virtual ~CSocket();
-
-	using Csock::Connect;
-	using Csock::Listen;
-
-	// This defaults to closing the socket, feel free to override
-	virtual void ReachedMaxBuffer();
-	virtual void SockError(int iErrno);
-	// This limits the global connections from this IP to defeat DoS
-	// attacks, feel free to override
-	virtual bool ConnectionFrom(const CString& sHost, unsigned short uPort);
-
-	bool Connect(const CString& sHostname, unsigned short uPort, bool bSSL = false, unsigned int uTimeout = 60);
-	bool Listen(unsigned short uPort, bool bSSL = false, unsigned int uTimeout = 0);
-	virtual bool PutIRC(const CString& sLine);
-	virtual bool PutUser(const CString& sLine);
-	virtual bool PutStatus(const CString& sLine);
-	virtual bool PutModule(const CString& sLine, const CString& sIdent = "", const CString& sHost = "znc.in");
-	virtual bool PutModNotice(const CString& sLine, const CString& sIdent = "", const CString& sHost = "znc.in");
-
-	// Setters
-	void SetModule(CModule* p);
-	// !Setters
-
-	// Getters
-	CModule* GetModule() const;
-	// !Getters
-private:
-protected:
-	CModule*	m_pModule;
-};
-
 class CModInfo {
 public:
 	CModInfo() {}
@@ -413,12 +377,12 @@ public:
 	 */
 	virtual void OnNick(const CNick& Nick, const CString& sNewNick, const vector<CChan*>& vChans);
 	/** Called when a nick is kicked from a channel.
-	 *  @param Nick The nick which is kicked.
-	 *  @param sOpNick The nick which generated the kick.
+	 *  @param OpNick The nick which generated the kick.
+	 *  @param sKickedNick The nick which was kicked.
 	 *  @param Channel The channel on which this kick occurs.
 	 *  @param sMessage The kick message.
 	 */
-	virtual void OnKick(const CNick& Nick, const CString& sOpNick, CChan& Channel, const CString& sMessage);
+	virtual void OnKick(const CNick& OpNick, const CString& sKickedNick, CChan& Channel, const CString& sMessage);
 	/** Called when a nick joins a channel.
 	 *  @param Nick The nick who joined.
 	 *  @param Channel The channel which was joined.
@@ -552,12 +516,14 @@ public:
 	 */
 	virtual EModRet OnChanCTCP(CNick& Nick, CChan& Channel, CString& sMessage);
 	/** Called when we receive a private CTCP ACTION ("/me" in query) <em>from IRC</em>.
+	 *  This is called after CModule::OnPrivCTCP().
 	 *  @param Nick The nick the action came from.
 	 *  @param sMessage The action message
 	 *  @return See CModule::EModRet.
 	 */
 	virtual EModRet OnPrivAction(CNick& Nick, CString& sMessage);
 	/** Called when we receive a channel CTCP ACTION ("/me" in a channel) <em>from IRC</em>.
+	 *  This is called after CModule::OnChanCTCP().
 	 *  @param Nick The nick the action came from.
 	 *  @param Channel The channel the action was sent to.
 	 *  @param sMessage The action message
