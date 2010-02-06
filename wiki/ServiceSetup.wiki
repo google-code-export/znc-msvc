@@ -12,9 +12,9 @@ First, shut down ZNC if you haven't already.
 
 Then, you have to move the ZNC configuration dir from %appdata% to the ZNC binaries folder. This also means that the user you are going to run ZNC as needs to have write access to the new directory.
 
-The service will not run as your current user (e.g. "Administrator", so it won't find the config in C:\Users\Administrator\AppData\Roaming\ZNC). It will however not even look in that folder if we move+rename the config dir to .znc in the directory where znc.exe resides.
+The service will not run as your current user (e.g. "Administrator", so it won't find the config in `C:\Users\Administrator\AppData\Roaming\ZNC`). It will however not even look in that folder if we move+rename the config dir to .znc in the directory where znc.exe resides.
 
-So that's what we're going to do. Move the ZNC folder from AppData to your znc.exe dir, then fire up a command prompt and use `rename ZNC .znc` to rename the directory.
+So that's what we're going to do. Move the ZNC folder from %appdata% to your znc.exe dir, then fire up a command prompt and use `rename ZNC .znc` to rename the directory.
 
 The resulting tree should look like this:
 {{{
@@ -34,7 +34,7 @@ We use the [http://support.microsoft.com/kb/251192 sc.exe] command line utility 
 
   `sc create ZNC binPath= "D:\Program Files\ZNC\ZNC_Service.exe"`
 
-Don't forget the space character after `binPath=`!
+Don't forget the space character following `binPath=`.
 
 You probably don't want to start the service immediately. Please read on.
 
@@ -45,3 +45,10 @@ In order to get ZNC logging errors and such to the system event log (eventvwr.ms
 ===Starting the service===
 
 Use services.msc to configure when the service starts, and to actually start it now.
+
+===Removing the service===
+
+In case you ever want to get rid of the service entry:
+
+  * Execute: `sc delete ZNC`
+  * Delete the registry key `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\eventlog\Application\ZNCServiceEventProvider`
