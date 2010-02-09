@@ -57,10 +57,9 @@ public:
 				}
 			}
 
-			sNick += "\\S";
+			sNick += "|S";
 
-			m_pUser->PutUser(":" + sNick + "!SkypeUser@irc.znc.in PRIVMSG " + sChan + " :" + sMsg.substr(uPos + 2), NULL);
-			return HALT;
+			sLine = ":" + sNick + "!SkypeUser@irc.znc.in PRIVMSG " + sChan + " :" + sMsg.substr(uPos + 2);
 		}
 		return CONTINUE;
 	}
