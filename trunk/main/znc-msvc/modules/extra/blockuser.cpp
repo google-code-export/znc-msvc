@@ -25,7 +25,7 @@ public:
 		MCString::iterator it2;
 
 		// Load saved settings
-		for (it2 = BeginNV(); it2 != EndNV(); it2++) {
+		for (it2 = BeginNV(); it2 != EndNV(); ++it2) {
 			// Ignore errors
 			Block(it2->first);
 		}
@@ -33,7 +33,7 @@ public:
 		// Parse arguments, each argument is a user name to block
 		sArgs.Split(" ", vArgs, false);
 
-		for (it = vArgs.begin(); it != vArgs.end(); it++) {
+		for (it = vArgs.begin(); it != vArgs.end(); ++it) {
 			if (!Block(*it)) {
 				sMessage = "Could not block [" + *it + "]";
 				return false;
@@ -66,7 +66,7 @@ public:
 
 			Table.AddColumn("Blocked user");
 
-			for (it = BeginNV(); it != EndNV(); it++) {
+			for (it = BeginNV(); it != EndNV(); ++it) {
 				Table.AddRow();
 				Table.SetCell("Blocked user", it->first);
 			}
@@ -100,7 +100,7 @@ public:
 private:
 	bool IsBlocked(const CString& sUser) {
 		MCString::iterator it;
-		for (it = BeginNV(); it != EndNV(); it++) {
+		for (it = BeginNV(); it != EndNV(); ++it) {
 			if (sUser.Equals(it->first)) {
 				return true;
 			}
@@ -117,7 +117,7 @@ private:
 		// Disconnect all clients
 		vector<CClient*>& vpClients = pUser->GetClients();
 		vector<CClient*>::iterator it;
-		for (it = vpClients.begin(); it != vpClients.end(); it++) {
+		for (it = vpClients.begin(); it != vpClients.end(); ++it) {
 			(*it)->PutStatusNotice(MESSAGE);
 			(*it)->Close(Csock::CLT_AFTERWRITE);
 		}

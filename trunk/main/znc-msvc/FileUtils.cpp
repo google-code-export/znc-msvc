@@ -98,7 +98,7 @@ bool CFile::IsLnk(bool bUseLstat) const { return CFile::IsLnk(m_sLongName, bUseL
 bool CFile::IsSock(bool bUseLstat) const { return CFile::IsSock(m_sLongName, bUseLstat); }
 
 // for gettin file types, using fstat instead
-bool CFile::FType(const CString sFileName, EFileTypes eType, bool bUseLstat) {
+bool CFile::FType(const CString& sFileName, EFileTypes eType, bool bUseLstat) {
 	struct stat st = {0};
 
 	if (!bUseLstat) {
@@ -635,7 +635,7 @@ bool CDir::MakeDir(const CString& sPath, mode_t iMode) {
 
 	// For every single subpath, do...
 	sPath.Split("/", dirs, false);
-	for (it = dirs.begin(); it != dirs.end(); it++) {
+	for (it = dirs.begin(); it != dirs.end(); ++it) {
 		// Add this to the path we already created
 		sDir += *it;
 

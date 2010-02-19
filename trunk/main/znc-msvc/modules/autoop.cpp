@@ -53,7 +53,7 @@ public:
 	const CString& GetHostmask() const { return m_sHostmask; }
 
 	bool ChannelMatches(const CString& sChan) const {
-		for (set<CString>::const_iterator it = m_ssChans.begin(); it != m_ssChans.end(); it++) {
+		for (set<CString>::const_iterator it = m_ssChans.begin(); it != m_ssChans.end(); ++it) {
 			if (sChan.AsLower().WildCmp(*it)) {
 				return true;
 			}
@@ -69,7 +69,7 @@ public:
 	CString GetChannels() const {
 		CString sRet;
 
-		for (set<CString>::const_iterator it = m_ssChans.begin(); it != m_ssChans.end(); it++) {
+		for (set<CString>::const_iterator it = m_ssChans.begin(); it != m_ssChans.end(); ++it) {
 			if (!sRet.empty()) {
 				sRet += " ";
 			}
@@ -101,7 +101,7 @@ public:
 	CString ToString() const {
 		CString sChans;
 
-		for (set<CString>::const_iterator it = m_ssChans.begin(); it != m_ssChans.end(); it++) {
+		for (set<CString>::const_iterator it = m_ssChans.begin(); it != m_ssChans.end(); ++it) {
 			if (!sChans.empty()) {
 				sChans += " ";
 			}
@@ -136,7 +136,7 @@ public:
 		AddTimer(new CAutoOpTimer(this));
 
 		// Load the users
-		for (MCString::iterator it = BeginNV(); it != EndNV(); it++) {
+		for (MCString::iterator it = BeginNV(); it != EndNV(); ++it) {
 			const CString& sLine = it->second;
 			CAutoOpUser* pUser = new CAutoOpUser;
 
@@ -151,7 +151,7 @@ public:
 	}
 
 	virtual ~CAutoOpMod() {
-		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); it++) {
+		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); ++it) {
 			delete it->second;
 		}
 
@@ -161,7 +161,7 @@ public:
 	virtual void OnJoin(const CNick& Nick, CChan& Channel) {
 		// If we have ops in this chan
 		if (Channel.HasPerm(CChan::Op)) {
-			for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); it++) {
+			for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); ++it) {
 				// and the nick who joined is a valid user
 				if (it->second->HostMatches(Nick.GetHostMask()) && it->second->ChannelMatches(Channel.GetName())) {
 					if (it->second->GetUserKey().Equals("__NOKEY__")) {
@@ -250,7 +250,7 @@ public:
 			Table.AddColumn("Key");
 			Table.AddColumn("Channels");
 
-			for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); it++) {
+			for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); ++it) {
 				Table.AddRow();
 				Table.SetCell("User", it->second->GetUsername());
 				Table.SetCell("Hostmask", it->second->GetHostmask());
@@ -296,7 +296,7 @@ public:
 	}
 
 	CAutoOpUser* FindUserByHost(const CString& sHostmask, const CString& sChannel = "") {
-		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); it++) {
+		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); ++it) {
 			CAutoOpUser* pUser = it->second;
 
 			if (pUser->HostMatches(sHostmask) && (sChannel.empty() || pUser->ChannelMatches(sChannel))) {
@@ -338,7 +338,7 @@ public:
 		bool bMatchedHost = false;
 		CAutoOpUser* pUser = NULL;
 
-		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); it++) {
+		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); ++it) {
 			pUser = it->second;
 
 			// First verify that the guy who challenged us matches a user's host
@@ -397,7 +397,7 @@ public:
 		CString sChallenge = itQueue->second;
 		m_msQueue.erase(itQueue);
 
-		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); it++) {
+		for (map<CString, CAutoOpUser*>::iterator it = m_msUsers.begin(); it != m_msUsers.end(); ++it) {
 			if (it->second->HostMatches(Nick.GetHostMask())) {
 				if (sResponse == CString(it->second->GetUserKey() + "::" + sChallenge).MD5()) {
 					OpUser(Nick, *it->second);
@@ -421,7 +421,7 @@ public:
 		while (bRemoved) {
 			bRemoved = false;
 
-			for (MCString::iterator it = m_msQueue.begin(); it != m_msQueue.end(); it++) {
+			for (MCString::iterator it = m_msQueue.begin(); it != m_msQueue.end(); ++it) {
 				if (!it->second.empty()) {
 					m_msQueue.erase(it);
 					bRemoved = true;
@@ -431,7 +431,7 @@ public:
 		}
 
 		// Now issue challenges for the new users in the queue
-		for (MCString::iterator it = m_msQueue.begin(); it != m_msQueue.end(); it++) {
+		for (MCString::iterator it = m_msQueue.begin(); it != m_msQueue.end(); ++it) {
 			it->second = CString::RandomString(AUTOOP_CHALLENGE_LENGTH);
 			PutIRC("NOTICE " + it->first + " :!ZNCAO CHALLENGE " + it->second);
 		}

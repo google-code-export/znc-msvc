@@ -109,7 +109,7 @@ public:
 
 			sFile.Split("\n", vsLines);
 
-			for (it = vsLines.begin(); it != vsLines.end(); it++) {
+			for (it = vsLines.begin(); it != vsLines.end(); ++it) {
 				CString sLine(*it);
 				sLine.Trim();
 				pChan->AddBuffer(sLine);
@@ -186,7 +186,7 @@ public:
 
 				sFile.Split("\n", vsLines);
 
-				for (it = vsLines.begin(); it != vsLines.end(); it++) {
+				for (it = vsLines.begin(); it != vsLines.end(); ++it) {
 					CString sLine(*it);
 					sLine.Trim();
 					PutModule("[" + sLine + "]");
@@ -217,7 +217,7 @@ public:
 
 			sFile.Split("\n", vsLines);
 
-			for (it = vsLines.begin(); it != vsLines.end(); it++) {
+			for (it = vsLines.begin(); it != vsLines.end(); ++it) {
 				CString sLine(*it);
 				sLine.Trim();
 				PutUser(sLine);

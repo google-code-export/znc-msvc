@@ -50,7 +50,7 @@ CIRCSock::~CIRCSock() {
 
 	m_pUser->IRCDisconnected();
 
-	for (map<CString, CChan*>::iterator a = m_msChans.begin(); a != m_msChans.end(); a++) {
+	for (map<CString, CChan*>::iterator a = m_msChans.begin(); a != m_msChans.end(); ++a) {
 		delete a->second;
 	}
 
@@ -107,6 +107,13 @@ void CIRCSock::ReadLine(const CString& sData) {
 
 		switch (uRaw) {
 			case 1:	{// :irc.server.com 001 nick :Welcome to the Internet Relay Network nick
+				if (m_bAuthed && sServer == "irc.znc.in") {
+					// m_bAuthed == true => we already received another 001 => we might be in a traffic loop
+					m_pUser->PutStatus("ZNC seems to be connected to itself, disconnecting...");
+					Quit();
+					return;
+				}
+
 				m_pUser->SetIRCServer(sServer);
 				SetTimeout(240, TMO_READ);	// Now that we are connected, let nature take its course
 				PutIRC("WHO " + sNick);
@@ -855,7 +862,7 @@ void CIRCSock::Disconnected() {
 	// otherwise, on reconnect, it might think it still
 	// had user modes that it actually doesn't have.
 	CString sUserMode;
-	for (set<unsigned char>::const_iterator it = m_scUserModes.begin(); it != m_scUserModes.end(); it++) {
+	for (set<unsigned char>::const_iterator it = m_scUserModes.begin(); it != m_scUserModes.end(); ++it) {
 		sUserMode += *it;
 	}
 	if (!sUserMode.empty()) {
@@ -1095,7 +1102,7 @@ CIRCSock::EChanModeArgs CIRCSock::GetModeType(unsigned char uMode) const {
 }
 
 void CIRCSock::ResetChans() {
-	for (map<CString, CChan*>::iterator a = m_msChans.begin(); a != m_msChans.end(); a++) {
+	for (map<CString, CChan*>::iterator a = m_msChans.begin(); a != m_msChans.end(); ++a) {
 		a->second->Reset();
 	}
 }

@@ -48,7 +48,7 @@ public:
 			Table.AddColumn("User");
 			Table.AddColumn("Last Seen");
 
-			for (it = mUsers.begin(); it != mUsers.end(); it++) {
+			for (it = mUsers.begin(); it != mUsers.end(); ++it) {
 				CUser *pUser = it->second;
 				time_t last = GetTime(pUser);
 

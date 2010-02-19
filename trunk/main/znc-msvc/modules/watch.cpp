@@ -290,7 +290,7 @@ public:
 
 private:
 	void Process(const CNick& Nick, const CString& sMessage, const CString& sSource) {
-		for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); it++) {
+		for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); ++it) {
 			CWatchEntry& WatchEntry = *it;
 
 			if (WatchEntry.IsMatch(Nick, sMessage, sSource, m_pUser)) {
@@ -307,7 +307,7 @@ private:
 
 	void SetDisabled(unsigned int uIdx, bool bDisabled) {
 		if (uIdx == (unsigned int) ~0) {
-			for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); it++) {
+			for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); ++it) {
 				(*it).SetDisabled(bDisabled);
 			}
 
@@ -479,7 +479,7 @@ private:
 			CWatchEntry WatchEntry(sHostMask, sTarget, sPattern);
 
 			bool bExists = false;
-			for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); it++) {
+			for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); ++it) {
 				if (*it == WatchEntry) {
 					sMessage = "Entry for [" + WatchEntry.GetHostMask() + "] already exists.";
 					bExists = true;
@@ -506,7 +506,7 @@ private:
 
 	void Save() {
 		ClearNV(false);
-		for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); it++) {
+		for (list<CWatchEntry>::iterator it = m_lsWatchers.begin(); it != m_lsWatchers.end(); ++it) {
 			CWatchEntry& WatchEntry = *it;
 			CString sSave;
 
@@ -531,7 +531,7 @@ private:
 
 		bool bWarn = false;
 
-		for (MCString::iterator it = BeginNV(); it != EndNV(); it++) {
+		for (MCString::iterator it = BeginNV(); it != EndNV(); ++it) {
 			VCString vList;
 			it->first.Split("\n", vList);
 

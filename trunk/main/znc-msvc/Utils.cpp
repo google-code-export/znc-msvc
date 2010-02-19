@@ -41,12 +41,12 @@ void CUtils::GenerateCert(FILE *pOut, const CString& sHost) {
 	EVP_PKEY *pKey = NULL;
 	X509 *pCert = NULL;
 	X509_NAME *pName = NULL;
-	int days = 365;
+	const int days = 365;
 
 	unsigned long long iSeed = time(NULL);
 	int serial = (rand_r(&iSeed) % 9999);
 
-	RSA *pRSA = RSA_generate_key(1024, 0x10001, NULL, NULL);
+	RSA *pRSA = RSA_generate_key(2048, 0x10001, NULL, NULL);
 	if ((pKey = EVP_PKEY_new())) {
 		if (!EVP_PKEY_assign_RSA(pKey, pRSA)) {
 			EVP_PKEY_free(pKey);
@@ -102,7 +102,7 @@ void CUtils::GenerateCert(FILE *pOut, const CString& sHost) {
 		X509_set_subject_name(pCert, pName);
 		X509_set_issuer_name(pCert, pName);
 
-		if (!X509_sign(pCert, pKey, EVP_md5())) {
+		if (!X509_sign(pCert, pKey, EVP_sha1())) {
 			X509_free(pCert);
 			EVP_PKEY_free(pKey);
 			return;
