@@ -654,7 +654,7 @@ public:
 
 	//! sets the max buffered threshold when EnableReadLine() is enabled
 	void SetMaxBufferThreshold( u_int iThreshold );
-	size_t GetMaxBufferThreshold() const;
+	u_int GetMaxBufferThreshold() const;
 
 	//! Returns the connection type from enum eConnType
 	int GetType() const;
@@ -777,9 +777,9 @@ public:
 	* @param iBytes the amount of bytes we can write
 	* @param iMilliseconds the amount of time we have to rate to iBytes
 	*/
-	virtual void SetRate( size_t iBytes, unsigned long long iMilliseconds );
+	virtual void SetRate( u_int iBytes, unsigned long long iMilliseconds );
 
-	size_t GetRateBytes();
+	u_int GetRateBytes();
 	unsigned long long GetRateTime();
 	//! This has a garbage collecter, and is used internall to call the jobs
 	virtual void Cron();
@@ -1590,10 +1590,11 @@ public:
 		SetSelectTimeout( iLowerBounds );
 		if( m_errno == SELECT_TIMEOUT )
 		{ // only do this if the previous call to select was a timeout
-			unsigned int iSelectTimeout = (unsigned int)GetDynamicSleepTime( time(NULL), iMaxResolution );
+			time_t iNow = time( NULL );
+			u_long iSelectTimeout = (u_long)GetDynamicSleepTime( iNow, iMaxResolution );
 			iSelectTimeout *= 1000000;
-			iSelectTimeout = std::max<unsigned int>( iLowerBounds, iSelectTimeout );
-			iSelectTimeout = std::min<unsigned int>( iSelectTimeout, iUpperBounds );
+			iSelectTimeout = std::max( iLowerBounds, iSelectTimeout );
+			iSelectTimeout = std::min( iSelectTimeout, iUpperBounds );
 			if( iLowerBounds != iSelectTimeout )
 				SetSelectTimeout( iSelectTimeout );
 		}
@@ -2233,7 +2234,7 @@ private:
 typedef TSocketManager<Csock> CSocketManager;
 
 #ifndef _NO_CSOCKET_NS
-};
+}
 #endif /* _NO_CSOCKET_NS */
 
 #endif /* _HAS_CSOCKET_ */
