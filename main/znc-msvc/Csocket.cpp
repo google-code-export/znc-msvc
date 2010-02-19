@@ -1378,7 +1378,7 @@ bool Csock::Write( const char *data, size_t len )
 
 	}
 	// rate shaping
-	u_long iBytesToSend = 0;
+	size_t iBytesToSend = 0;
 
 #ifdef HAVE_LIBSSL
 	if( m_bssl && m_sSSLBuffer.empty() && !m_bsslEstablished )
@@ -1539,7 +1539,7 @@ ssize_t Csock::Read( char *data, size_t len )
 	else
 #endif /* HAVE_LIBSSL */
 #ifdef _WIN32
-		bytes = recv( m_iReadSock, data, len, 0 );
+		bytes = recv( m_iReadSock, data, (int)len, 0 );
 #else
 		bytes = read( m_iReadSock, data, len );
 #endif /* _WIN32 */
@@ -1755,7 +1755,7 @@ void Csock::PushBuff( const char *data, size_t len, bool bStartAtZero )
 CS_STRING & Csock::GetInternalReadBuffer() { return( m_sbuffer ); }
 CS_STRING & Csock::GetInternalWriteBuffer() { return( m_sSend ); }
 void Csock::SetMaxBufferThreshold( u_int iThreshold ) { m_iMaxStoredBufferLength = iThreshold; }
-size_t Csock::GetMaxBufferThreshold() const { return( m_iMaxStoredBufferLength ); }
+u_int Csock::GetMaxBufferThreshold() const { return( m_iMaxStoredBufferLength ); }
 int Csock::GetType() const { return( m_iConnType ); }
 void Csock::SetType( int iType ) { m_iConnType = iType; }
 const CS_STRING & Csock::GetSockName() const { return( m_sSockName ); }
@@ -2035,13 +2035,13 @@ void Csock::SetRequiresClientCert( bool bRequiresCert ) { m_iRequireClientCertFl
 void Csock::SetParentSockName( const CS_STRING & sParentName ) { m_sParentName = sParentName; }
 const CS_STRING & Csock::GetParentSockName() { return( m_sParentName ); }
 
-void Csock::SetRate( size_t iBytes, unsigned long long iMilliseconds )
+void Csock::SetRate( u_int iBytes, unsigned long long iMilliseconds )
 {
 	m_iMaxBytes = iBytes;
 	m_iMaxMilliSeconds = iMilliseconds;
 }
 
-size_t Csock::GetRateBytes() { return( m_iMaxBytes ); }
+u_int Csock::GetRateBytes() { return( m_iMaxBytes ); }
 unsigned long long Csock::GetRateTime() { return( m_iMaxMilliSeconds ); }
 
 void Csock::Cron()
