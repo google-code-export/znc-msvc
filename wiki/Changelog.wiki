@@ -1,6 +1,9 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2010-02-19 (0.080) (rev 1754) ==
+  * Upstream fixed some bugs, nothing too exciting compared to 0.079-r 1722.
+
 == 2010-01-27 (0.079-r 1722) ==
   * Updated to official SVN revision 1722, lots of changes & fixes. Thanks!
   * Updated colloquy module from [http://github.com/wired/colloquypush/raw/master/znc/colloquy.cpp here]
