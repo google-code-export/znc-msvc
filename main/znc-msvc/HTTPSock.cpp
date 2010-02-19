@@ -38,7 +38,7 @@ void CHTTPSock::Init() {
 
 CHTTPSock::~CHTTPSock() {}
 
-void CHTTPSock::ReadData(const char* data, int len) {
+void CHTTPSock::ReadData(const char* data, size_t len) {
 	if (!m_bDone && m_bGotHeader && m_bPost) {
 		m_sPostData.append(data, len);
 		CheckPost();
@@ -409,7 +409,7 @@ bool CHTTPSock::PrintHeader(off_t uContentLength, const CString& sContentType, u
 	}
 	Write("Content-Type: " + m_sContentType + "\r\n");
 
-	for (MCString::iterator it = m_msHeaders.begin(); it != m_msHeaders.end(); it++) {
+	for (MCString::iterator it = m_msHeaders.begin(); it != m_msHeaders.end(); ++it) {
 		Write(it->first + ": " + it->second + "\r\n");
 	}
 

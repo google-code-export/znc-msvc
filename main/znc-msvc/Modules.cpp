@@ -747,7 +747,7 @@ bool CModules::UnloadModule(const CString& sModule, CString& sRetMsg) {
 	}
 
 	if (pModule->IsFake()) {
-		for (iterator it = begin(); it != end(); it++) {
+		for (iterator it = begin(); it != end(); ++it) {
 			if (*it == pModule) {
 				erase(it);
 				sRetMsg = "Fake module [" + sMod + "] unloaded";
@@ -768,7 +768,7 @@ bool CModules::UnloadModule(const CString& sModule, CString& sRetMsg) {
 		if (Unload) {
 			Unload(pModule);
 
-			for (iterator it = begin(); it != end(); it++) {
+			for (iterator it = begin(); it != end(); ++it) {
 				if (*it == pModule) {
 					erase(it);
 					break;

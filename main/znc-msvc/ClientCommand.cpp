@@ -72,7 +72,7 @@ void CClient::UserCommand(CString& sLine) {
 		Table.AddColumn("Ident");
 		Table.AddColumn("Host");
 
-		for (map<CString,CNick*>::const_iterator a = msNicks.begin(); a != msNicks.end(); a++) {
+		for (map<CString,CNick*>::const_iterator a = msNicks.begin(); a != msNicks.end(); ++a) {
 			Table.AddRow();
 
 			for (unsigned int b = 0; b < sPerms.size(); b++) {
@@ -167,8 +167,9 @@ void CClient::UserCommand(CString& sLine) {
 		Table.AddColumn("OnIRC");
 		Table.AddColumn("IRC Server");
 		Table.AddColumn("IRC User");
+		Table.AddColumn("Channels");
 
-		for (map<CString, CUser*>::const_iterator it = msUsers.begin(); it != msUsers.end(); it++) {
+		for (map<CString, CUser*>::const_iterator it = msUsers.begin(); it != msUsers.end(); ++it) {
 			Table.AddRow();
 			Table.SetCell("Username", it->first);
 			Table.SetCell("Clients", CString(it->second->GetClients().size()));
@@ -178,6 +179,7 @@ void CClient::UserCommand(CString& sLine) {
 				Table.SetCell("OnIRC", "Yes");
 				Table.SetCell("IRC Server", it->second->GetIRCServer());
 				Table.SetCell("IRC User", it->second->GetIRCNick().GetNickMask());
+				Table.SetCell("Channels", CString(it->second->GetChans().size()));
 			}
 		}
 
@@ -276,12 +278,29 @@ void CClient::UserCommand(CString& sLine) {
 			PutStatus("Channel [" + sChan + "] enabled.");
 		}
 	} else if (sCommand.Equals("LISTCHANS")) {
-		const vector<CChan*>& vChans = m_pUser->GetChans();
-		CIRCSock* pIRCSock = (!m_pUser) ? NULL : m_pUser->GetIRCSock();
+		CUser* pUser = m_pUser;
+		const CString sNick = sLine.Token(1);
+
+		if (!sNick.empty()) {
+			if (!m_pUser->IsAdmin()) {
+				PutStatus("Usage: ListChans");
+				return;
+			}
+
+			pUser = CZNC::Get().FindUser(sNick);
+
+			if (!pUser) {
+				PutStatus("No such user [" + sNick + "]");
+				return;
+			}
+		}
+
+		const vector<CChan*>& vChans = pUser->GetChans();
+		CIRCSock* pIRCSock = pUser->GetIRCSock();
 		const CString& sPerms = (pIRCSock) ? pIRCSock->GetPerms() : "";
 
 		if (!vChans.size()) {
-			PutStatus("You have no channels defined");
+			PutStatus("There are no channels defined.");
 			return;
 		}
 
@@ -584,7 +603,7 @@ void CClient::UserCommand(CString& sLine) {
 			set<CModInfo> ssGlobalMods;
 			CZNC::Get().GetModules().GetAvailableMods(ssGlobalMods, true);
 
-			if (!ssGlobalMods.size()) {
+			if (ssGlobalMods.empty()) {
 				PutStatus("No global modules available.");
 			} else {
 				PutStatus("Global modules:");
@@ -593,7 +612,7 @@ void CClient::UserCommand(CString& sLine) {
 				GTable.AddColumn("Description");
 				set<CModInfo>::iterator it;
 
-				for (it = ssGlobalMods.begin(); it != ssGlobalMods.end(); it++) {
+				for (it = ssGlobalMods.begin(); it != ssGlobalMods.end(); ++it) {
 					const CModInfo& Info = *it;
 					GTable.AddRow();
 					GTable.SetCell("Name", (CZNC::Get().GetModules().FindModule(Info.GetName()) ? "*" : " ") + Info.GetName());
@@ -616,7 +635,7 @@ void CClient::UserCommand(CString& sLine) {
 			Table.AddColumn("Description");
 			set<CModInfo>::iterator it;
 
-			for (it = ssUserMods.begin(); it != ssUserMods.end(); it++) {
+			for (it = ssUserMods.begin(); it != ssUserMods.end(); ++it) {
 				const CModInfo& Info = *it;
 				Table.AddRow();
 				Table.SetCell("Name", (m_pUser->GetModules().FindModule(Info.GetName()) ? "*" : " ") + Info.GetName());
@@ -760,6 +779,11 @@ void CClient::UserCommand(CString& sLine) {
 #else
 		CString sMod = sLine.Token(1);
 
+		if (sMod.empty()) {
+			PutStatus("Usage: UpdateMod <module>");
+			return;
+		}
+
 		if (m_pUser->DenyLoadMod() || !m_pUser->IsAdmin()) {
 			PutStatus("Unable to reload [" + sMod + "] Access Denied.");
 			return;
@@ -811,7 +835,7 @@ void CClient::UserCommand(CString& sLine) {
 		Table.AddColumn("VHost");
 
 		VCString::const_iterator it;
-		for (it = vsVHosts.begin(); it != vsVHosts.end(); it++) {
+		for (it = vsVHosts.begin(); it != vsVHosts.end(); ++it) {
 			Table.AddRow();
 			Table.SetCell("VHost", *it);
 		}
@@ -834,7 +858,7 @@ void CClient::UserCommand(CString& sLine) {
 			VCString::const_iterator it;
 			bool bFound = false;
 
-			for (it = vsVHosts.begin(); it != vsVHosts.end(); it++) {
+			for (it = vsVHosts.begin(); it != vsVHosts.end(); ++it) {
 				if (sVHost.Equals(*it)) {
 					bFound = true;
 					break;
@@ -904,7 +928,7 @@ void CClient::UserCommand(CString& sLine) {
 		vector<CChan*>::const_iterator it;
 		const vector<CChan*>& vChans = m_pUser->GetChans();
 
-		for (it = vChans.begin(); it != vChans.end(); it++) {
+		for (it = vChans.begin(); it != vChans.end(); ++it) {
 			(*it)->ClearBuffer();
 		}
 		PutStatus("All channel buffers have been cleared");
@@ -934,55 +958,44 @@ void CClient::UserCommand(CString& sLine) {
 		pChan->SetBufferCount(uLineCount);
 
 		PutStatus("BufferCount for [" + sChan + "] set to [" + CString(pChan->GetBufferCount()) + "]");
-	} else if (sCommand.Equals("TRAFFIC")) {
+	} else if (m_pUser->IsAdmin() && sCommand.Equals("TRAFFIC")) {
 		CZNC::TrafficStatsPair Users, ZNC, Total;
 		CZNC::TrafficStatsMap traffic = CZNC::Get().GetTrafficStats(Users, ZNC, Total);
 		CZNC::TrafficStatsMap::const_iterator it;
 
-		if(m_pUser->IsAdmin()) {
-			CTable Table;
-			Table.AddColumn("Username");
-			Table.AddColumn("In");
-			Table.AddColumn("Out");
-			Table.AddColumn("Total");
+		CTable Table;
+		Table.AddColumn("Username");
+		Table.AddColumn("In");
+		Table.AddColumn("Out");
+		Table.AddColumn("Total");
 
-			for (it = traffic.begin(); it != traffic.end(); it++) {
-				Table.AddRow();
-				Table.SetCell("Username", it->first);
-				Table.SetCell("In", CString::ToByteStr(it->second.first));
-				Table.SetCell("Out", CString::ToByteStr(it->second.second));
-				Table.SetCell("Total", CString::ToByteStr(it->second.first + it->second.second));
-			}
-			
+		for (it = traffic.begin(); it != traffic.end(); ++it) {
 			Table.AddRow();
-			Table.SetCell("Username", "<Users>");
-			Table.SetCell("In", CString::ToByteStr(Users.first));
-			Table.SetCell("Out", CString::ToByteStr(Users.second));
-			Table.SetCell("Total", CString::ToByteStr(Users.first + Users.second));
-
-			Table.AddRow();
-			Table.SetCell("Username", "<ZNC>");
-			Table.SetCell("In", CString::ToByteStr(ZNC.first));
-			Table.SetCell("Out", CString::ToByteStr(ZNC.second));
-			Table.SetCell("Total", CString::ToByteStr(ZNC.first + ZNC.second));
-
-			Table.AddRow();
-			Table.SetCell("Username", "<Total>");
-			Table.SetCell("In", CString::ToByteStr(Total.first));
-			Table.SetCell("Out", CString::ToByteStr(Total.second));
-			Table.SetCell("Total", CString::ToByteStr(Total.first + Total.second));
-
-			PutStatus(Table);
-		} else {
-			// traffic info for non-admin users.
-			it = traffic.find(m_pUser->GetUserName());
-
-			if(it != traffic.end()) {
-				PutStatus("Inbound traffic: " + CString::ToByteStr(it->second.first));
-				PutStatus("Outbound traffic: " + CString::ToByteStr(it->second.second));
-				PutStatus("Total: " + CString::ToByteStr(it->second.first + it->second.second));
-			}
+			Table.SetCell("Username", it->first);
+			Table.SetCell("In", CString::ToByteStr(it->second.first));
+			Table.SetCell("Out", CString::ToByteStr(it->second.second));
+			Table.SetCell("Total", CString::ToByteStr(it->second.first + it->second.second));
 		}
+
+		Table.AddRow();
+		Table.SetCell("Username", "<Users>");
+		Table.SetCell("In", CString::ToByteStr(Users.first));
+		Table.SetCell("Out", CString::ToByteStr(Users.second));
+		Table.SetCell("Total", CString::ToByteStr(Users.first + Users.second));
+
+		Table.AddRow();
+		Table.SetCell("Username", "<ZNC>");
+		Table.SetCell("In", CString::ToByteStr(ZNC.first));
+		Table.SetCell("Out", CString::ToByteStr(ZNC.second));
+		Table.SetCell("Total", CString::ToByteStr(ZNC.first + ZNC.second));
+
+		Table.AddRow();
+		Table.SetCell("Username", "<Total>");
+		Table.SetCell("In", CString::ToByteStr(Total.first));
+		Table.SetCell("Out", CString::ToByteStr(Total.second));
+		Table.SetCell("Total", CString::ToByteStr(Total.first + Total.second));
+
+		PutStatus(Table);
 	} else if (sCommand.Equals("UPTIME")) {
 		PutStatus("Running for " + CZNC::Get().GetUptime());
 	} else {
@@ -998,44 +1011,39 @@ void CClient::HelpUser() {
 
 	Table.AddRow();
 	Table.SetCell("Command", "Version");
-	Table.SetCell("Arguments", "");
-	Table.SetCell("Description", "Prints which version of znc this is");
+	Table.SetCell("Description", "Print which version of ZNC this is");
 
 	Table.AddRow();
 	Table.SetCell("Command", "ListDCCs");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "List all active DCCs");
 
 	Table.AddRow();
 	Table.SetCell("Command", "ListMods");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "List all loaded modules");
 
 	Table.AddRow();
 	Table.SetCell("Command", "ListAvailMods");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "List all available modules");
 
-	Table.AddRow();
-	Table.SetCell("Command", "ListChans");
-	Table.SetCell("Arguments", "");
-	Table.SetCell("Description", "List all channels");
+	if (!m_pUser->IsAdmin()) { // If they are an admin we will add this command below with an argument
+		Table.AddRow();
+		Table.SetCell("Command", "ListChans");
+		Table.SetCell("Description", "List all channels");
+	}
 
 	Table.AddRow();
 	Table.SetCell("Command", "ListNicks");
 	Table.SetCell("Arguments", "<#chan>");
 	Table.SetCell("Description", "List all nicks on a channel");
 
-	if (!m_pUser->IsAdmin()) { // If they are an admin we will add this command below with an argument
+	if (!m_pUser->IsAdmin()) {
 		Table.AddRow();
 		Table.SetCell("Command", "ListClients");
-		Table.SetCell("Arguments", "");
-		Table.SetCell("Description", "List all clients connected to your znc user");
+		Table.SetCell("Description", "List all clients connected to your ZNC user");
 	}
 
 	Table.AddRow();
 	Table.SetCell("Command", "ListServers");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "List all servers");
 
 	Table.AddRow();
@@ -1045,7 +1053,7 @@ void CClient::HelpUser() {
 
 	Table.AddRow();
 	Table.SetCell("Command", "RemServer");
-	Table.SetCell("Arguments", "<host>");
+	Table.SetCell("Arguments", "<host> [port] [pass]");
 	Table.SetCell("Description", "Remove a server from the list");
 
 	Table.AddRow();
@@ -1060,8 +1068,7 @@ void CClient::HelpUser() {
 
 	Table.AddRow();
 	Table.SetCell("Command", "Topics");
-	Table.SetCell("Arguments", "");
-	Table.SetCell("Description", "Show topics in all channels");
+	Table.SetCell("Description", "Show topics in all your channels");
 
 	Table.AddRow();
 	Table.SetCell("Command", "PlayBuffer");
@@ -1075,7 +1082,6 @@ void CClient::HelpUser() {
 
 	Table.AddRow();
 	Table.SetCell("Command", "ClearAllChannelBuffers");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "Clear the channel buffers");
 
 	Table.AddRow();
@@ -1086,7 +1092,7 @@ void CClient::HelpUser() {
 	if (m_pUser->IsAdmin()) {
 		Table.AddRow();
 		Table.SetCell("Command", "AddVHost");
-		Table.SetCell("Arguments", "<vhost (ip preferred)>");
+		Table.SetCell("Arguments", "<vhost (IP preferred)>");
 		Table.SetCell("Description", "Adds a VHost for normal users to use");
 
 		Table.AddRow();
@@ -1098,33 +1104,28 @@ void CClient::HelpUser() {
 	if (m_pUser->IsAdmin() || !m_pUser->DenySetVHost()) {
 		Table.AddRow();
 		Table.SetCell("Command", "ListVHosts");
-		Table.SetCell("Arguments", "");
 		Table.SetCell("Description", "Shows the configured list of vhosts");
 
 		Table.AddRow();
 		Table.SetCell("Command", "SetVHost");
-		Table.SetCell("Arguments", "<vhost (ip preferred)>");
+		Table.SetCell("Arguments", "<vhost (IP preferred)>");
 		Table.SetCell("Description", "Set the VHost for this connection");
 
 		Table.AddRow();
 		Table.SetCell("Command", "ClearVHost");
-		Table.SetCell("Arguments", "");
 		Table.SetCell("Description", "Clear the VHost for this connection");
 	}
 
 	Table.AddRow();
 	Table.SetCell("Command", "Jump");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "Jump to the next server in the list");
 
 	Table.AddRow();
 	Table.SetCell("Command", "Disconnect");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "Disconnect from IRC");
 
 	Table.AddRow();
 	Table.SetCell("Command", "Connect");
-	Table.SetCell("Arguments", "");
 	Table.SetCell("Description", "Reconnect to IRC");
 
 	Table.AddRow();
@@ -1139,8 +1140,7 @@ void CClient::HelpUser() {
 
 	Table.AddRow();
 	Table.SetCell("Command", "Uptime");
-	Table.SetCell("Arguments", "");
-	Table.SetCell("Description", "Show how long ZNC is already running");
+	Table.SetCell("Description", "Show for how long ZNC has been running");
 
 	if (!m_pUser->DenyLoadMod()) {
 		Table.AddRow();
@@ -1168,64 +1168,63 @@ void CClient::HelpUser() {
 
 	Table.AddRow();
 	Table.SetCell("Command", "ShowMOTD");
-	Table.SetCell("Arguments", "");
-	Table.SetCell("Description", "Show the message of the day");
+	Table.SetCell("Description", "Show ZNC's message of the day");
 
 	if (m_pUser->IsAdmin()) {
 		Table.AddRow();
 		Table.SetCell("Command", "SetMOTD");
 		Table.SetCell("Arguments", "<Message>");
-		Table.SetCell("Description", "Set the message of the day");
+		Table.SetCell("Description", "Set ZNC's message of the day");
 
 		Table.AddRow();
 		Table.SetCell("Command", "AddMOTD");
 		Table.SetCell("Arguments", "<Message>");
-		Table.SetCell("Description", "Append <Message> to MOTD");
+		Table.SetCell("Description", "Append <Message> to ZNC's MOTD");
 
 		Table.AddRow();
 		Table.SetCell("Command", "ClearMOTD");
-		Table.SetCell("Arguments", "");
-		Table.SetCell("Description", "Clear the MOTD");
+		Table.SetCell("Description", "Clear ZNC's MOTD");
 
 		Table.AddRow();
 		Table.SetCell("Command", "Rehash");
-		Table.SetCell("Arguments", "");
 		Table.SetCell("Description", "Reload znc.conf from disk");
 
 		Table.AddRow();
 		Table.SetCell("Command", "SaveConfig");
-		Table.SetCell("Arguments", "");
 		Table.SetCell("Description", "Save the current settings to disk");
 
 		Table.AddRow();
 		Table.SetCell("Command", "ListUsers");
-		Table.SetCell("Arguments", "");
-		Table.SetCell("Description", "List all users/clients connected to znc");
+		Table.SetCell("Description", "List all ZNC users and their connection status");
+
+		Table.AddRow();
+		Table.SetCell("Command", "ListChans");
+		Table.SetCell("Arguments", "[User]");
+		Table.SetCell("Description", "List all channels");
 
 		Table.AddRow();
 		Table.SetCell("Command", "ListClients");
 		Table.SetCell("Arguments", "[User]");
-		Table.SetCell("Description", "List all clients connected to your znc user");
+		Table.SetCell("Description", "List all connected clients");
 
 		Table.AddRow();
 		Table.SetCell("Command", "Traffic");
-		Table.SetCell("Arguments", "");
-		Table.SetCell("Description", "Show basic traffic stats for all znc users");
+		Table.SetCell("Description", "Show basic traffic stats for all ZNC users");
 
 		Table.AddRow();
 		Table.SetCell("Command", "Broadcast");
 		Table.SetCell("Arguments", "[message]");
-		Table.SetCell("Description", "Broadcast a message to all users");
+		Table.SetCell("Description", "Broadcast a message to all ZNC users");
 
 		Table.AddRow();
 		Table.SetCell("Command", "Shutdown");
 		Table.SetCell("Arguments", "[message]");
-		Table.SetCell("Description", "Shutdown znc completely");
+		Table.SetCell("Description", "Shut down ZNC completely");
 
 		Table.AddRow();
 		Table.SetCell("Command", "Restart");
 		Table.SetCell("Arguments", "[message]");
-		Table.SetCell("Description", "Restarts znc");
+		Table.SetCell("Description", "Restart ZNC");
 	}
 
 	PutStatus(Table);

@@ -44,7 +44,7 @@ typedef void (*outputHook)(int type, const char* text, void *userData);
 		sTmpDbg << f << endl; \
 		CUtils::PrintDebug(sTmpDbg.str()); \
 	} \
-} while (0);
+} while (0)
 
 static inline void SetFdCloseOnExec(int fd)
 {
@@ -424,8 +424,8 @@ public:
 	// Overloaded operators
 	T& operator *() const { assert(m_pType); return *m_pType; }
 	T* operator ->() const { assert(m_pType); return m_pType; }
-	bool operator ==(T* rhs) { return (m_pType == rhs); }
-	bool operator ==(const CSmartPtr<T>& rhs) { return (m_pType == *rhs); }
+	bool operator ==(T* rhs) const { return (m_pType == rhs); }
+	bool operator ==(const CSmartPtr<T>& rhs) const { return (m_pType == *rhs); }
 
 	/**
 	 * @brief Attach() to a raw pointer

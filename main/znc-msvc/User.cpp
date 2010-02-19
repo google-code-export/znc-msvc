@@ -127,7 +127,7 @@ bool CUser::UpdateModule(const CString &sModule) {
 	map<CUser*, CString>::iterator it2;
 	bool error = false;
 
-	for (it = Users.begin(); it != Users.end(); it++) {
+	for (it = Users.begin(); it != Users.end(); ++it) {
 		CModule *pMod = it->second->GetModules().FindModule(sModule);
 		if (pMod) {
 			Affected[it->second] = pMod->GetArgs();
@@ -136,7 +136,7 @@ bool CUser::UpdateModule(const CString &sModule) {
 	}
 
 	CString sErr;
-	for (it2 = Affected.begin(); it2 != Affected.end(); it2++) {
+	for (it2 = Affected.begin(); it2 != Affected.end(); ++it2) {
 		if (!it2->first->GetModules().LoadModule(sModule, it2->second, it2->first, sErr)) {
 			error = true;
 			DEBUG("Failed to reload [" << sModule << "] for [" << it2->first->GetUserName()
@@ -289,7 +289,7 @@ void CUser::UserConnected(CClient* pClient) {
 		CString sUserMode("");
 		const set<unsigned char>& scUserModes = GetIRCSock()->GetUserModes();
 		for (set<unsigned char>::const_iterator it = scUserModes.begin();
-				it != scUserModes.end(); it++) {
+				it != scUserModes.end(); ++it) {
 			sUserMode += *it;
 		}
 		if (!sUserMode.empty()) {
@@ -368,7 +368,7 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	// Allowed Hosts
 	m_ssAllowedHosts.clear();
 	const set<CString>& ssHosts = User.GetAllowedHosts();
-	for (set<CString>::const_iterator it = ssHosts.begin(); it != ssHosts.end(); it++) {
+	for (set<CString>::const_iterator it = ssHosts.begin(); it != ssHosts.end(); ++it) {
 		AddAllowedHost(*it);
 	}
 
@@ -446,7 +446,7 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	// CTCP Replies
 	m_mssCTCPReplies.clear();
 	const MCString& msReplies = User.GetCTCPReplies();
-	for (MCString::const_iterator it = msReplies.begin(); it != msReplies.end(); it++) {
+	for (MCString::const_iterator it = msReplies.begin(); it != msReplies.end(); ++it) {
 		AddCTCPReply(it->first, it->second);
 	}
 	// !CTCP Replies
@@ -492,7 +492,7 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 		}
 	}
 
-	for (set<CString>::iterator it = ssUnloadMods.begin(); it != ssUnloadMods.end(); it++) {
+	for (set<CString>::iterator it = ssUnloadMods.begin(); it != ssUnloadMods.end(); ++it) {
 		vCurMods.UnloadModule(*it);
 	}
 	// !Modules
@@ -516,7 +516,7 @@ bool CUser::IsHostAllowed(const CString& sHostMask) const {
 		return true;
 	}
 
-	for (set<CString>::const_iterator a = m_ssAllowedHosts.begin(); a != m_ssAllowedHosts.end(); a++) {
+	for (set<CString>::const_iterator a = m_ssAllowedHosts.begin(); a != m_ssAllowedHosts.end(); ++a) {
 		if (sHostMask.WildCmp(*a)) {
 			return true;
 		}
@@ -599,7 +599,7 @@ bool CUser::AddChan(const CString& sName, bool bInConfig) {
 }
 
 bool CUser::DelChan(const CString& sName) {
-	for (vector<CChan*>::iterator a = m_vChans.begin(); a != m_vChans.end(); a++) {
+	for (vector<CChan*>::iterator a = m_vChans.begin(); a != m_vChans.end(); ++a) {
 		if (sName.Equals((*a)->GetName())) {
 			delete *a;
 			m_vChans.erase(a);
@@ -666,7 +666,7 @@ bool CUser::WriteConfig(CFile& File) {
 
 	// Allow Hosts
 	if (!m_ssAllowedHosts.empty()) {
-		for (set<CString>::iterator it = m_ssAllowedHosts.begin(); it != m_ssAllowedHosts.end(); it++) {
+		for (set<CString>::iterator it = m_ssAllowedHosts.begin(); it != m_ssAllowedHosts.end(); ++it) {
 			PrintLine(File, "Allow", *it);
 		}
 
@@ -675,7 +675,7 @@ bool CUser::WriteConfig(CFile& File) {
 
 	// CTCP Replies
 	if (!m_mssCTCPReplies.empty()) {
-		for (MCString::iterator itb = m_mssCTCPReplies.begin(); itb != m_mssCTCPReplies.end(); itb++) {
+		for (MCString::iterator itb = m_mssCTCPReplies.begin(); itb != m_mssCTCPReplies.end(); ++itb) {
 			PrintLine(File, "CTCPReply", itb->first.AsUpper() + " " + itb->second);
 		}
 
@@ -735,7 +735,7 @@ CChan* CUser::FindChan(const CString& sName) const {
 
 void CUser::JoinChans() {
 	// Avoid divsion by zero, it's bad!
-	if (m_vChans.size() == 0)
+	if (m_vChans.empty())
 		return;
 
 	// We start at a random offset into the channel list so that if your
@@ -964,7 +964,7 @@ CString CUser::GetLocalIP() {
 		return pIRCSock->GetLocalIP();
 	}
 
-	if (m_vClients.size()) {
+	if (!m_vClients.empty()) {
 		return m_vClients[0]->GetLocalIP();
 	}
 
@@ -1119,7 +1119,7 @@ CString CUser::GetCurNick() const {
 		return pIRCSock->GetNick();
 	}
 
-	if (m_vClients.size()) {
+	if (!m_vClients.empty()) {
 		return m_vClients[0]->GetNick();
 	}
 

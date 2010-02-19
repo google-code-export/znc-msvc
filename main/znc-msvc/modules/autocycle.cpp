@@ -29,7 +29,7 @@ public:
 
 		// Load our saved settings, ignore errors
 		MCString::iterator it;
-		for (it = BeginNV(); it != EndNV(); it++) {
+		for (it = BeginNV(); it != EndNV(); ++it) {
 			Add(it->first);
 		}
 
@@ -138,12 +138,12 @@ protected:
 		if (sInput.Left(1) == "!") {
 			CString sChan = sInput.substr(1);
 			for (it = m_vsNegChans.begin(); it != m_vsNegChans.end();
-					it++) {
+					++it) {
 				if (*it == sChan)
 					return true;
 			}
 		} else {
-			for (it = m_vsChans.begin(); it != m_vsChans.end(); it++) {
+			for (it = m_vsChans.begin(); it != m_vsChans.end(); ++it) {
 				if (*it == sInput)
 					return true;
 			}

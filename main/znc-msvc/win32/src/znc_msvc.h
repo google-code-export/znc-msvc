@@ -32,6 +32,11 @@ using std::_cpp_max;
 typedef int mode_t;
 typedef short uid_t;
 typedef short gid_t;
+#ifdef  _WIN64
+typedef signed __int64 ssize_t;
+#else
+typedef _W64 signed int ssize_t;
+#endif
 
 #define strcasecmp _stricmp
 #define strtoll _strtoi64
