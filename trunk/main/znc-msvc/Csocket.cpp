@@ -1480,7 +1480,7 @@ bool Csock::Write( const char *data, size_t len )
 	}
 #endif /* HAVE_LIBSSL */
 #ifdef _WIN32
-	cs_ssize_t bytes = send( m_iWriteSock, m_sSend.data(), iBytesToSend, 0 );
+	cs_ssize_t bytes = send( m_iWriteSock, m_sSend.data(), (int)iBytesToSend, 0 );
 #else
 	cs_ssize_t bytes = write( m_iWriteSock, m_sSend.data(), iBytesToSend );
 #endif /* _WIN32 */
