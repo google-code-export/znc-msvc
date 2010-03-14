@@ -26,6 +26,7 @@ using std::_cpp_max;
 #include <stdint.h>
 #include <string>
 #include <queue>
+#include <wincrypt.h>
 
 #include "exports.h"
 
