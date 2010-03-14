@@ -635,6 +635,39 @@ void CIRCSock::ReadLine(const CString& sData) {
 			if (!m_pUser->IsUserAttached()) {
 				m_pUser->AddQueryBuffer(":" + Nick.GetNickMask() + " WALLOPS ", ":" + m_pUser->AddTimestamp(sMsg), false);
 			}
+		} else if (sCmd.Equals("CAP")) {
+			// sRest.Token(0) is most likely "*". No idea why, the
+			// CAP spec don't mention this, but all implementations
+			// I've seen add this extra asterisk
+			CString sSubCmd = sRest.Token(1);
+			CString sArgs = sRest.Token(2, true).TrimPrefix_n(":");
+
+			if (sSubCmd == "LS" && !m_bAuthed) {
+				VCString vsTokens;
+				VCString::iterator it;
+				sArgs.Split(" ", vsTokens, false);
+
+				for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
+					if (*it == "multi-prefix" || *it == "userhost-in-names") {
+						PutIRC("CAP REQ " + *it);
+					}
+				}
+
+				// Tell the IRC server we are done with CAP
+				PutIRC("CAP END");
+			} else if (sSubCmd == "ACK" && !m_bAuthed) {
+				VCString vsTokens;
+				VCString::iterator it;
+				sArgs.Split(" ", vsTokens, false);
+
+				for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
+					if (*it == "multi-prefix") {
+						m_bNamesx = true;
+					} else if (*it == "userhost-in-names") {
+						m_bUHNames = true;
+					}
+				}
+			}
 		}
 	}
 
@@ -834,6 +867,8 @@ void CIRCSock::Connected() {
 
 	MODULECALL(OnIRCRegistration(sPass, sNick, sIdent, sRealName), m_pUser, NULL, return);
 
+	PutIRC("CAP LS");
+
 	if (!sPass.empty()) {
 		PutIRC("PASS " + sPass);
 	}
@@ -935,12 +970,14 @@ void CIRCSock::ReachedMaxBuffer() {
 }
 
 void CIRCSock::ParseISupport(const CString& sLine) {
-	unsigned int i = 0;
-	CString sArg = sLine.Token(i++);
+	VCString vsTokens;
+	VCString::iterator it;
 
-	while (!sArg.empty()) {
-		CString sName = sArg.Token(0, false, "=");
-		CString sValue = sArg.Token(1, true, "=");
+	sLine.Split(" ", vsTokens, false);
+
+	for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
+		CString sName = it->Token(0, false, "=");
+		CString sValue = it->Token(1, true, "=");
 
 		if (sName.Equals("PREFIX")) {
 			CString sPrefixes = sValue.Token(1, false, ")");
@@ -972,59 +1009,69 @@ void CIRCSock::ParseISupport(const CString& sLine) {
 				}
 			}
 		} else if (sName.Equals("NAMESX")) {
+			if (m_bNamesx)
+				continue;
 			m_bNamesx = true;
 			PutIRC("PROTOCTL NAMESX");
 		} else if (sName.Equals("UHNAMES")) {
+			if (m_bUHNames)
+				continue;
 			m_bUHNames = true;
 			PutIRC("PROTOCTL UHNAMES");
 		}
-
-		sArg = sLine.Token(i++);
 	}
 }
 
 void CIRCSock::ForwardRaw353(const CString& sLine) const {
 	vector<CClient*>& vClients = m_pUser->GetClients();
+	vector<CClient*>::iterator it;
+
+	for (it = vClients.begin(); it != vClients.end(); ++it) {
+		ForwardRaw353(sLine, *it);
+	}
+}
+
+void CIRCSock::ForwardRaw353(const CString& sLine, CClient* pClient) const {
 	CString sNicks = sLine.Token(5, true);
 	if (sNicks.Left(1) == ":")
 		sNicks.LeftChomp();
 
-	for (unsigned int a = 0; a < vClients.size(); a++) {
-		if ((!m_bNamesx || vClients[a]->HasNamesx()) && (!m_bUHNames || vClients[a]->HasUHNames())) {
-			// Client and server have both the same UHNames and Namesx stuff enabled
-			m_pUser->PutUser(sLine, vClients[a]);
-		} else {
-			// Get everything except the actual user list
-			CString sTmp = sLine.Token(0, false, " :") + " :";
+	if ((!m_bNamesx || pClient->HasNamesx()) && (!m_bUHNames || pClient->HasUHNames())) {
+		// Client and server have both the same UHNames and Namesx stuff enabled
+		m_pUser->PutUser(sLine, pClient);
+	} else {
+		// Get everything except the actual user list
+		CString sTmp = sLine.Token(0, false, " :") + " :";
 
-			unsigned int i = 0;
-			// This loop runs once for every nick on the channel
-			for (;;) {
-				CString sNick = sNicks.Token(i).Trim_n(" ");
-				if (sNick.empty())
-					break;
+		VCString vsNicks;
+		VCString::const_iterator it;
 
-				if (m_bNamesx && !vClients[a]->HasNamesx() && IsPermChar(sNick[0])) {
-					// Server has, client doesn't have NAMESX, so we just use the first perm char
-					size_t pos = sNick.find_first_not_of(GetPerms());
-					if (pos >= 2 && pos != CString::npos) {
-						sNick = sNick[0] + sNick.substr(pos);
-					}
+		// This loop runs once for every nick on the channel
+		sNicks.Split(" ", vsNicks, false);
+		for (it = vsNicks.begin(); it != vsNicks.end(); ++it) {
+			CString sNick = *it;
+			if (sNick.empty())
+				break;
+
+			if (m_bNamesx && !pClient->HasNamesx() && IsPermChar(sNick[0])) {
+				// Server has, client doesn't have NAMESX, so we just use the first perm char
+				size_t pos = sNick.find_first_not_of(GetPerms());
+				if (pos >= 2 && pos != CString::npos) {
+					sNick = sNick[0] + sNick.substr(pos);
 				}
-
-				if (m_bUHNames && !vClients[a]->HasUHNames()) {
-					// Server has, client hasnt UHNAMES,
-					// so we strip away ident and host.
-					sNick = sNick.Token(0, false, "!");
-				}
-
-				sTmp += sNick + " ";
-				i++;
 			}
-			// Strip away the spaces we inserted at the end
-			sTmp.TrimRight(" ");
-			m_pUser->PutUser(sTmp, vClients[a]);
+
+			if (m_bUHNames && !pClient->HasUHNames()) {
+				// Server has, client hasnt UHNAMES,
+				// so we strip away ident and host.
+				sNick = sNick.Token(0, false, "!");
+			}
+
+			sTmp += sNick + " ";
 		}
+		// Strip away the spaces we inserted at the end
+		sTmp.TrimRight(" ");
+		m_pUser->PutUser(sTmp, pClient);
 	}
 }
 

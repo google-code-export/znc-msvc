@@ -7,9 +7,6 @@
  */
 
 #include "stdafx.hpp"
-
-#ifdef _MODULES
-
 #include "Modules.h"
 #include "HTTPSock.h"
 #include "znc.h"
@@ -45,6 +42,24 @@ void CHTTPSock::ReadData(const char* data, size_t len) {
 	}
 }
 
+bool CHTTPSock::SetCookie(const CString& sKey, const CString& sValue) {
+	if (!sKey.empty() && !sValue.empty()) {
+		m_msCookies[sKey] = sValue;
+		return true;
+	}
+
+	return false;
+}
+const MCString& CHTTPSock::GetCookies() const {
+	return m_msCookies;
+}
+
+CString CHTTPSock::GetCookie(const CString& sKey) const {
+	MCString::const_iterator it = m_msCookies.find(sKey);
+
+	return it != m_msCookies.end() ? it->second : "";
+}
+
 void CHTTPSock::CheckPost() {
 	if (m_sPostData.size() >= m_uPostLen) {
 		ParseParams(m_sPostData.Left(m_uPostLen));
@@ -74,6 +89,16 @@ void CHTTPSock::ReadLine(const CString& sData) {
 		m_bPost = true;
 		m_sURI = sLine.Token(1);
 		ParseURI();
+	} else if (sName.Equals("Cookie:")) {
+		VCString vsNV;
+
+		sLine.Token(1, true).Split(";", vsNV, false, "", "", true, true);
+
+		for (unsigned int a = 0; a < vsNV.size(); a++) {
+			CString s(vsNV[a]);
+
+			SetCookie(s.Token(0, false, "=").Escape_n(CString::EURL, CString::EASCII), s.Token(1, true, "=").Escape_n(CString::EURL, CString::EASCII));
+		}
 	} else if (sName.Equals("Authorization:")) {
 		CString sUnhashed;
 		sLine.Token(2).Base64Decode(sUnhashed);
@@ -409,7 +434,13 @@ bool CHTTPSock::PrintHeader(off_t uContentLength, const CString& sContentType, u
 	}
 	Write("Content-Type: " + m_sContentType + "\r\n");
 
-	for (MCString::iterator it = m_msHeaders.begin(); it != m_msHeaders.end(); ++it) {
+	MCString::iterator it;
+
+	for (it = m_msCookies.begin(); it != m_msCookies.end(); ++it) {
+		Write("Set-Cookie: " + it->first.Escape_n(CString::EURL) + "=" + it->second.Escape_n(CString::EURL) + "; path=/;\r\n");
+	}
+
+	for (it = m_msHeaders.begin(); it != m_msHeaders.end(); ++it) {
 		Write(it->first + ": " + it->second + "\r\n");
 	}
 
@@ -461,5 +492,3 @@ void CHTTPSock::ReachedMaxBuffer() {
 	DEBUG(GetSockName() << " == ReachedMaxBuffer()");
 	Close();
 }
-
-#endif // _MODULES

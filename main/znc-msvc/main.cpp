@@ -57,11 +57,32 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType)
 }
 
 
+static void seedPRNG() {
+	struct timeval tv;
+	unsigned int seed;
+
+	// Try to find a seed which can't be as easily guessed as only time()
+
+	if (gettimeofday(&tv, NULL) == 0) {
+		seed  = tv.tv_sec;
+
+		// This is in [0:1e6], which means that roughly 20 bits are
+		// actually used, let's try to shuffle the high bits.
+		seed ^= (tv.tv_usec << 10) | tv.tv_usec;
+	} else
+		seed = time(NULL);
+
+	seed ^= rand();
+	seed ^= getpid();
+// :WIN32: :TODO: Use CryptGenRandom
+	srand(seed);
+}
+
 int main(int argc, char** argv) {
 	CString sConfig;
 	CString sDataDir = "";
 
-	srand((unsigned int)time(NULL));
+	seedPRNG();
 	// Win32 doesn't support shell escape codes, so we do this.
 	CUtils::SetStdoutIsTTY(false);
 

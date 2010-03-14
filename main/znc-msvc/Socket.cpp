@@ -28,8 +28,6 @@ unsigned int CSockManager::GetAnonConnectionCount(const CString &sIP) const {
 	return ret;
 }
 
-#ifdef _MODULES
-
 /////////////////// CSocket ///////////////////
 CSocket::CSocket(CModule* pModule) : CZNCSock() {
 	m_pModule = pModule;
@@ -46,11 +44,15 @@ CSocket::CSocket(CModule* pModule, const CString& sHostname, unsigned short uPor
 }
 
 CSocket::~CSocket() {
-	CUser *pUser = m_pModule->GetUser();
+	CUser *pUser = NULL;
 
-	m_pModule->UnlinkSocket(this);
+	// CWebSock could cause us to have a NULL pointer here
+	if (m_pModule) {
+		pUser = m_pModule->GetUser();
+		m_pModule->UnlinkSocket(this);
+	}
 
-	if (!m_pModule->IsGlobal() && pUser) {
+	if (pUser && !m_pModule->IsGlobal()) {
 		pUser->AddBytesWritten(GetBytesWritten());
 		pUser->AddBytesRead(GetBytesRead());
 	} else {
@@ -132,5 +134,3 @@ bool CSocket::PutModNotice(const CString& sLine, const CString& sIdent, const CS
 void CSocket::SetModule(CModule* p) { m_pModule = p; }
 CModule* CSocket::GetModule() const { return m_pModule; }
 /////////////////// !CSocket ///////////////////
-
-#endif // _MODULES

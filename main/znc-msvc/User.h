@@ -11,9 +11,7 @@
 
 #include "Buffer.h"
 #include "FileUtils.h"
-#ifdef _MODULES
 #include "Modules.h"
-#endif
 #include "Nick.h"
 #include <set>
 #include <vector>
@@ -73,7 +71,6 @@ public:
 
 	void DelClients();
 	void DelServers();
-#ifdef _MODULES
 	void DelModules();
 
 	// Unloads a module on all users who have it loaded and loads it again.
@@ -83,7 +80,6 @@ public:
 	CModules& GetModules() { return *m_pModules; }
 	const CModules& GetModules() const { return *m_pModules; }
 	// !Modules
-#endif
 
 	// Buffers
 	void AddRawBuffer(const CString& sPre, const CString& sPost, bool bIncNick = true) { m_RawBuffer.AddLine(sPre, sPost, bIncNick); }
@@ -138,6 +134,29 @@ public:
 	void AddBytesRead(unsigned long long u) { m_uBytesRead += u; }
 	void AddBytesWritten(unsigned long long u) { m_uBytesWritten += u; }
 
+	// Counter for logging out of the web interface
+	unsigned int GetWebLogoutCounter(const CString& sToken) {
+		map<CString, unsigned int>::iterator it = m_suWebLogoutCounters.find(sToken);
+
+		if (it == m_suWebLogoutCounters.end()) {
+			m_suWebLogoutCounters[sToken] = 1;
+			return 1;
+		}
+
+		return it->second;
+	}
+
+	unsigned int IncWebLogoutCounter(const CString& sToken) {
+		map<CString, unsigned int>::iterator it = m_suWebLogoutCounters.find(sToken);
+
+		if (it == m_suWebLogoutCounters.end()) {
+			m_suWebLogoutCounters[sToken] = 2;
+			return 2;
+		}
+
+		return ++it->second;
+	}
+
 	// Setters
 	void SetUserName(const CString& s);
 	void SetNick(const CString& s);
@@ -169,6 +188,7 @@ public:
 	void SetTimezoneOffset(float b) { m_fTimezoneOffset = b; }
 	void SetJoinTries(unsigned int i) { m_uMaxJoinTries = i; }
 	void SetMaxJoins(unsigned int i) { m_uMaxJoins = i; }
+	void SetSkinName(const CString& s) { m_sSkinName = s; }
 	void SetIRCConnectEnabled(bool b) { m_bIRCConnectEnabled = b; }
 	void SetModRepliesAsNotices(bool b) { m_bModRepliesAsNotices = b; }
 	void SetIRCAway(bool b) { m_bIRCAway = b; }
@@ -225,6 +245,7 @@ public:
 	unsigned int JoinTries() const { return m_uMaxJoinTries; }
 	unsigned int MaxJoins() const { return m_uMaxJoins; }
 	bool ModRepliesAsNotices() const { return m_bModRepliesAsNotices; }
+	CString GetSkinName() const;
 	// !Getters
 private:
 protected:
@@ -287,10 +308,11 @@ protected:
 	unsigned int		m_uMaxJoinTries;
 	unsigned int		m_uMaxJoins;
 	bool				m_bModRepliesAsNotices;
+	CString				m_sSkinName;
 
-#ifdef _MODULES
+	map<CString, unsigned int>  m_suWebLogoutCounters;
+
 	CModules*		m_pModules;
-#endif
 };
 
 #endif // !_USER_H

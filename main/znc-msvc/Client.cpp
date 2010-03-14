@@ -13,6 +13,7 @@
 #include "IRCSock.h"
 #include "User.h"
 #include "znc.h"
+#include "WebModules.h"
 
 #define CALLMOD(MOD, CLIENT, USER, FUNC) {				\
 	CModule* pModule = CZNC::Get().GetModules().FindModule(MOD);	\
@@ -64,14 +65,32 @@ void CClient::ReadLine(const CString& sData) {
 
 	DEBUG("(" << ((m_pUser) ? m_pUser->GetUserName() : GetRemoteIP()) << ") CLI -> ZNC [" << sLine << "]");
 
-#ifdef _MODULES
 	if (IsAttached()) {
 		MODULECALL(OnUserRaw(sLine), m_pUser, this, return);
 	} else {
-		if (CZNC::Get().GetModules().OnUnknownUserRaw(this, sLine))
+		// If it's an HTTP Request - Check the webmods
+		if (sLine.WildCmp("GET * HTTP/1.?") || sLine.WildCmp("POST * HTTP/1.?")) {
+			CModule* pMod = new CModule(NULL, "<webmod>", "");
+			pMod->SetFake(true);
+
+			CWebSock* pSock = new CWebSock(pMod);
+			CZNC::Get().GetManager().SwapSockByAddr(pSock, this);
+
+			// And don't forget to give it some sane name / timeout
+			pSock->SetSockName("WebMod::Client");
+			pSock->SetTimeout(120);
+
+			// TODO can we somehow get rid of this?
+			pSock->ReadLine(sLine);
+			pSock->PushBuff("", 0, true);
+
 			return;
+		}
+
+		if (CZNC::Get().GetModules().OnUnknownUserRaw(this, sLine)) {
+			return;
+		}
 	}
-#endif
 
 	CString sCommand = sLine.Token(0);
 	if (sCommand.Left(1) == ":") {
@@ -156,12 +175,10 @@ void CClient::ReadLine(const CString& sData) {
 			else
 				UserCommand(sModCommand);
 		} else {
-#ifdef _MODULES
 			if (sModCommand.empty())
 				CALLMOD(sTarget, this, m_pUser, PutModule("Hello. How may I help you?"))
 			else
 				CALLMOD(sTarget, this, m_pUser, OnModCommand(sModCommand))
-#endif
 		}
 		return;
 	} else if (sCommand.Equals("DETACH")) {
@@ -293,14 +310,16 @@ void CClient::ReadLine(const CString& sData) {
 		Close(Csock::CLT_AFTERWRITE);	// Treat a client quit as a detach
 		return;		// Don't forward this msg.  We don't want the client getting us disconnected.
 	} else if (sCommand.Equals("PROTOCTL")) {
-		unsigned int i = 1;
-		while (!sLine.Token(i).empty()) {
-			if (sLine.Token(i).Equals("NAMESX")) {
+		VCString vsTokens;
+		VCString::const_iterator it;
+		sLine.Token(1, true).Split(" ", vsTokens, false);
+
+		for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
+			if (*it == "NAMESX") {
 				m_bNamesx = true;
-			} else if (sLine.Token(i).Equals("UHNAMES")) {
+			} else if (*it == "UHNAMES") {
 				m_bUHNames = true;
 			}
-			i++;
 		}
 		return;	// If the server understands it, we already enabled namesx / uhnames
 	} else if (sCommand.Equals("NOTICE")) {
@@ -313,13 +332,11 @@ void CClient::ReadLine(const CString& sData) {
 
 		if (sTarget.TrimPrefix(m_pUser->GetStatusPrefix())) {
 			if (!sTarget.Equals("status")) {
-#ifdef _MODULES
 				CALLMOD(sTarget, this, m_pUser, OnModNotice(sMsg));
 				
 				m_pUser->SetModRepliesAsNotices(true);
 				CALLMOD(sTarget, this, m_pUser, OnModCommand(sMsg));
 				m_pUser->SetModRepliesAsNotices(false);
-#endif
 			} else {
 				m_pUser->SetModRepliesAsNotices(true);
 				MODULECALL(OnStatusCommand(sMsg), m_pUser, this, return);
@@ -337,7 +354,6 @@ void CClient::ReadLine(const CString& sData) {
 		}
 #endif
 
-#ifdef _MODULES
 		if (sMsg.WildCmp("\001*\001")) {
 			CString sCTCP = sMsg;
 			sCTCP.LeftChomp();
@@ -349,7 +365,6 @@ void CClient::ReadLine(const CString& sData) {
 		} else {
 			MODULECALL(OnUserNotice(sTarget, sMsg), m_pUser, this, return);
 		}
-#endif
 
 		if (!GetIRCSock()) {
 			// Some lagmeters do a NOTICE to their own nick, ignore those.
@@ -487,9 +502,7 @@ void CClient::ReadLine(const CString& sData) {
 				if (sTarget.Equals("status")) {
 					StatusCTCP(sCTCP);
 				} else {
-#ifdef _MODULES
 					CALLMOD(sTarget, this, m_pUser, OnModCTCP(sCTCP));
-#endif
 				}
 				return;
 			}
@@ -529,9 +542,7 @@ void CClient::ReadLine(const CString& sData) {
 			if (sTarget.Equals("status")) {
 				UserCommand(sMsg);
 			} else {
-#ifdef _MODULES
 				CALLMOD(sTarget, this, m_pUser, OnModCommand(sMsg));
-#endif
 			}
 			return;
 		}
@@ -611,26 +622,6 @@ bool CClient::SendMotd() {
 }
 
 void CClient::AuthUser() {
-	/*
-#ifdef _MODULES
-	if (CZNC::Get().GetModules().OnLoginAttempt(m_sUser, m_sPass, *this)) {
-		return;
-	}
-#endif
-
-	CUser* pUser = CZNC::Get().GetUser(m_sUser);
-
-	if (pUser && pUser->CheckPass(m_sPass)) {
-		AcceptLogin(*pUser);
-	} else {
-		if (pUser) {
-			pUser->PutStatus("Another client attempted to login as you, with a bad password.");
-		}
-
-		RefuseLogin();
-	}
-	*/
-
 	m_spAuth = new CClientAuth(this, m_sUser, m_sPass);
 
 	CZNC::Get().AuthUser(m_spAuth);
@@ -678,9 +669,7 @@ void CAuthBase::RefuseLogin(const CString& sReason) {
 				"to login as you, but was rejected [" + sReason + "].");
 	}
 
-#ifdef _MODULES
 	CZNC::Get().GetModules().OnFailedLogin(GetUsername(), GetRemoteIP());
-#endif
 	RefusedLogin(sReason);
 	Invalidate();
 }

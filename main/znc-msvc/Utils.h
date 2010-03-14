@@ -369,7 +369,7 @@ public:
 	// Getters
 	unsigned int GetTTL() { return m_uTTL; }
 	// !Getters
-private:
+protected:
 	typedef pair<unsigned long long, V> value;
 	typedef typename map<K, value>::iterator iterator;
 	map<K, value>	m_mItems;	//!< Map of cached items.  The value portion of the map is for the expire time
@@ -424,8 +424,6 @@ public:
 	// Overloaded operators
 	T& operator *() const { assert(m_pType); return *m_pType; }
 	T* operator ->() const { assert(m_pType); return m_pType; }
-	bool operator ==(T* rhs) const { return (m_pType == rhs); }
-	bool operator ==(const CSmartPtr<T>& rhs) const { return (m_pType == *rhs); }
 
 	/**
 	 * @brief Attach() to a raw pointer
@@ -518,6 +516,15 @@ private:
 	T*				m_pType;	//!< Raw pointer to the class being referenced
 	unsigned int*	m_puCount;	//!< Counter of how many CSmartPtr's are referencing the same raw pointer
 };
+
+template<typename T>
+bool operator ==(T* lhs, const CSmartPtr<T>& rhs) { return (lhs == rhs.GetPtr()); }
+
+template<typename T>
+bool operator ==(const CSmartPtr<T>& lhs, T* rhs) { return (lhs.GetPtr() == rhs); }
+
+template<typename T>
+bool operator ==(const CSmartPtr<T>& lhs, const CSmartPtr<T>& rhs) { return (lhs.GetPtr() == rhs.GetPtr()); }
 
 #endif // !_UTILS_H
 

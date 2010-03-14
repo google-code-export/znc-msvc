@@ -12,9 +12,7 @@
 #include "main.h"
 #include "Client.h"
 #include "FileUtils.h"
-#ifdef _MODULES
 #include "Modules.h"
-#endif
 #include "Socket.h"
 #include <map>
 
@@ -89,6 +87,7 @@ public:
 
 	// Setters
 	void SetConfigState(enum ConfigState e) { m_eConfigState = e; }
+	void SetSkinName(const CString& s) { m_sSkinName = s; }
 	void SetStatusPrefix(const CString& s) { m_sStatusPrefix = (s.empty()) ? "*" : s; }
 	void SetISpoofFile(const CString& s) { m_sISpoofFile = s; }
 	void SetISpoofFormat(const CString& s) { m_sISpoofFormat = (s.empty()) ? "global { reply \"%\" }" : s; }
@@ -98,10 +97,9 @@ public:
 	enum ConfigState GetConfigState() const { return m_eConfigState; }
 	CSockManager& GetManager() { return m_Manager; }
 	const CSockManager& GetManager() const { return m_Manager; }
-#ifdef _MODULES
 	CGlobalModules& GetModules() { return *m_pModules; }
 	size_t FilterUncommonModules(set<CModInfo>& ssModules);
-#endif
+	CString GetSkinName() const { return m_sSkinName; }
 	const CString& GetStatusPrefix() const { return m_sStatusPrefix; }
 	const CString& GetCurPath() const { if (!CFile::Exists(m_sCurPath)) { CDir::MakeDir(m_sCurPath); } return m_sCurPath; }
 	const CString& GetHomePath() const { if (!CFile::Exists(m_sHomePath)) { CDir::MakeDir(m_sHomePath); } return m_sHomePath; }
@@ -124,6 +122,8 @@ public:
 	static void _Reset();
 	void HookOutput(outputHook fHook);
 	CUser* FindUser(const CString& sUsername);
+	CModule* FindModule(const CString& sModName, const CString& sUsername);
+	CModule* FindModule(const CString& sModName, CUser* pUser);
 	bool DeleteUser(const CString& sUsername);
 	bool AddUser(CUser* pUser, CString& sErrorRet);
 	const map<CString,CUser*> & GetUserMap() const { return(m_msUsers); }
@@ -163,6 +163,7 @@ protected:
 	CString					m_sZNCPath;
 
 	CString					m_sConfigFile;
+	CString					m_sSkinName;
 	CString					m_sStatusPrefix;
 	CString					m_sISpoofFile;
 	CString					m_sOrigISpoof;
@@ -174,9 +175,7 @@ protected:
 	CFile*					m_pISpoofLockFile;
 	unsigned int				m_uiConnectDelay;
 	unsigned int				m_uiAnonIPLimit;
-#ifdef _MODULES
 	CGlobalModules*			m_pModules;
-#endif
 	unsigned long long		m_uBytesRead;
 	unsigned long long		m_uBytesWritten;
 	CConnectUserTimer		*m_pConnectUserTimer;
@@ -189,21 +188,18 @@ public:
 	virtual ~CRealListener() {}
 
 	virtual bool ConnectionFrom(const CString& sHost, unsigned short uPort) {
-		DEBUG(GetSockName() << " == ConnectionFrom(" << sHost << ", " << uPort << ")");
-		return CZNC::Get().IsHostAllowed(sHost);
+		bool bHostAllowed = CZNC::Get().IsHostAllowed(sHost);
+		DEBUG(GetSockName() << " == ConnectionFrom(" << sHost << ", " << uPort << ") [" << (bHostAllowed ? "Allowed" : "Not allowed") << "]");
+		return bHostAllowed;
 	}
 
 	virtual Csock* GetSockObj(const CString& sHost, unsigned short uPort) {
 		CClient *pClient = new CClient(sHost, uPort);
 		if (CZNC::Get().AllowConnectionFrom(sHost)) {
-#ifdef _MODULES
 			CZNC::Get().GetModules().OnClientConnect(pClient, sHost, uPort);
-#endif
 		} else {
 			pClient->RefuseLogin("Too many anonymous connections from your IP");
-#ifdef _MODULES
 			CZNC::Get().GetModules().OnFailedLogin("", sHost);
-#endif
 		}
 		return pClient;
 	}
@@ -220,11 +216,11 @@ public:
 
 class CListener {
 public:
-	CListener(unsigned short uPort, const CString& sBindHost, bool bSSL, bool bIPV6) {
+	CListener(unsigned short uPort, const CString& sBindHost, bool bSSL, EAddrType eAddr) {
 		m_uPort = uPort;
 		m_sBindHost = sBindHost;
 		m_bSSL = bSSL;
-		m_bIPV6 = bIPV6;
+		m_eAddr = eAddr;
 		m_pListener = NULL;
 	}
 
@@ -235,14 +231,14 @@ public:
 
 	// Setters
 	void SetSSL(bool b) { m_bSSL = b; }
-	void SetIPV6(bool b) { m_bIPV6 = b; }
+	void SetAddrType(EAddrType eAddr) { m_eAddr = eAddr; }
 	void SetPort(unsigned short u) { m_uPort = u; }
 	void SetBindHost(const CString& s) { m_sBindHost = s; }
 	// !Setters
 
 	// Getters
 	bool IsSSL() const { return m_bSSL; }
-	bool IsIPV6() const { return m_bIPV6; }
+	EAddrType GetAddrType() const { return m_eAddr; }
 	unsigned short GetPort() const { return m_uPort; }
 	const CString& GetBindHost() const { return m_sBindHost; }
 	CRealListener* GetRealListener() const { return m_pListener; }
@@ -264,15 +260,15 @@ public:
 #endif
 
 		return CZNC::Get().GetManager().ListenHost(m_uPort, "_LISTENER", m_sBindHost, bSSL, SOMAXCONN,
-				m_pListener, 0, m_bIPV6);
+				m_pListener, 0, m_eAddr);
 	}
 private:
 protected:
 	bool			m_bSSL;
-	bool			m_bIPV6;
+	EAddrType		m_eAddr;
 	unsigned short	m_uPort;
 	CString			m_sBindHost;
-	CRealListener*		m_pListener;
+	CRealListener*	m_pListener;
 };
 
 #endif // !_ZNC_H

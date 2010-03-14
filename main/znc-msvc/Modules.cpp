@@ -7,13 +7,12 @@
  */
 
 #include "stdafx.hpp"
-
-#ifdef _MODULES
-
 #include "Modules.h"
 #include "User.h"
 #include "znc.h"
 #include <dlfcn.h>
+#include "WebModules.h"
+#include "Template.h"
 
 #ifndef RTLD_LOCAL
 # define RTLD_LOCAL 0
@@ -389,6 +388,10 @@ void CModule::ListSockets() {
 
 CString CModule::GetModNick() const { return ((m_pUser) ? m_pUser->GetStatusPrefix() : "*") + m_sModName; }
 
+// Webmods
+bool CModule::OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) { return false; }
+// !Webmods
+
 bool CModule::OnLoad(const CString& sArgs, CString& sMessage) { sMessage = ""; return true; }
 bool CModule::OnBoot() { return true; }
 void CModule::OnPreRehash() {}
@@ -495,6 +498,10 @@ bool CModule::PutModNotice(const CString& sLine, const CString& sIdent, const CS
 // CGlobalModule //
 ///////////////////
 CModule::EModRet CGlobalModule::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) { return CONTINUE; }
+CModule::EModRet CGlobalModule::OnWriteConfig(CFile& Config) { return CONTINUE; }
+void CGlobalModule::OnWriteUserConfig(CFile& Config, CUser& User) {}
+void CGlobalModule::OnWriteChanConfig(CFile& Config, CChan& Chan) {}
+CModule::EModRet CGlobalModule::OnAddUser(CUser& User, CString& sErrorRet) { return CONTINUE; }
 CModule::EModRet CGlobalModule::OnDeleteUser(CUser& User) { return CONTINUE; }
 void CGlobalModule::OnClientConnect(CClient* pClient, const CString& sHost, unsigned short uPort) {}
 CModule::EModRet CGlobalModule::OnLoginAttempt(CSmartPtr<CAuthBase> Auth) { return CONTINUE; }
@@ -595,6 +602,22 @@ bool CModules::OnModCTCP(const CString& sMessage) { MODUNLOADCHK(OnModCTCP(sMess
 ////////////////////
 bool CGlobalModules::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) {
 	GLOBALMODHALTCHK(OnConfigLine(sName, sValue, pUser, pChan));
+}
+
+bool CGlobalModules::OnWriteConfig(CFile& Config) {
+	GLOBALMODHALTCHK(OnWriteConfig(Config));
+}
+
+void CGlobalModules::OnWriteUserConfig(CFile& Config, CUser& User) {
+	GLOBALMODCALL(OnWriteUserConfig(Config, User));
+}
+
+void CGlobalModules::OnWriteChanConfig(CFile& Config, CChan& Chan) {
+	GLOBALMODCALL(OnWriteChanConfig(Config, Chan));
+}
+
+bool CGlobalModules::OnAddUser(CUser& User, CString& sErrorRet) {
+	GLOBALMODHALTCHK(OnAddUser(User, sErrorRet));
 }
 
 bool CGlobalModules::OnDeleteUser(CUser& User) {
@@ -704,6 +727,8 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 	pModule->SetDescription(sDesc);
 	pModule->SetGlobal(bIsGlobal);
 	pModule->SetArgs(sArgs);
+	DEBUG("********************************* [" + CZNC::Get().GetCurPath() + "] [" + sModPath + "] [" + CDir::ChangeDir(CZNC::Get().GetCurPath(), sModPath) + "]");
+	pModule->SetModPath(CDir::ChangeDir(CZNC::Get().GetCurPath(), sModPath));
 	push_back(pModule);
 
 	bool bLoaded;
@@ -996,5 +1021,3 @@ ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, 
 
 	return p;
 }
-
-#endif // _MODULES

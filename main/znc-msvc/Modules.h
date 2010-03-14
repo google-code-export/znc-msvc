@@ -6,11 +6,10 @@
  * by the Free Software Foundation.
  */
 
-#ifdef _MODULES
-
 #ifndef _MODULES_H
 #define _MODULES_H
 
+#include "WebModules.h"
 #include "FileUtils.h"
 #include "Utils.h"
 #include <set>
@@ -22,6 +21,8 @@ using std::set;
 class CAuthBase;
 class CChan;
 class CClient;
+class CWebSock;
+class CTemplate;
 class CIRCSock;
 // !Forward Declarations
 
@@ -264,6 +265,17 @@ public:
 	 *  @return false to abort ZNC startup.
 	 */
 	virtual bool OnBoot();
+
+	// For handling web traffic
+	virtual bool WebRequiresLogin() { return true; }
+	virtual bool WebRequiresAdmin() { return false; }
+	virtual CString GetWebMenuTitle() { return ""; }
+	virtual bool OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl);
+	virtual void AddSubPage(TWebSubPage spSubPage) { m_vSubPages.push_back(spSubPage); }
+	virtual void ClearSubPages() { m_vSubPages.clear(); }
+	virtual VWebSubPages& GetSubPages() { return m_vSubPages; }
+	// !Web
+
 	/** Called just before znc.conf is rehashed */
 	virtual void OnPreRehash();
 	/** This module hook is called after a <em>successful</em> rehash. */
@@ -676,6 +688,7 @@ public:
 	void SetFake(bool b) { m_bFake = b; }
 	void SetGlobal(bool b) { m_bGlobal = b; }
 	void SetDescription(const CString& s) { m_sDescription = s; }
+	void SetModPath(const CString& s) { m_sModPath = s; }
 	void SetArgs(const CString& s) { m_sArgs = s; }
 	// !Setters
 
@@ -684,6 +697,7 @@ public:
 	bool IsGlobal() const { return m_bGlobal; }
 	const CString& GetDescription() const { return m_sDescription; }
 	const CString& GetArgs() const { return m_sArgs; }
+	const CString& GetModPath() const { return m_sModPath; }
 
 	/** @returns For user modules this returns the user for which this
 	 *           module was loaded. For global modules this returns NULL,
@@ -712,8 +726,10 @@ protected:
 	CString			m_sDataDir;
 	CString			m_sSavePath;
 	CString			m_sArgs;
+	CString			m_sModPath;
 private:
 	MCString		m_mssRegistry; //!< way to save name/value pairs. Note there is no encryption involved in this
+	VWebSubPages	m_vSubPages;
 };
 
 class ZNC_API CModules : public vector<CModule*> {
@@ -842,9 +858,39 @@ public:
 	 *  @param pChan If this line was found in a chan section, then this is
 	 *               the corresponding CChan instance.
 	 *  @return See CModule::EModRet.
-	 *  @todo How are modules supposed to write these into the config?
 	 */
 	virtual EModRet OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
+	/** Called when ZNC starts rewriting the config file. This can be used
+	 *  re-write the "GM:" lines for OnConfigLine() which would get lost
+	 *  otherwise.
+	 *  @param Config Reference to the CFile which will be used for writing
+	 *                the config file.
+	 *  @return See CModule::EModRet.
+	 */
+	virtual EModRet OnWriteConfig(CFile& Config);
+	/** Called just before ZNC finishes a user section in the config file.
+	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
+	 *  which would get lost otherwise.
+	 *  @param Config Reference to the CFile which will be used for writing
+	 *                the config file.
+	 *  @param User The user which is being written.
+	 */
+	virtual void OnWriteUserConfig(CFile& Config, CUser& User);
+	/** Called just before ZNC finishes a chan section in the config file.
+	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
+	 *  which would get lost otherwise.
+	 *  @param Config Reference to the CFile which will be used for writing
+	 *                the config file.
+	 *  @param Chan The channel which is being written.
+	 */
+	virtual void OnWriteChanConfig(CFile& Config, CChan& Chan);
+	/** This module hook is called when a user is being added.
+	 * @param User The user which will be added.
+	 * @param sErrorRet A message that may be displayed to the user if
+	 * 	the module stops adding the user.
+	 * @return See CModule::EModRet.
+	 */
+	virtual EModRet OnAddUser(CUser& User, CString& sErrorRet);
 	/** This module hook is called when a user is deleted.
 	 *  @param User The user which will be deleted.
 	 *  @return See CModule::EModRet.
@@ -887,6 +933,10 @@ public:
 	~CGlobalModules() {}
 
 	bool OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
+	bool OnWriteConfig(CFile& Config);
+	void OnWriteUserConfig(CFile& Config, CUser& User);
+	void OnWriteChanConfig(CFile& Config, CChan& Chan);
+	bool OnAddUser(CUser& User, CString& sErrorRet);
 	bool OnDeleteUser(CUser& User);
 	void OnClientConnect(CClient* pClient, const CString& sHost, unsigned short uPort);
 	bool OnLoginAttempt(CSmartPtr<CAuthBase> Auth);
@@ -896,5 +946,3 @@ private:
 };
 
 #endif // !_MODULES_H
-
-#endif // _MODULES

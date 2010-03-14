@@ -10,6 +10,7 @@
 #include "stdafx.hpp"
 #include "znc.h"
 #include "Modules.h"
+#include "IRCSock.h"
 #include "User.h"
 
 class CAutoReplyMod : public CModule {
@@ -43,6 +44,12 @@ public:
 	}
 
 	void Handle(const CString& sNick) {
+		CIRCSock *pIRCSock = GetUser()->GetIRCSock();
+		if (!pIRCSock)
+			// WTF?
+			return;
+		if (sNick == pIRCSock->GetNick())
+			return;
 		if (m_Messaged.HasItem(sNick))
 			return;
 
