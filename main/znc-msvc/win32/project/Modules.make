@@ -140,6 +140,7 @@ $(MAKDIR)\keepnick.dll \
 $(MAKDIR)\kickrejoin.dll \
 $(MAKDIR)\nickserv.dll \
 $(MAKDIR)\noctcp.dll \
+$(MAKDIR)\notes.dll \
 $(MAKDIR)\notify.dll \
 $(MAKDIR)\partyline.dll \
 $(MAKDIR)\perform.dll \
@@ -156,6 +157,7 @@ $(MAKDIR)\twitter.dll \
 $(MAKDIR)\watch.dll \
 $(MAKDIR)\watch_only_detached.dll \
 $(MAKDIR)\webadmin.dll \
+$(MAKDIR)\webchat.dll \
 $(MAKDIR)\extra\antiidle.dll \
 $(MAKDIR)\extra\autovoice.dll \
 $(MAKDIR)\extra\block_motd.dll \
@@ -201,6 +203,7 @@ $(MAKDIR)\keepnick.obj \
 $(MAKDIR)\kickrejoin.obj \
 $(MAKDIR)\nickserv.obj \
 $(MAKDIR)\noctcp.obj \
+$(MAKDIR)\notes.obj \
 $(MAKDIR)\notify.obj \
 $(MAKDIR)\partyline.obj \
 $(MAKDIR)\perform.obj \
@@ -217,6 +220,7 @@ $(MAKDIR)\twitter.obj \
 $(MAKDIR)\watch.obj \
 $(MAKDIR)\watch_only_detached.obj \
 $(MAKDIR)\webadmin.obj \
+$(MAKDIR)\webchat.obj \
 $(MAKDIR)\extra\antiidle.obj \
 $(MAKDIR)\extra\autovoice.obj \
 $(MAKDIR)\extra\block_motd.obj \

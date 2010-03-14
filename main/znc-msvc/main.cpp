@@ -58,6 +58,29 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType)
 
 
 static void seedPRNG() {
+#ifdef _WIN32
+	HCRYPTPROV hProv;
+	bool l_failed = true;
+
+	if(CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_SILENT))
+	{
+		unsigned int l_seed;
+
+		if(CryptGenRandom(hProv, sizeof(unsigned int), (LPBYTE)&l_seed))
+		{
+			srand(l_seed);
+
+			l_failed = false;
+		}
+
+		CryptReleaseContext(hProv, 0);
+	}
+
+	if(l_failed)
+	{
+		srand((unsigned int)time(NULL));
+	}
+#else
 	struct timeval tv;
 	unsigned int seed;
 
@@ -74,8 +97,9 @@ static void seedPRNG() {
 
 	seed ^= rand();
 	seed ^= getpid();
-// :WIN32: :TODO: Use CryptGenRandom
+
 	srand(seed);
+#endif
 }
 
 int main(int argc, char** argv) {
@@ -222,6 +246,10 @@ int main(int argc, char** argv) {
 	// removed: checks for isRoot, bForeground, forking and signal handlers
 
 	int iRet = 0;
+
+	CUtils::PrintMessage("\n\n***************************************************");
+	CUtils::PrintMessage("** ZNC is now running. Do not close this window. **");
+	CUtils::PrintMessage("***************************************************\n\n");
 
 	try {
 		pZNC->Loop(&g_bMainLoop);

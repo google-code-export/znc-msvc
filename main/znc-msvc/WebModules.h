@@ -32,7 +32,7 @@ private:
 };
 
 
-class CWebSession {
+class ZNC_API CWebSession {
 public:
 	CWebSession(const CString& sId);
 	virtual ~CWebSession() {}
@@ -110,7 +110,7 @@ class CWebSessionMap : public TCacheMap<CString, CSmartPtr<CWebSession> > {
 		void FinishUserSessions(const CUser& User);
 };
 
-class CWebSock : public CHTTPSock {
+class ZNC_API CWebSock : public CHTTPSock {
 public:
 	CWebSock(CModule* pModule);
 	CWebSock(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout = 60);

@@ -6,6 +6,7 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
 #include "WebModules.h"
 #include "User.h"
 #include "znc.h"

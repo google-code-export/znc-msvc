@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ZNC_DLL"
 	ProjectGUID="{9775CB8F-D77C-40D2-B484-39892A723CD1}"
 	RootNamespace="ZNC_DLL"
@@ -573,6 +573,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\WebModules.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\znc.cpp"
 				>
 			</File>
@@ -676,6 +680,10 @@
 			</File>
 			<File
 				RelativePath="..\..\Utils.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\WebModules.h"
 				>
 			</File>
 			<File

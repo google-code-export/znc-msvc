@@ -6,7 +6,7 @@
  * by the Free Software Foundation.
  */
 
-#include "Chan.h"
+#include "stdafx.hpp"
 #include "HTTPSock.h"
 #include "Server.h"
 #include "Template.h"
