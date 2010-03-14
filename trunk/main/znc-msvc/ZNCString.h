@@ -24,8 +24,8 @@ using std::list;
 using std::pair;
 
 #define _SQL(s) CString("'" + CString(s).Escape_n(CString::ESQL) + "'")
-#define _URL(s) CString("'" + CString(s).Escape_n(CString::EURL) + "'")
-#define _HTML(s) CString("'" + CString(s).Escape_n(CString::EHTML) + "'")
+#define _URL(s) CString(s).Escape_n(CString::EURL)
+#define _HTML(s) CString(s).Escape_n(CString::EHTML)
 
 class CString;
 class MCString;
@@ -114,7 +114,8 @@ public:
 	CString Right(size_t uCount) const;
 
 	CString FirstLine() const { return Token(0, false, "\n"); }
-	CString Token(unsigned int uPos, bool bRest = false, const CString& sSep = " ", bool bAllowEmpty = false, const CString& sLeft = "", const CString& sRight = "", bool bTrimQuotes = true) const;
+	CString Token(unsigned int uPos, bool bRest = false, const CString& sSep = " ", bool bAllowEmpty = false) const;
+	CString Token(unsigned int uPos, bool bRest, const CString& sSep, bool bAllowEmpty, const CString& sLeft, const CString& sRight, bool bTrimQuotes = true) const;
 
 	size_t URLSplit(MCString& msRet) const;
 	size_t OptionSplit(MCString& msRet, bool bUpperKeys = false) const;

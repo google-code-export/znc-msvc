@@ -39,11 +39,14 @@
 #define _MODDIR_ "/usr/lib/znc"
 #endif
 
+#ifndef _SKINDIR_
+#define _SKINDIR_ _MODDIR_ "/webskins"
+#endif
+
 #ifndef _DATADIR_
 #define _DATADIR_ "/usr/share/znc"
 #endif
 
-#ifdef _MODULES
 #define MODULECALL(macFUNC, macUSER, macCLIENT, macEXITER)	\
 	if (macUSER) {											\
 		CGlobalModules& GMods = CZNC::Get().GetModules();	\
@@ -64,13 +67,11 @@
 		GMods.SetClient(pOldGClient);			\
 		UMods.SetClient(pOldUClient);								\
 	}
-# ifndef _WIN32
+
+#ifndef _WIN32
 #  define MODULE_FILE_EXT ".so"
- #else
-#  define MODULE_FILE_EXT ".dll"
-# endif
 #else
-#define MODULECALL(macFUNC, macUSER, macCLIENT, macEXITER)
+#  define MODULE_FILE_EXT ".dll"
 #endif
 
 #include "winver.h"

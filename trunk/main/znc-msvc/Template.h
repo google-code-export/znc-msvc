@@ -6,8 +6,6 @@
  * by the Free Software Foundation.
  */
 
-#ifdef _MODULES
-
 #ifndef _TEMPLATE_H
 #define _TEMPLATE_H
 
@@ -145,14 +143,15 @@ public:
 	void Init();
 
 	CTemplate* GetParent(bool bRoot);
-	CString ExpandFile(const CString& sFilename);
+	CString ExpandFile(const CString& sFilename, bool bFromInc = false);
 	bool SetFile(const CString& sFileName);
 
 	void SetPath(const CString& sPath);	// Sets the dir:dir:dir type path to look at for templates, as of right now no ../../.. protection
-	void PrependPath(const CString& sPath);
-	void AppendPath(const CString& sPath);
+	CString MakePath(const CString& sPath) const;
+	void PrependPath(const CString& sPath, bool bIncludesOnly = false);
+	void AppendPath(const CString& sPath, bool bIncludesOnly = false);
 	void RemovePath(const CString& sPath);
-	void ClearPath();
+	void ClearPaths();
 	CString ResolvePath(const CString& sPath, const CString& sFilename);
 	bool PrintString(CString& sRet);
 	bool Print(ostream& oOut = cout);
@@ -175,7 +174,7 @@ public:
 private:
 	CTemplate*							m_pParent;
 	CString								m_sFileName;
-	LCString							m_lsPaths;
+	list<pair<CString, bool> >			m_lsbPaths;
 	map<CString, vector<CTemplate*> >	m_mvLoops;
 	vector<CTemplateLoopContext*>		m_vLoopContexts;
 	CSmartPtr<CTemplateOptions>			m_spOptions;
@@ -183,5 +182,3 @@ private:
 };
 
 #endif // !_TEMPLATE_H
-
-#endif // _MODULES
