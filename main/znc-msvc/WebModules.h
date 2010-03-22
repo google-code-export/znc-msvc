@@ -112,20 +112,26 @@ class CWebSessionMap : public TCacheMap<CString, CSmartPtr<CWebSession> > {
 
 class ZNC_API CWebSock : public CHTTPSock {
 public:
+	enum EPageReqResult {
+		PAGE_NOTFOUND,
+		PAGE_PRINT,
+		PAGE_DEFERRED
+	};
+
 	CWebSock(CModule* pModule);
 	CWebSock(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout = 60);
 	virtual ~CWebSock();
 
 	virtual bool ForceLogin();
 	virtual bool OnLogin(const CString& sUser, const CString& sPass);
-	virtual bool OnPageRequest(const CString& sURI, CString& sPageRet);
+	virtual void OnPageRequest(const CString& sURI);
 
 	void ParsePath();	// This parses the path portion of the url into some member vars
 	CModule* ResolveModule();
 
 	//virtual bool PrintFile(const CString& sFileName, CString sContentType = "");
-	bool PrintTemplate(const CString& sPageName, CString& sPageRet, CModule* pModule = NULL);
-	bool PrintStaticFile(const CString& sPath, CString& sPageRet, CModule* pModule = NULL);
+	EPageReqResult PrintTemplate(const CString& sPageName, CString& sPageRet, CModule* pModule = NULL);
+	EPageReqResult PrintStaticFile(const CString& sPath, CString& sPageRet, CModule* pModule = NULL);
 
 	bool AddModLoop(const CString& sLoopName, CModule& Module);
 	void SetPaths(CModule* pModule, bool bIsTemplate = false);
@@ -158,6 +164,8 @@ public:
 	}
 
 private:
+	EPageReqResult OnPageRequestInternal(const CString& sURI, CString& sPageRet);
+
 	bool					m_bPathsSet;
 	CTemplate				m_Template;
 	CSmartPtr<CAuthBase>	m_spAuth;
