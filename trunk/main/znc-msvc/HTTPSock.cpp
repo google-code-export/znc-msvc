@@ -66,7 +66,6 @@ void CHTTPSock::CheckPost() {
 		GetPage();
 		m_sPostData.clear();
 		m_bDone = true;
-		Close(Csock::CLT_AFTERWRITE);
 	}
 }
 
@@ -126,17 +125,16 @@ void CHTTPSock::ReadLine(const CString& sData) {
 }
 
 void CHTTPSock::GetPage() {
-	CString sPage;
-
 	DEBUG("Page Request [" << m_sURI << "] ");
 
-	if (!OnPageRequest(m_sURI, sPage)) {
-		PrintNotFound();
-		return;
-	}
+	OnPageRequest(m_sURI);
+}
 
+void CHTTPSock::PrintPage(const CString& sPage) {
 	if (!SentHeader()) {
 		PrintHeader(sPage.length());
+	} else {
+		DEBUG("PrintPage(): Header was already sent");
 	}
 
 	Write(sPage);
@@ -364,6 +362,7 @@ bool CHTTPSock::PrintNotFound() {
 
 bool CHTTPSock::PrintErrorPage(unsigned int uStatusId, const CString& sStatusMsg, const CString& sMessage) {
 	if (SentHeader()) {
+		DEBUG("PrintErrorPage(): Header was already sent");
 		return false;
 	}
 
@@ -390,6 +389,7 @@ bool CHTTPSock::ForceLogin() {
 	}
 
 	if (SentHeader()) {
+		DEBUG("ForceLogin(): Header was already sent!");
 		return false;
 	}
 
@@ -412,7 +412,7 @@ bool CHTTPSock::SentHeader() const {
 
 bool CHTTPSock::PrintHeader(off_t uContentLength, const CString& sContentType, unsigned int uStatusId, const CString& sStatusMsg) {
 	if (SentHeader()) {
-		DEBUG("- Header already sent!");
+		DEBUG("PrintHeader(): Header was already sent!");
 		return false;
 	}
 
@@ -462,6 +462,7 @@ void CHTTPSock::AddHeader(const CString& sName, const CString& sValue) {
 
 bool CHTTPSock::Redirect(const CString& sURL) {
 	if (SentHeader()) {
+		DEBUG("Redirect() - Header was already sent");
 		return false;
 	}
 
