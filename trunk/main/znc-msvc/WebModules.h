@@ -39,10 +39,9 @@ public:
 
 	const CString& GetId() const { return m_sId; }
 	CUser* GetUser() const { return m_pUser; }
-	bool IsLoggedIn() const { return m_pUser && m_bLoggedIn; }
+	bool IsLoggedIn() const { return m_pUser != NULL; }
 	bool IsAdmin() const;
 
-	bool SetLoggedIn(bool b) { m_bLoggedIn = b; return m_bLoggedIn; }
 	CUser* SetUser(CUser* p) { m_pUser = p; return m_pUser; }
 
 	void ClearMessageLoops();
@@ -52,7 +51,6 @@ public:
 private:
 	CString		m_sId;
 	CUser*		m_pUser;
-	bool		m_bLoggedIn;
 	VCString	m_vsErrorMsgs;
 	VCString	m_vsSuccessMsgs;
 };
@@ -113,9 +111,10 @@ class CWebSessionMap : public TCacheMap<CString, CSmartPtr<CWebSession> > {
 class ZNC_API CWebSock : public CHTTPSock {
 public:
 	enum EPageReqResult {
-		PAGE_NOTFOUND,
-		PAGE_PRINT,
-		PAGE_DEFERRED
+		PAGE_NOTFOUND, // print 404 and Close()
+		PAGE_PRINT, // print page contents and Close()
+		PAGE_DEFERRED, // async processing, Close() will be called from a different place
+		PAGE_DONE // all stuff has been done and Close() has been called (e.g. by CHTTPSock::Redirect)
 	};
 
 	CWebSock(CModule* pModule);
@@ -156,8 +155,8 @@ public:
 	size_t GetAvailSkins(vector<CFile>& vRet);
 	CString GetSkinName();
 
-	CString GetCookie(const CString& sKey) const;
-	bool SetCookie(const CString& sKey, const CString& sValue);
+	CString GetRequestCookie(const CString& sKey) const;
+	bool SendCookie(const CString& sKey, const CString& sValue);
 
 	static void FinishUserSessions(const CUser& User) {
 		m_mspSessions.FinishUserSessions(User);

@@ -266,15 +266,50 @@ public:
 	 */
 	virtual bool OnBoot();
 
-	// For handling web traffic
+
+	/** Modules which can only be used with an active user session have to return true here.
+	 *  @return false for modules that can do stuff for non-logged in web users as well.
+	 */
 	virtual bool WebRequiresLogin() { return true; }
+	/** Return true if this module should only be usable for admins on the web.
+	 *  @return false if normal users can use this module's web pages as well.
+	 */
 	virtual bool WebRequiresAdmin() { return false; }
+	/** Return the title of the module's section in the web interface's side bar.
+	 *  @return The Title.
+	 */
 	virtual CString GetWebMenuTitle() { return ""; }
+	/** For WebMods: Called before the list of registered SubPages will be checked.
+	 *  Important: If you return true, you need to take care of calling WebSock.Close!
+	 *  This allows for stuff like returning non-templated data, long-polling and other fun.
+	 *  @param WebSock The active request.
+	 *  @param sPageName The name of the page that has been requested.
+	 *  @return true if you handled the page request or false if the name is to be checked
+	 *          against the list of registered SubPages and their permission settings.
+	 */
+	virtual bool OnWebPreRequest(CWebSock& WebSock, const CString& sPageName);
+	/** If OnWebPreRequest returned false, and the RequiresAdmin/IsAdmin check has been passed,
+	 *  this method will be called with the page name. It will also be called for pages that
+	 *  have NOT been specifically registered with AddSubPage.
+	 *  @param WebSock The active request.
+	 *  @param sPageName The name of the page that has been requested.
+	 *  @param Tmpl The active template. You can add variables, loops and stuff to it.
+	 *  @return You MUST return true if you want the template to be evaluated and sent to the browser.
+	 *          Return false if you called Redirect() or PrintErrorPage(). If you didn't, a 404 page will be sent.
+	 */
 	virtual bool OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl);
+	/** Registers a sub page for the sidebar.
+	 *  @param spSubPage The SubPage instance.
+	 */
 	virtual void AddSubPage(TWebSubPage spSubPage) { m_vSubPages.push_back(spSubPage); }
+	/** Removes all registered (AddSubPage'd) SubPages.
+	 */
 	virtual void ClearSubPages() { m_vSubPages.clear(); }
+	/** Returns a list of all registered SubPages. Don't mess with it too much.
+	 *  @return The List.
+	 */
 	virtual VWebSubPages& GetSubPages() { return m_vSubPages; }
-	// !Web
+
 
 	/** Called just before znc.conf is rehashed */
 	virtual void OnPreRehash();
@@ -306,6 +341,33 @@ public:
 	 *  @return see CModule::EModRet
 	 */
 	virtual EModRet OnBroadcast(CString& sMessage);
+
+	/** Called when a module-specific config line is read from znc.conf.
+	 *  Module specific config lines are always prefixed with "GM:".
+	 *  @param sName Name of the config entry without the "GM:" prefix.
+	 *  @param sValue The value of the config entry.
+	 *  @param pUser If this line was found in a user section, then this is
+	 *               the corresponding CUser instance.
+	 *  @param pChan If this line was found in a chan section, then this is
+	 *               the corresponding CChan instance.
+	 *  @return See CModule::EModRet.
+	 */
+	virtual EModRet OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
+	/** Called just before ZNC finishes a user section in the config file.
+	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
+	 *  which would get lost otherwise.
+	 *  @param Config Reference to the CFile which will be used for writing
+	 *                the config file.
+	 */
+	virtual void OnWriteUserConfig(CFile& Config);
+	/** Called just before ZNC finishes a chan section in the config file.
+	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
+	 *  which would get lost otherwise.
+	 *  @param Config Reference to the CFile which will be used for writing
+	 *                the config file.
+	 *  @param Chan The channel which is being written.
+	 */
+	virtual void OnWriteChanConfig(CFile& Config, CChan& Chan);
 
 	/** This module hook is called when a user sends a DCC SEND request to
 	 *  your module fake-nickname.
@@ -752,6 +814,9 @@ public:
 	bool OnIRCConnecting(CIRCSock *pIRCSock);
 	bool OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName);
 	bool OnBroadcast(CString& sMessage);
+	bool OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
+	bool OnWriteUserConfig(CFile& Config);
+	bool OnWriteChanConfig(CFile& Config, CChan& Chan);
 
 	bool OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize);
 
@@ -849,17 +914,6 @@ public:
 			const CString &sDataDir) : CModule(pDLL, sModName, sDataDir) {}
 	virtual ~CGlobalModule() {}
 
-	/** Called when a module-specific config line is read from znc.conf.
-	 *  Module specific config lines are always prefixed with "GM:".
-	 *  @param sName Name of the config entry without the "GM:" prefix.
-	 *  @param sValue The value of the config entry.
-	 *  @param pUser If this line was found in a user section, then this is
-	 *               the corresponding CUser instance.
-	 *  @param pChan If this line was found in a chan section, then this is
-	 *               the corresponding CChan instance.
-	 *  @return See CModule::EModRet.
-	 */
-	virtual EModRet OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
 	/** Called when ZNC starts rewriting the config file. This can be used
 	 *  re-write the "GM:" lines for OnConfigLine() which would get lost
 	 *  otherwise.
@@ -868,22 +922,6 @@ public:
 	 *  @return See CModule::EModRet.
 	 */
 	virtual EModRet OnWriteConfig(CFile& Config);
-	/** Called just before ZNC finishes a user section in the config file.
-	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
-	 *  which would get lost otherwise.
-	 *  @param Config Reference to the CFile which will be used for writing
-	 *                the config file.
-	 *  @param User The user which is being written.
-	 */
-	virtual void OnWriteUserConfig(CFile& Config, CUser& User);
-	/** Called just before ZNC finishes a chan section in the config file.
-	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
-	 *  which would get lost otherwise.
-	 *  @param Config Reference to the CFile which will be used for writing
-	 *                the config file.
-	 *  @param Chan The channel which is being written.
-	 */
-	virtual void OnWriteChanConfig(CFile& Config, CChan& Chan);
 	/** This module hook is called when a user is being added.
 	 * @param User The user which will be added.
 	 * @param sErrorRet A message that may be displayed to the user if
@@ -932,10 +970,7 @@ public:
 	CGlobalModules() : CModules() {}
 	~CGlobalModules() {}
 
-	bool OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
 	bool OnWriteConfig(CFile& Config);
-	void OnWriteUserConfig(CFile& Config, CUser& User);
-	void OnWriteChanConfig(CFile& Config, CChan& Chan);
 	bool OnAddUser(CUser& User, CString& sErrorRet);
 	bool OnDeleteUser(CUser& User);
 	void OnClientConnect(CClient* pClient, const CString& sHost, unsigned short uPort);

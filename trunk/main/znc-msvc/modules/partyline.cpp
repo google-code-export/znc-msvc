@@ -87,23 +87,42 @@ public:
 	}
 
 	void Load() {
-		VCString vsChannels;
+		CString sAction, sKey;
+		CPartylineChannel* pChannel;
 		for (MCString::iterator it = BeginNV(); it != EndNV(); ++it) {
-			CUser* pUser = CZNC::Get().FindUser(it->first);
-			CPartylineChannel* pChannel;
-			it->second.Split(",", vsChannels, false);
-
-			if (!pUser) {
-				// TODO: give some usefull message?
-				continue;
+			if (it->first.find(":") != CString::npos) {
+				sAction = it->first.Token(0, false, ":");
+				sKey = it->first.Token(1, true, ":");
+			} else {
+				// backwards compatibility for older NV data
+				sAction = "fixedchan";
+				sKey = it->first;
 			}
 
-			for (VCString::iterator i = vsChannels.begin(); i != vsChannels.end(); ++i) {
-				if (i->Trim_n().empty())
+			if (sAction == "fixedchan") {
+				CUser* pUser = CZNC::Get().FindUser(sKey);
+				if (!pUser) {
+					// TODO: give some useful message?
 					continue;
-				pChannel = GetChannel(*i);
-				JoinUser(pUser, pChannel);
-				pChannel->AddFixedNick(it->first);
+				}
+
+				VCString vsChannels;
+				it->second.Split(",", vsChannels, false);
+				for (VCString::iterator i = vsChannels.begin(); i != vsChannels.end(); ++i) {
+					if (i->Trim_n().empty())
+						continue;
+					pChannel = GetChannel(*i);
+					JoinUser(pUser, pChannel);
+					pChannel->AddFixedNick(sKey);
+				}
+			}
+
+			if (sAction == "topic") {
+				pChannel = FindChannel(sKey);
+				if (pChannel && !(it->second).empty()) {
+					PutChan(pChannel->GetNicks(), ":irc.znc.in TOPIC " + pChannel->GetName() + " :" + it->second);
+					pChannel->SetTopic(it->second);
+				}
 			}
 		}
 
@@ -122,9 +141,16 @@ public:
 		}
 
 		if (!sChans.empty())
-			SetNV(sUser, sChans.substr(1)); // Strip away the first ,
+			SetNV("fixedchan:" + sUser, sChans.substr(1)); // Strip away the first ,
 		else
-			DelNV(sUser);
+			DelNV("fixedchan:" + sUser);
+	}
+
+	void SaveTopic(CPartylineChannel* pChannel) {
+		if (!pChannel->GetTopic().empty())
+			SetNV("topic:" + pChannel->GetName(), pChannel->GetTopic());
+		else
+			DelNV("topic:" + pChannel->GetName());
 	}
 
 	virtual EModRet OnDeleteUser(CUser& User) {
@@ -230,6 +256,7 @@ public:
 					if (m_pUser->IsAdmin()) {
 						PutChan(ssNicks, ":" + m_pUser->GetIRCNick().GetNickMask() + " TOPIC " + sChannel + " :" + sTopic);
 						pChannel->SetTopic(sTopic);
+						SaveTopic(pChannel);
 					} else {
 						m_pUser->PutUser(":irc.znc.in 482 " +  m_pUser->GetIRCNick().GetNick() + " " + sChannel + " :You're not channel operator");
 					}
@@ -299,12 +326,13 @@ public:
 				pUser->PutUser(":" + pUser->GetIRCNick().GetNickMask() + sCmd
 						+ pChannel->GetName() + " " + pUser->GetIRCNick().GetNick() + sMsg);
 				PutChan(ssNicks, ":?" + pUser->GetUserName() + "!" + pUser->GetIdent() + "@" + sHost
-						+ sCmd + pChannel->GetName() + " ?" + pUser->GetUserName() + sMsg, false);
+						+ sCmd + pChannel->GetName() + " ?" + pUser->GetUserName() + sMsg,
+						false, true, pUser);
 			} else {
 				pUser->PutUser(":" + pUser->GetIRCNick().GetNickMask() + sCmd
 						+ pChannel->GetName() + sMsg);
 				PutChan(ssNicks, ":?" + pUser->GetUserName() + "!" + pUser->GetIdent() + "@" + sHost
-						+ sCmd + pChannel->GetName() + sMsg, false);
+						+ sCmd + pChannel->GetName() + sMsg, false, true, pUser);
 			}
 
 			if (ssNicks.empty()) {
@@ -353,7 +381,7 @@ public:
 			}
 
 			pUser->PutUser(":" + pUser->GetIRCNick().GetNickMask() + " JOIN " + pChannel->GetName());
-			PutChan(ssNicks, ":?" + sNick + "!" + pUser->GetIdent() + "@" + sHost + " JOIN " + pChannel->GetName(), false);
+			PutChan(ssNicks, ":?" + sNick + "!" + pUser->GetIdent() + "@" + sHost + " JOIN " + pChannel->GetName(), false, true, pUser);
 
 			if (!pChannel->GetTopic().empty()) {
 				pUser->PutUser(":" + GetIRCServer(pUser) + " 332 " + pUser->GetIRCNick().GetNickMask() + " " + pChannel->GetName() + " :" + pChannel->GetTopic());
@@ -361,7 +389,7 @@ public:
 			SendNickList(pUser, ssNicks, pChannel->GetName());
 
 			if (pUser->IsAdmin()) {
-				PutChan(ssNicks, ":*" + GetModName() + "!znc@znc.in MODE " + pChannel->GetName() + " +o ?" + pUser->GetUserName(), false);
+				PutChan(ssNicks, ":*" + GetModName() + "!znc@znc.in MODE " + pChannel->GetName() + " +o ?" + pUser->GetUserName(), false, true, pUser);
 			}
 		}
 	}

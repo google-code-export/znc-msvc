@@ -9,6 +9,8 @@
 #ifndef _HTTPSOCK_H
 #define _HTTPSOCK_H
 
+#include "Socket.h"
+
 class CModule;
 
 class ZNC_API CHTTPSock : public CSocket {
@@ -50,9 +52,9 @@ public:
 	void GetPage();
 
 	// Cookies
-	bool SetCookie(const CString& sKey, const CString& sValue);
-	const MCString& GetCookies() const;
-	CString GetCookie(const CString& sKey) const;
+	const MCString& GetRequestCookies() const;
+	CString GetRequestCookie(const CString& sKey) const;
+	bool SendCookie(const CString& sKey, const CString& sValue);
 	// Cookies
 
 	// Setters
@@ -96,7 +98,8 @@ protected:
 	MCString				m_msHeaders;
 	bool					m_bHTTP10Client;
 	CString					m_sIfNoneMatch;
-	MCString				m_msCookies;
+	MCString				m_msRequestCookies;
+	MCString				m_msResponseCookies;
 };
 
 #endif // !_HTTPSOCK_H

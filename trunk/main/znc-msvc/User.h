@@ -245,6 +245,7 @@ public:
 	unsigned int JoinTries() const { return m_uMaxJoinTries; }
 	unsigned int MaxJoins() const { return m_uMaxJoins; }
 	bool ModRepliesAsNotices() const { return m_bModRepliesAsNotices; }
+	bool IsIRCAway() { return m_bIRCAway; }
 	CString GetSkinName() const;
 	// !Getters
 private:

@@ -42,22 +42,27 @@ void CHTTPSock::ReadData(const char* data, size_t len) {
 	}
 }
 
-bool CHTTPSock::SetCookie(const CString& sKey, const CString& sValue) {
+bool CHTTPSock::SendCookie(const CString& sKey, const CString& sValue) {
 	if (!sKey.empty() && !sValue.empty()) {
-		m_msCookies[sKey] = sValue;
+		if (m_msRequestCookies.find(sKey) == m_msRequestCookies.end() ||
+			m_msRequestCookies[sKey].StrCmp(sValue) != 0)
+		{
+			m_msResponseCookies[sKey] = sValue;
+		}
 		return true;
 	}
 
 	return false;
 }
-const MCString& CHTTPSock::GetCookies() const {
-	return m_msCookies;
+
+const MCString& CHTTPSock::GetRequestCookies() const {
+	return m_msRequestCookies;
 }
 
-CString CHTTPSock::GetCookie(const CString& sKey) const {
-	MCString::const_iterator it = m_msCookies.find(sKey);
+CString CHTTPSock::GetRequestCookie(const CString& sKey) const {
+	MCString::const_iterator it = m_msRequestCookies.find(sKey);
 
-	return it != m_msCookies.end() ? it->second : "";
+	return it != m_msRequestCookies.end() ? it->second : "";
 }
 
 void CHTTPSock::CheckPost() {
@@ -96,7 +101,8 @@ void CHTTPSock::ReadLine(const CString& sData) {
 		for (unsigned int a = 0; a < vsNV.size(); a++) {
 			CString s(vsNV[a]);
 
-			SetCookie(s.Token(0, false, "=").Escape_n(CString::EURL, CString::EASCII), s.Token(1, true, "=").Escape_n(CString::EURL, CString::EASCII));
+			m_msRequestCookies[s.Token(0, false, "=").Escape_n(CString::EURL, CString::EASCII)] =
+				s.Token(1, true, "=").Escape_n(CString::EURL, CString::EASCII);
 		}
 	} else if (sName.Equals("Authorization:")) {
 		CString sUnhashed;
@@ -379,7 +385,7 @@ CString CHTTPSock::GetErrorPage(unsigned int uStatusId, const CString& sStatusMs
 		"<html><head>\r\n<title>" + CString(uStatusId) + " " + sStatusMsg.Escape_n(CString::EHTML) + "</title>\r\n"
 		"</head><body>\r\n<h1>" + sStatusMsg.Escape_n(CString::EHTML) + "</h1>\r\n"
 		"<p>" + sMessage.Escape_n(CString::EHTML) + "</p>\r\n"
-		"<hr>\r\n<address>" + CZNC::GetTag(false).Escape_n(CString::EHTML) + " at " + GetLocalIP().Escape_n(CString::EHTML) + " Port " + CString(GetLocalPort()) + "</address>\r\n"
+		"<hr />\r\n<address>" + CZNC::GetTag(false).Escape_n(CString::EHTML) + " at " + GetLocalIP().Escape_n(CString::EHTML) + " Port " + CString(GetLocalPort()) + "</address>\r\n"
 		"</body></html>\r\n";
 }
 
@@ -436,7 +442,7 @@ bool CHTTPSock::PrintHeader(off_t uContentLength, const CString& sContentType, u
 
 	MCString::iterator it;
 
-	for (it = m_msCookies.begin(); it != m_msCookies.end(); ++it) {
+	for (it = m_msResponseCookies.begin(); it != m_msResponseCookies.end(); ++it) {
 		Write("Set-Cookie: " + it->first.Escape_n(CString::EURL) + "=" + it->second.Escape_n(CString::EURL) + "; path=/;\r\n");
 	}
 
