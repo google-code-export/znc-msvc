@@ -526,9 +526,9 @@ void CZNC::InitDirs(const CString& sArgvPath, const CString& sDataDir) {
 #endif
 }
 
-CString CZNC::GetConfPath() const {
+CString CZNC::GetConfPath(bool bAllowMkDir) const {
 	CString sConfPath = m_sZNCPath + "/configs";
-	if (!CFile::Exists(sConfPath)) {
+	if (bAllowMkDir && !CFile::Exists(sConfPath)) {
 		CDir::MakeDir(sConfPath);
 	}
 
@@ -555,11 +555,11 @@ CString CZNC::GetModPath() const {
 }
 
 
-CString CZNC::ExpandConfigPath(const CString& sConfigFile) {
+CString CZNC::ExpandConfigPath(const CString& sConfigFile, bool bAllowMkDir) {
 	CString sRetPath;
 
 	if (sConfigFile.empty()) {
-		sRetPath = GetConfPath() + "/znc.conf";
+		sRetPath = GetConfPath(bAllowMkDir) + "/znc.conf";
 	} else {
 		if (sConfigFile.Left(2) == "./" || sConfigFile.Left(3) == "../") {
 			sRetPath = GetCurPath() + "/" + sConfigFile;
@@ -568,7 +568,7 @@ CString CZNC::ExpandConfigPath(const CString& sConfigFile) {
 #else
 		} else if (sConfigFile.Left(1) != "/") {
 #endif
-			sRetPath = GetConfPath() + "/" + sConfigFile;
+			sRetPath = GetConfPath(bAllowMkDir) + "/" + sConfigFile;
 		} else {
 			sRetPath = sConfigFile;
 		}
@@ -1061,7 +1061,7 @@ bool CZNC::ParseConfig(const CString& sConfig)
 {
 	CString s;
 
-	m_sConfigFile = ExpandConfigPath(sConfig);
+	m_sConfigFile = ExpandConfigPath(sConfig, false);
 
 	return DoRehash(s);
 }
@@ -1464,6 +1464,9 @@ bool CZNC::DoRehash(CString& sError)
 					} else if (sName.Equals("PrependTimestamp")) {
 						pUser->SetTimestampPrepend(sValue.ToBool());
 						continue;
+					} else if (sName.Equals("IRCConnectEnabled")) {
+						pUser->SetIRCConnectEnabled(sValue.ToBool());
+						continue;
 					} else if (sName.Equals("Timestamp")) {
 						if (!sValue.Trim_n().Equals("true")) {
 							if (sValue.Trim_n().Equals("append")) {
@@ -1748,8 +1751,13 @@ bool CZNC::DoRehash(CString& sError)
 	{
 		if ((pChan && pChan == it->m_pChan) || (pUser && pUser == it->m_pUser))
 			continue; // skip unclosed user or chan
-		if (!GetModules().OnConfigLine(it->m_sName, it->m_sValue, it->m_pUser, it->m_pChan))
-		{
+		bool bHandled = false;
+		if (it->m_pUser) {
+			MODULECALL(OnConfigLine(it->m_sName, it->m_sValue, it->m_pUser, it->m_pChan), it->m_pUser, NULL, bHandled = true);
+		} else {
+			bHandled = GetModules().OnConfigLine(it->m_sName, it->m_sValue, it->m_pUser, it->m_pChan);
+		}
+		if (!bHandled) {
 			CUtils::PrintMessage("unhandled global module config line [GM:" + it->m_sName + "] = [" + it->m_sValue + "]");
 		}
 	}
@@ -1887,6 +1895,49 @@ bool CZNC::AddUser(CUser* pUser, CString& sErrorRet) {
 	}
 	m_msUsers[pUser->GetUserName()] = pUser;
 	return true;
+}
+
+CListener* CZNC::FindListener(u_short uPort, const CString& sBindHost, EAddrType eAddr) {
+	vector<CListener*>::iterator it;
+
+	for (it = m_vpListeners.begin(); it < m_vpListeners.end(); ++it) {
+		if ((*it)->GetPort() != uPort)
+			continue;
+		if ((*it)->GetBindHost() != sBindHost)
+			continue;
+		if ((*it)->GetAddrType() != eAddr)
+			continue;
+		return *it;
+	}
+	return NULL;
+}
+
+bool CZNC::AddListener(CListener* pListener) {
+	if (!pListener->GetRealListener()) {
+		// Listener doesnt actually listen
+		delete pListener;
+		return false;
+	}
+
+	// We don't check if there is an identical listener already listening
+	// since one can't listen on e.g. the same port multiple times
+
+	m_vpListeners.push_back(pListener);
+	return true;
+}
+
+bool CZNC::DelListener(CListener* pListener) {
+	vector<CListener*>::iterator it;
+
+	for (it = m_vpListeners.begin(); it < m_vpListeners.end(); ++it) {
+		if (*it == pListener) {
+			m_vpListeners.erase(it);
+			delete pListener;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static CZNC* g_pZNC = NULL;
@@ -2072,4 +2123,8 @@ double CZNC::GetCoreVersion()
 void CZNC::LeakConnectUser(CConnectUserTimer *pTimer) {
 	if (m_pConnectUserTimer == pTimer)
 		m_pConnectUserTimer = NULL;
+}
+
+CRealListener::~CRealListener() {
+	m_pParent->SetRealListener(NULL);
 }

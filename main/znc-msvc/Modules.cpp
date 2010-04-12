@@ -389,6 +389,7 @@ void CModule::ListSockets() {
 CString CModule::GetModNick() const { return ((m_pUser) ? m_pUser->GetStatusPrefix() : "*") + m_sModName; }
 
 // Webmods
+bool CModule::OnWebPreRequest(CWebSock& WebSock, const CString& sPageName) { return false; }
 bool CModule::OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) { return false; }
 // !Webmods
 
@@ -401,6 +402,9 @@ void CModule::OnIRCConnected() {}
 CModule::EModRet CModule::OnIRCConnecting(CIRCSock *IRCSock) { return CONTINUE; }
 CModule::EModRet CModule::OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName) { return CONTINUE; }
 CModule::EModRet CModule::OnBroadcast(CString& sMessage) { return CONTINUE; }
+CModule::EModRet CModule::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) { return CONTINUE; }
+void CModule::OnWriteUserConfig(CFile& Config) {}
+void CModule::OnWriteChanConfig(CFile& Config, CChan& Chan) {}
 
 CModule::EModRet CModule::OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize) { return CONTINUE; }
 
@@ -497,10 +501,7 @@ bool CModule::PutModNotice(const CString& sLine, const CString& sIdent, const CS
 ///////////////////
 // CGlobalModule //
 ///////////////////
-CModule::EModRet CGlobalModule::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) { return CONTINUE; }
 CModule::EModRet CGlobalModule::OnWriteConfig(CFile& Config) { return CONTINUE; }
-void CGlobalModule::OnWriteUserConfig(CFile& Config, CUser& User) {}
-void CGlobalModule::OnWriteChanConfig(CFile& Config, CChan& Chan) {}
 CModule::EModRet CGlobalModule::OnAddUser(CUser& User, CString& sErrorRet) { return CONTINUE; }
 CModule::EModRet CGlobalModule::OnDeleteUser(CUser& User) { return CONTINUE; }
 void CGlobalModule::OnClientConnect(CClient* pClient, const CString& sHost, unsigned short uPort) {}
@@ -548,6 +549,9 @@ bool CModules::OnIRCConnected() { MODUNLOADCHK(OnIRCConnected()); return false; 
 bool CModules::OnIRCConnecting(CIRCSock *pIRCSock) { MODHALTCHK(OnIRCConnecting(pIRCSock)); }
 bool CModules::OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName) { MODHALTCHK(OnIRCRegistration(sPass, sNick, sIdent, sRealName)); }
 bool CModules::OnBroadcast(CString& sMessage) { MODHALTCHK(OnBroadcast(sMessage)); }
+bool CModules::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) { MODHALTCHK(OnConfigLine(sName, sValue, pUser, pChan)); }
+bool CModules::OnWriteUserConfig(CFile& Config) { MODUNLOADCHK(OnWriteUserConfig(Config)); return false; }
+bool CModules::OnWriteChanConfig(CFile& Config, CChan& Chan) { MODUNLOADCHK(OnWriteChanConfig(Config, Chan)); return false; }
 bool CModules::OnIRCDisconnected() { MODUNLOADCHK(OnIRCDisconnected()); return false; }
 bool CModules::OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize) { MODHALTCHK(OnDCCUserSend(RemoteNick, uLongIP, uPort, sFile, uFileSize)); }
 bool CModules::OnChanPermission(const CNick& OpNick, const CNick& Nick, CChan& Channel, unsigned char uMode, bool bAdded, bool bNoChange) { MODUNLOADCHK(OnChanPermission(OpNick, Nick, Channel, uMode, bAdded, bNoChange)); return false; }
@@ -600,20 +604,8 @@ bool CModules::OnModCTCP(const CString& sMessage) { MODUNLOADCHK(OnModCTCP(sMess
 ////////////////////
 // CGlobalModules //
 ////////////////////
-bool CGlobalModules::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) {
-	GLOBALMODHALTCHK(OnConfigLine(sName, sValue, pUser, pChan));
-}
-
 bool CGlobalModules::OnWriteConfig(CFile& Config) {
 	GLOBALMODHALTCHK(OnWriteConfig(Config));
-}
-
-void CGlobalModules::OnWriteUserConfig(CFile& Config, CUser& User) {
-	GLOBALMODCALL(OnWriteUserConfig(Config, User));
-}
-
-void CGlobalModules::OnWriteChanConfig(CFile& Config, CChan& Chan) {
-	GLOBALMODCALL(OnWriteChanConfig(Config, Chan));
 }
 
 bool CGlobalModules::OnAddUser(CUser& User, CString& sErrorRet) {

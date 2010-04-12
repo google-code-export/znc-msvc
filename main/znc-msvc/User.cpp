@@ -447,6 +447,7 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 	// !CTCP Replies
 
 	// Flags
+	SetIRCConnectEnabled(User.GetIRCConnectEnabled());
 	SetKeepBuffer(User.KeepBuffer());
 	SetMultiClients(User.MultiClients());
 	SetBounceDCCs(User.BounceDCCs());
@@ -656,6 +657,7 @@ bool CUser::WriteConfig(CFile& File) {
 	PrintLine(File, "TimezoneOffset", CString(m_fTimezoneOffset));
 	PrintLine(File, "JoinTries", CString(m_uMaxJoinTries));
 	PrintLine(File, "MaxJoins", CString(m_uMaxJoins));
+	PrintLine(File, "IRCConnectEnabled", CString(GetIRCConnectEnabled()));
 	File.Write("\n");
 
 	// Allow Hosts
@@ -709,7 +711,7 @@ bool CUser::WriteConfig(CFile& File) {
 		}
 	}
 
-	CZNC::Get().GetModules().OnWriteUserConfig(File, *this);
+	MODULECALL(OnWriteUserConfig(File), this, NULL,);
 
 	File.Write("</User>\n");
 
