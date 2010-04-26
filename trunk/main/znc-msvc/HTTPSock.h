@@ -78,8 +78,8 @@ public:
 	CString GetRawParam(const CString& sName, bool bPost = true) const;
 	bool HasParam(const CString& sName, bool bPost = true) const;
 	const map<CString, VCString>& GetParams(bool bPost = true) const;
-	unsigned int GetParamValues(const CString& sName, VCString& vsRet, bool bPost = true, const CString& sFilter = "\r\n") const;
-	unsigned int GetParamValues(const CString& sName, set<CString>& ssRet, bool bPost = true, const CString& sFilter = "\r\n") const;
+	size_t GetParamValues(const CString& sName, VCString& vsRet, bool bPost = true, const CString& sFilter = "\r\n") const;
+	size_t GetParamValues(const CString& sName, set<CString>& ssRet, bool bPost = true, const CString& sFilter = "\r\n") const;
 	// !Parameter access
 private:
 	static CString GetRawParam(const CString& sName, const map<CString, VCString>& msvsParams);
