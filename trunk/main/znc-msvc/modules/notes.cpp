@@ -29,8 +29,6 @@ public:
 		return true;
 	}
 
-	virtual bool WebRequiresLogin() { return true; }
-	virtual bool WebRequiresAdmin() { return false; }
 	virtual CString GetWebMenuTitle() { return "Notes"; }
 
 	virtual void OnClientLogin() {
@@ -175,7 +173,7 @@ public:
 
 			return true;
 		} else if (sPageName == "delnote") {
-			DelNote(WebSock.GetParam("key"));
+			DelNote(WebSock.GetParam("key", false));
 			WebSock.Redirect("/mods/notes/");
 			return true;
 		} else if (sPageName == "addnote") {

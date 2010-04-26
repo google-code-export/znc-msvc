@@ -6,8 +6,8 @@
  * by the Free Software Foundation.
  */
 
+
 #include "stdafx.hpp"
-#include "znc.h"
 #include "Modules.h"
 #include "User.h"
 #include "Chan.h"
