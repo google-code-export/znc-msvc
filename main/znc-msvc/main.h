@@ -97,6 +97,7 @@
 #include "Server.h"
 #include "Template.h"
 #include "User.h"
+#include "Listener.h"
 #include "znc.h"
 
 /** @mainpage
