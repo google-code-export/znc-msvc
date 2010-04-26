@@ -20,12 +20,14 @@ echo ************************ Making folders...   *************************
 
 if exist build-temp\x86 echo Deleting temp x86 folder... && rd /s /q build-temp\x86
 md build-temp\x86\znc
+md build-temp\x86\znc\webskins
 md build-temp\x86\znc\modules
-md build-temp\x86\znc\modules\webadmin
+md build-temp\x86\znc\modules\www
 if exist build-temp\x64 echo Deleting temp x64 folder... && rd /s /q build-temp\x64
 md build-temp\x64\znc
+md build-temp\x64\znc\webskins
 md build-temp\x64\znc\modules
-md build-temp\x64\znc\modules\webadmin
+md build-temp\x64\znc\modules\www
 
 
 echo ************************ Copying binaries... *************************
@@ -49,11 +51,13 @@ copy release\* build-temp\x86\znc
 copy release\* build-temp\x64\znc
 
 
-echo ****************** Copying webadmin skin files... ********************
+echo ****************** Copying web interface skin files... ********************
 
 echo .svn > build-temp\xcopyskipsvn.txt
-xcopy znc-msvc\modules\webadmin build-temp\x86\znc\modules\webadmin /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
-xcopy znc-msvc\modules\webadmin build-temp\x64\znc\modules\webadmin /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+xcopy znc-msvc\webskins build-temp\x86\znc\webskins /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+xcopy znc-msvc\webskins build-temp\x64\znc\webskins /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+xcopy znc-msvc\modules\www build-temp\x86\znc\modules\www /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+xcopy znc-msvc\modules\www build-temp\x64\znc\modules\www /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
 del build-temp\xcopyskipsvn.txt
 
 
