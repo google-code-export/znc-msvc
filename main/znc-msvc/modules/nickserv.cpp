@@ -24,8 +24,11 @@ public:
 	{
 		if (sArgs.empty())
 			m_sPass = GetNV("Password");
-		else
+		else {
 			m_sPass = sArgs;
+			SetNV("Password", m_sPass);
+			SetArgs("");
+		}
 
 		return true;
 	}

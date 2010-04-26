@@ -14,6 +14,7 @@
 #include "User.h"
 #include "WebModules.h"
 #include "ZNCString.h"
+#include "Listener.h"
 #include <sstream>
 #include <utility>
 
@@ -39,9 +40,7 @@ public:
 		return true;
 	}
 
-	CString GetModArgs(CWebSock& WebSock, const CString& sModName, bool bGlobal = false) {
-		CUser* pUser = CZNC::Get().FindUser(WebSock.GetParam("user"));
-
+	CString GetModArgs(CUser* pUser, const CString& sModName, bool bGlobal = false) {
 		if (!bGlobal && !pUser) {
 			return "";
 		}
@@ -222,8 +221,20 @@ public:
 		return pNewUser;
 	}
 
-	virtual bool WebRequiresLogin() { return true; }
-	virtual bool WebRequiresAdmin() { return false; }
+	CString SafeGetUserNameParam(CWebSock& WebSock) {
+		CString sUserName = WebSock.GetParam("user"); // check for POST param
+		if(sUserName.empty() && !WebSock.IsPost()) {
+			// if no POST param named user has been given and we are not
+			// saving this form, fall back to using the GET parameter.
+			sUserName = WebSock.GetParam("user", false);
+		}
+		return sUserName;
+	}
+
+	CUser* SafeGetUserFromParam(CWebSock& WebSock) {
+		return CZNC::Get().FindUser(SafeGetUserNameParam(WebSock));
+	}
+
 	virtual CString GetWebMenuTitle() { return "webadmin"; }
 	virtual bool OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) {
 		CSmartPtr<CWebSession> spSession = WebSock.GetSession();
@@ -243,9 +254,9 @@ public:
 
 			return UserPage(WebSock, Tmpl);
 		} else if (sPageName == "editchan") {
-			CUser* pUser = CZNC::Get().FindUser(WebSock.GetParam("user"));
+			CUser* pUser = SafeGetUserFromParam(WebSock);
 
-			// Admin/Self Check
+			// Admin||Self Check
 			if (!spSession->IsAdmin() && (!spSession->GetUser() || spSession->GetUser() != pUser)) {
 				return false;
 			}
@@ -255,7 +266,11 @@ public:
 				return true;
 			}
 
-			CChan* pChan = pUser->FindChan(WebSock.GetParam("name"));
+			CString sChan = WebSock.GetParam("name");
+			if(sChan.empty() && !WebSock.IsPost()) {
+				sChan = WebSock.GetParam("name", false);
+			}
+			CChan* pChan = pUser->FindChan(sChan);
 			if (!pChan) {
 				WebSock.PrintErrorPage("No such channel");
 				return true;
@@ -263,9 +278,9 @@ public:
 
 			return ChanPage(WebSock, Tmpl, pUser, pChan);
 		} else if (sPageName == "addchan") {
-			CUser* pUser = CZNC::Get().FindUser(WebSock.GetParam("user"));
+			CUser* pUser = SafeGetUserFromParam(WebSock);
 
-			// Admin/Self Check
+			// Admin||Self Check
 			if (!spSession->IsAdmin() && (!spSession->GetUser() || spSession->GetUser() != pUser)) {
 				return false;
 			}
@@ -275,10 +290,11 @@ public:
 			}
 
 			WebSock.PrintErrorPage("No such username");
+			return true;
 		} else if (sPageName == "delchan") {
-			CUser* pUser = CZNC::Get().FindUser(WebSock.GetParam("user"));
+			CUser* pUser = CZNC::Get().FindUser(WebSock.GetParam("user", false));
 
-			// Admin/Self Check
+			// Admin||Self Check
 			if (!spSession->IsAdmin() && (!spSession->GetUser() || spSession->GetUser() != pUser)) {
 				return false;
 			}
@@ -288,11 +304,30 @@ public:
 			}
 
 			WebSock.PrintErrorPage("No such username");
+			return true;
 		} else if (sPageName == "deluser") {
-			// Admin Check
 			if (!spSession->IsAdmin()) {
 				return false;
 			}
+
+			if (!WebSock.IsPost()) {
+				// Show the "Are you sure?" page:
+
+				CString sUser = WebSock.GetParam("user", false);
+				CUser* pUser = CZNC::Get().FindUser(sUser);
+
+				if (!pUser) {
+					WebSock.PrintErrorPage("No such username");
+					return true;
+				}
+
+				Tmpl.SetFile("del_user.tmpl");
+				Tmpl["Username"] = sUser;
+				return true;
+			}
+
+			// The "Are you sure?" page has been submitted with "Yes",
+			// so we actually delete the user now:
 
 			CString sUser = WebSock.GetParam("user");
 			CUser* pUser = CZNC::Get().FindUser(sUser);
@@ -308,9 +343,16 @@ public:
 			WebSock.PrintErrorPage("No such username");
 			return true;
 		} else if (sPageName == "edituser") {
-			CUser* pUser = WebSock.HasParam("user") ? CZNC::Get().FindUser(WebSock.GetParam("user")) : spSession->GetUser();
+			CString sUserName = SafeGetUserNameParam(WebSock);
+			CUser* pUser = CZNC::Get().FindUser(sUserName);
 
-			// Admin/Self Check
+			if(!pUser) {
+				if(sUserName.empty()) {
+					pUser = spSession->GetUser();
+				} // else: the "no such user" message will be printed.
+			}
+
+			// Admin||Self Check
 			if (!spSession->IsAdmin() && (!spSession->GetUser() || spSession->GetUser() != pUser)) {
 				return false;
 			}
@@ -320,8 +362,8 @@ public:
 			}
 
 			WebSock.PrintErrorPage("No such username");
+			return true;
 		} else if (sPageName == "listusers") {
-			// Admin Check
 			if (!spSession->IsAdmin()) {
 				return false;
 			}
@@ -421,7 +463,7 @@ public:
 	}
 
 	bool DelChan(CWebSock& WebSock, CUser* pUser) {
-		CString sChan = WebSock.GetParam("name");
+		CString sChan = WebSock.GetParam("name", false);
 
 		if (!pUser) {
 			WebSock.PrintErrorPage("That user doesn't exist");
@@ -560,7 +602,7 @@ public:
 
 				l["Name"] = Info.GetName();
 				l["Description"] = Info.GetDescription();
-				l["Args"] = GetModArgs(WebSock, Info.GetName());
+				l["Args"] = GetModArgs(pUser, Info.GetName());
 
 				if (pUser && pUser->GetModules().FindModule(Info.GetName())) {
 					l["Checked"] = "true";
@@ -788,7 +830,7 @@ public:
 
 				l["Name"] = Info.GetName();
 				l["Description"] = Info.GetDescription();
-				l["Args"] = GetModArgs(WebSock, Info.GetName(), true);
+				l["Args"] = GetModArgs(NULL, Info.GetName(), true);
 			}
 
 			return true;
