@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 html {
 	margin: 0;
 	padding: 0;
@@ -358,6 +360,14 @@ table thead td a:hover {
 	font-weight: bold;
 }
 
+#menu .subitem.active a:before {
+	content: "» ";
+}
+
+#menu .subitem.active a:after {
+	content: " «";
+}
+
 #menu .subitem.active a:hover {
 	color: #000;
 	text-decoration: none;
@@ -385,4 +395,18 @@ table thead td a:hover {
 	margin: 5px 10px;
 	padding: 5px 1px;
 	border-bottom: 1px solid #000;
+}
+
+.textsection p {
+	margin-bottom: 0.7em;
+}
+
+.yesnobutton {
+	float: left;
+	width: 110px;
+	padding-top: 10px;
+}
+
+.yesnobutton input {
+	width: 100px;
 }
