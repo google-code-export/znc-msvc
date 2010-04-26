@@ -72,6 +72,7 @@
 #  define MODULE_FILE_EXT ".so"
 #else
 #  define MODULE_FILE_EXT ".dll"
+#  define RUN_FROM_SOURCE
 #endif
 
 #include "winver.h"
