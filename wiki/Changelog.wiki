@@ -1,6 +1,11 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2010-04-26 (0.089-r 1944) ==
+  * Upstream fixed and added like a million things, check out the changelog on znc.in
+  * Updated OpenSSL to 1.0.0
+  * Updated c-ares to 1.7.1
+
 == 2010-02-19 (0.080) (rev 1754) ==
   * Upstream fixed some bugs, nothing too exciting compared to 0.079-r 1722.
 
