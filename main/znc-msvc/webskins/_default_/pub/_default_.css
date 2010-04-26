@@ -35,7 +35,7 @@ a:hover {
 	min-height: 80%;
 	overflow: hidden;
 	margin: 0 auto;
-	width: 800px;
+	width: 900px;
 
 	border: 1px solid #ccc;
 	border-top: none;
@@ -67,31 +67,57 @@ h1 {
 	color: #aaa;
 }
 
-ul.nav {
-	float: left;
-	margin-left: 20px;
-	list-style: none;
+#main {
+	padding: 0 20px 20px 20px;
+	font-size: 90%;
+	width: 680px;
 }
 
-ul.nav li, ul.nav ul {
+#menu {
+	border-left: 2px solid #aaa;
+	padding-left: 10px;
+	position: absolute;
+	margin-left: 700px;
+	width: 170px;
+	font-size: 14px;
+}
+
+ul.nav, ul.nav li, ul.nav ul {
 	list-style: none;
 }
 
 ul.nav li.topitem {
-	float: left;
 	margin-right: 55px;
 }
 
-ul.nav li.topitem a {
-	display: inline-block;
+ul.nav li, ul.nav li.topitem .title {
+	display: block;
+	margin-bottom: 5px;
 }
 
-ul.nav li.parent ul li {
-	font-size: 80%;
+ul.nav li.subitem {
+	font-size: 90%;
 }
 
-ul.nav li.topitem:before {
+ul.nav li.topitem:before,
+ul.nav li.modtitle:before {
 	content: "» ";
+}
+
+ul.nav li.topitem, ul.nav li.modtitle {
+	padding-left: 3px;
+}
+
+ul.nav li.parent:before {
+	content: "";
+}
+
+ul.nav li.parent {
+	padding-left: 0;
+}
+
+ul.nav li.subitem {
+	margin-left: 20px;
 }
 
 #infobar {
@@ -99,7 +125,7 @@ ul.nav li.topitem:before {
 	clear: both;
 	position: relative;
 	top: -30px;
-	margin-left: 380px;
+	margin-left: 485px;
 	background-color: #ccc;
 	color: #333;
 	padding: 0 6px 3px 0;
@@ -150,15 +176,6 @@ ul.nav li.topitem:before {
 	background-color: #070;
 }
 
-#content {
-	clear: both;
-}
-
-#main {
-	padding: 0 20px 20px 20px;
-	font-size: 90%;
-}
-
 h2 {
 	margin-bottom: 0.4em;
 }
@@ -166,6 +183,11 @@ h2 {
 h3 {
 	margin-top: 1.2em;
 	margin-bottom: 0.4em;
+}
+
+.textsection, .toptable {
+	width: 670px;
+	overflow: hidden;
 }
 
 .section {
@@ -196,6 +218,8 @@ textarea {
 
 div.submitline {
 	margin: 1em;
+	padding-top: 1em;
+	border-top: 1px solid #aaa;
 }
 
 .submitline input {
@@ -205,7 +229,7 @@ div.submitline {
 
 input.full, textarea.full,
 .full input, .full textarea {
-	width: 600px;
+	width: 500px;
 }
 
 input.twothird, textarea.twothird,
@@ -320,4 +344,29 @@ td.mod_name,
 	float: left;
 	width: 200px;
 	margin-top: 0.5em;
+}
+
+#breadcrumb {
+	width: 670px;
+	padding: 0 0 3px 1px;
+	margin-bottom: 10px;
+	border-bottom: 1px solid #aaa;
+}
+
+td {
+	word-wrap: break-word;
+}
+
+.textsection p {
+	margin-bottom: 0.7em;
+}
+
+.yesnobutton {
+	float: left;
+	width: 110px;
+	padding-top: 10px;
+}
+
+.yesnobutton input {
+	width: 100px;
 }
