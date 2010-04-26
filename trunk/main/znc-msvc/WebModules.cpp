@@ -21,7 +21,7 @@ CZNCTagHandler::CZNCTagHandler(CWebSock& WebSock) : CTemplateTagHandler(), m_Web
 bool CZNCTagHandler::HandleTag(CTemplate& Tmpl, const CString& sName, const CString& sArgs, CString& sOutput) {
 	if (sName.Equals("URLPARAM")) {
 		//sOutput = CZNC::Get()
-		sOutput = m_WebSock.GetParam(sArgs.Token(0));
+		sOutput = m_WebSock.GetParam(sArgs.Token(0), false);
 		return true;
 	}
 
@@ -308,6 +308,7 @@ void CWebSock::SetVars() {
 	m_Template["SessionIP"] = GetRemoteIP();
 	m_Template["Tag"] = CZNC::GetTag(GetSession()->GetUser() != NULL);
 	m_Template["SkinName"] = GetSkinName();
+	m_Template["_CSRF_Check"] = GetCSRFCheck();
 
 	if (GetSession()->IsAdmin()) {
 		m_Template["IsAdmin"] = "true";
@@ -388,7 +389,7 @@ bool CWebSock::AddModLoop(const CString& sLoopName, CModule& Module) {
 						sParams += ssNV.second.Escape_n(CString::EURL);
 					}
 
-					if (bActive && GetParam(ssNV.first) != ssNV.second) {
+					if (bActive && GetParam(ssNV.first, false) != ssNV.second) {
 						bActive = false;
 					}
 				}
@@ -519,6 +520,16 @@ void CWebSock::OnPageRequest(const CString& sURI) {
 }
 
 CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CString& sPageRet) {
+	// Check that they really POSTed from one our forms by checking if they
+	// know the "secret" CSRF check value. Don't do this for login since
+	// CSRF against the login form makes no sense and the login form does a
+	// cookies-enabled check which would break otherwise.
+	if (IsPost() && GetParam("_CSRF_Check") != GetCSRFCheck() && sURI != "/login") {
+		sPageRet = GetErrorPage(403, "Access denied", "POST requests need to send "
+				"a secret token to prevent cross-site request forgery attacks.");
+		return PAGE_PRINT;
+	}
+
 	SendCookie("SessionId", GetSession()->GetId());
 
 	if (GetSession()->IsLoggedIn()) {
@@ -528,7 +539,7 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 
 	// Handle the static pages that don't require a login
 	if (sURI == "/") {
-		if(!m_bLoggedIn && GetParam("cookie_check").ToBool() && GetRequestCookie("SessionId").empty()) {
+		if(!m_bLoggedIn && GetParam("cookie_check", false).ToBool() && GetRequestCookie("SessionId").empty()) {
 			GetSession()->AddError("Your browser does not have cookies enabled for this site!");
 		}
 		return PrintTemplate("index", sPageRet);
@@ -543,7 +554,7 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 
 		// We already sent a reply
 		return PAGE_DONE;
-	} else if (sURI == "/login" || sURI.Left(7) == "/login/") {
+	} else if (sURI == "/login") {
 		if (GetParam("submitted").ToBool()) {
 			m_sUser = GetParam("user");
 			m_sPass = GetParam("pass");
@@ -553,7 +564,8 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 			return PAGE_DEFERRED;
 		}
 
-		return PrintTemplate("login", sPageRet);
+		Redirect("/"); // the login form is here
+		return PAGE_DONE;
 	} else if (sURI.Left(5) == "/pub/") {
 		return PrintStaticFile(sURI, sPageRet);
 	} else if (sURI.Left(11) == "/skinfiles/") {
@@ -713,6 +725,11 @@ CSmartPtr<CWebSession> CWebSock::GetSession() {
 	m_spSession = spSession;
 
 	return spSession;
+}
+
+CString CWebSock::GetCSRFCheck() {
+	CSmartPtr<CWebSession> pSession = GetSession();
+	return pSession->GetId().MD5();
 }
 
 bool CWebSock::OnLogin(const CString& sUser, const CString& sPass) {
