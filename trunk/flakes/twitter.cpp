@@ -292,27 +292,27 @@ protected:
 	{
 		MakeRequestHeaders(false, sHost, sPath, uPort, bSSL);
 		m_request += "\r\n";
-		
+
 		Connect(sHost, uPort, bSSL);
 	}
-	
+
 	void Post(const MCString& mPostData, const CString& sHost, const CString& sPath, unsigned short uPort = 80, bool bSSL = false)
 	{
 		MakeRequestHeaders(true, sHost, sPath, uPort, bSSL);
-		
+
 		CString sPostData;
-		
+
 		for(MCString::const_iterator it = mPostData.begin(); it != mPostData.end(); it++)
 		{
 			if(it != mPostData.begin()) sPostData += "&";
 			sPostData += URLEscape(it->first) + "=" + URLEscape(it->second);
 		}
-		
+
 		m_request += "Content-Type: application/x-www-form-urlencoded\r\n";
 		m_request += "Content-Length: " + CString(sPostData.size()) + "\r\n";
 		m_request += "\r\n";
 		m_request += sPostData;
-		
+
 		Connect(sHost, uPort, bSSL);
 	}
 
@@ -342,7 +342,7 @@ protected:
 			{
 				VCString vHeadersTemp;
 				map<const CString, CString> mHeaders;
-				
+
 				CString(m_buffer.substr(0, uPos)).Split("\n", vHeadersTemp, false, "", "", false, true);
 
 				for(VCString::const_iterator it = vHeadersTemp.begin(); it != vHeadersTemp.end(); it++)
@@ -380,7 +380,11 @@ protected:
 		Close();
 	}
 
+#if (VERSION_MAJOR == 0 && VERSION_MINOR <= 80)
 	void ReadData(const char *data, int len)
+#else
+	void ReadData(const char *data, size_t len)
+#endif
 	{
 		if(m_buffer.size() + len > m_maxBuf)
 		{
@@ -575,7 +579,7 @@ static bool IsStrValidUTF8(const CString& sString, size_t &ar_length)
 		ar_length++;
 		p += consumed;
 	}
-	
+
 	return true;
 }
 
@@ -1028,8 +1032,10 @@ protected:
 	CString m_method;
 	bool m_needsAuth;
 	CString m_host;
+	bool m_bHideErrors;
 
-	CTwitterHTTPSock(CTwitterModule *pModInstance, const CString& sMethod) : CSimpleHTTPSock(pModInstance), m_method(sMethod)
+	CTwitterHTTPSock(CTwitterModule *pModInstance, const CString& sMethod, bool bSilentErrors = true) :
+		CSimpleHTTPSock(pModInstance), m_method(sMethod), m_bHideErrors(bSilentErrors)
 	{
 		m_timedOut = false;
 		m_needsAuth = true;
@@ -1038,7 +1044,7 @@ protected:
 
 	void Timeout()
 	{
-		m_pMod->PutModule("ERROR: Sorry, I failed to contact the Twitter servers. They may be down, again!");
+		if(!m_bHideErrors) m_pMod->PutModule("ERROR: Sorry, I failed to contact the Twitter servers. They may be down, again!");
 		m_timedOut = true;
 
 		CSimpleHTTPSock::Timeout();
@@ -1079,7 +1085,7 @@ protected:
 	{
 		MCString::iterator sigCheck = mParams.find("oauth_signature");
 		if(sigCheck != mParams.end()) mParams.erase(sigCheck);
-		
+
 		if(m_needsAuth)
 		{
 			mParams["oauth_consumer_key"] = TWITTER_CONSUMER_KEY;
@@ -1140,7 +1146,7 @@ protected:
 		{
 			pMod->EraseSession(true);
 		}
-		else
+		else if(!m_bHideErrors)
 		{
 			pMod->PutModule("ERROR: " + m_method + " returned HTTP code " + CString(uResponseCode));
 
@@ -1154,7 +1160,7 @@ protected:
 
 	virtual void OnRequestError(int iErrorCode)
 	{
-		m_pMod->PutModule("ERROR: " + m_method + " failed (" + CString(iErrorCode) + ")");
+		if(!m_bHideErrors) m_pMod->PutModule("ERROR: " + m_method + " failed (" + CString(iErrorCode) + ")");
 	}
 };
 
@@ -1168,7 +1174,8 @@ class CTRRequestToken : public CTwitterHTTPSock
 protected:
 	bool m_accessToken;
 public:
-	CTRRequestToken(CTwitterModule *pModInstance) : CTwitterHTTPSock(pModInstance, "oauth/request_token")
+	CTRRequestToken(CTwitterModule *pModInstance) :
+		CTwitterHTTPSock(pModInstance, "oauth/request_token", false)
 	{
 		m_accessToken = false;
 	}
@@ -1205,7 +1212,7 @@ public:
 					sValue = it->Token(1, true, "=");
 
 				if(sKey == "oauth_token")
-				{					
+				{
 					pMod->m_token = sValue;
 				}
 				else if(sKey == "screen_name")
@@ -1261,7 +1268,8 @@ class CTRStatusUpdate : public CTwitterHTTPSock
 protected:
 	bool m_accessToken;
 public:
-	CTRStatusUpdate(CTwitterModule *pModInstance) : CTwitterHTTPSock(pModInstance, "statuses/update.xml")
+	CTRStatusUpdate(CTwitterModule *pModInstance) :
+		CTwitterHTTPSock(pModInstance, "statuses/update.xml", false)
 	{
 		m_accessToken = false;
 	}
@@ -1296,7 +1304,8 @@ public:
 class CTRUserInfo : public CTwitterHTTPSock
 {
 public:
-	CTRUserInfo(CTwitterModule *pModInstance) : CTwitterHTTPSock(pModInstance, "users/show.xml")
+	CTRUserInfo(CTwitterModule *pModInstance) :
+		CTwitterHTTPSock(pModInstance, "users/show.xml", false)
 	{
 	}
 
@@ -1372,7 +1381,8 @@ public:
 class CTRRateLimit : public CTwitterHTTPSock
 {
 public:
-	CTRRateLimit(CTwitterModule *pModInstance) : CTwitterHTTPSock(pModInstance, "account/rate_limit_status.xml")
+	CTRRateLimit(CTwitterModule *pModInstance) :
+		CTwitterHTTPSock(pModInstance, "account/rate_limit_status.xml", false)
 	{
 	}
 
@@ -1433,7 +1443,8 @@ protected:
 	int m_feedId;
 	ETwitterFeedType m_feedType;
 public:
-	CTRFeed(CTwitterModule *pModInstance, ETwitterFeedType type, int iFeedId) : CTwitterHTTPSock(pModInstance, "")
+	CTRFeed(CTwitterModule *pModInstance, ETwitterFeedType type, int iFeedId) :
+		CTwitterHTTPSock(pModInstance, "", true)
 	{
 		m_countSupported = true;
 		m_initial = false;
@@ -1753,7 +1764,7 @@ void CTwitterModule::OnModCommand(const CString& sCommand)
 			fNew.m_lastId = 0;
 			fNew.m_payload = (sSubCmd == "user" ? sToken2 : "");
 			fNew.m_target = (sSubCmd == "user" ? sToken3 : sToken2);
-			
+
 			m_feeds.push_back(fNew);
 
 			SaveSettings();
@@ -2199,7 +2210,7 @@ void CTwitterModule::TimerAction()
 		}
 		else
 			break;
-		
+
 		m_msgQueue.erase(it);
 	}
 
