@@ -141,7 +141,11 @@ protected:
 		Close();
 	}
 
+#if (VERSION_MAJOR == 0 && VERSION_MINOR <= 80)
 	void ReadData(const char *data, int len)
+#else
+	void ReadData(const char *data, size_t len)
+#endif
 	{
 		if(m_buffer.size() + len > 1024 * 1024)
 		{
