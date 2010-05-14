@@ -30,4 +30,4 @@ public:
 
 };
 
-GLOBALMODULEDEFS(CNoDCCGlobalMod, "Forcefully ignores all DCC requests.")
+GLOBALMODULEDEFS(CNoDCCGlobalMod, "Forcefully disallows all DCC functionality for all users.")
