@@ -54,8 +54,10 @@ static JSClass s_znc_class = {
 
 static JSFunctionSpec s_znc_functions[] = {
 	JS_FS("PutModule",			ZNCJSFUNC_NAME(PutModule),			2, 0, 0),
+	JS_FS("PutModNotice",		ZNCJSFUNC_NAME(PutModNotice),		2, 0, 0),
 	JS_FS("PutIRC",				ZNCJSFUNC_NAME(PutIRC),				1, 0, 0),
 	JS_FS("PutUser",			ZNCJSFUNC_NAME(PutUser),			1, 0, 0),
+	JS_FS("PutStatus",			ZNCJSFUNC_NAME(PutStatus),			1, 0, 0),
 	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		3, 0, 0),
 	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			3, 0, 0),
 
@@ -66,6 +68,9 @@ static JSFunctionSpec s_znc_functions[] = {
 	JS_FS("AddEventHandler",	ZNCJSFUNC_NAME(AddEventHandler),	2, 0, 0),
 	JS_FS("RemoveEventHandler",	ZNCJSFUNC_NAME(RemoveEventHandler), 2, 0, 0),
 
+	JS_FS("GetModName",			ZNCJSFUNC_NAME(GetModName),			0, 0, 0),
+	JS_FS("GetModNick",			ZNCJSFUNC_NAME(GetModNick),			0, 0, 0),
+	JS_FS("GetStatusPrefix",	ZNCJSFUNC_NAME(GetStatusPrefix),	0, 0, 0),
 	JS_FS("GetTag",				ZNCJSFUNC_NAME(GetTag),				1, 0, 0),
 	JS_FS("GetVersion",			ZNCJSFUNC_NAME(GetVersion),			0, 0, 0),
 	JS_FS("GetUptime",			ZNCJSFUNC_NAME(GetUptime),			0, 0, 0),

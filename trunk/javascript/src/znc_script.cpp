@@ -171,7 +171,6 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 	/* load (+ run, initialize) the script */
 	jsval jvRet;
-	//JSBool bOk;
 
 	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
 
@@ -493,7 +492,7 @@ void CZNCScript::ClearTimers()
 		{
 			m_timers.erase(it);
 		}
-		
+
 		it = m_timers.begin();
 	}
 
