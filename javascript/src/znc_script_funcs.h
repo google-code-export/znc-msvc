@@ -19,10 +19,15 @@ class CZNCScriptFuncs
 public:
 	/* ZNC */
 	_ZNCJSFUNC_H(PutModule);
+	_ZNCJSFUNC_H(PutModNotice);
 	_ZNCJSFUNC_H(PutIRC);
 	_ZNCJSFUNC_H(PutUser);
+	_ZNCJSFUNC_H(PutStatus);
 	_ZNCJSFUNC_H(SendMessage);
 	_ZNCJSFUNC_H(SendNotice);
+	_ZNCJSFUNC_H(GetModName);
+	_ZNCJSFUNC_H(GetModNick);
+	_ZNCJSFUNC_H(GetStatusPrefix);
 	_ZNCJSFUNC_H(GetTag);
 	_ZNCJSFUNC_H(GetVersion);
 	_ZNCJSFUNC_H(GetUptime);

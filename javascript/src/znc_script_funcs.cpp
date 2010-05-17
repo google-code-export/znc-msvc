@@ -36,6 +36,26 @@ _ZNCJSFUNC(PutModule)
 }
 
 
+_ZNCJSFUNC(PutModNotice)
+{
+	GET_SCRIPT(pScript);
+	char* szMessage = NULL;
+	const char* szModuleName = pScript->GetName().c_str();
+
+	if(!JS_ConvertArguments(cx, argc, argv, "s/s", &szMessage, &szModuleName))
+		return JS_FALSE;
+
+	const CString sModuleName(szModuleName);
+
+	*rval = BOOLEAN_TO_JSVAL(
+		pScript->GetUser()->PutUser(":" + pScript->GetUser()->GetStatusPrefix() + sModuleName + "!" +
+			sModuleName + "@znc.in NOTICE " + pScript->GetUser()->GetCurNick() + " :" + CString(szMessage))
+		);
+
+	return JS_TRUE;
+}
+
+
 _ZNCJSFUNC(PutUser)
 {
 	GET_SCRIPT(pScript);
@@ -68,6 +88,22 @@ _ZNCJSFUNC(PutIRC)
 }
 
 
+_ZNCJSFUNC(PutStatus)
+{
+	GET_SCRIPT(pScript);
+	char* szLine = NULL;
+
+	if(!JS_ConvertArguments(cx, argc, argv, "s", &szLine))
+		return JS_FALSE;
+
+	*rval = BOOLEAN_TO_JSVAL(
+		pScript->GetUser()->PutStatus(szLine)
+		);
+
+	return JS_TRUE;
+}
+
+
 static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
 	char* szTo = NULL;
@@ -87,7 +123,7 @@ static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *ob
 	// we need to take into account possible UTF-8 multibyte characters.
 	// this can be slowish, so we skip it if possible:
 
-	if(bAutoSplit || sMsg.size() <= 400) // unit: bytes, not characters!
+	if(!bAutoSplit || sMsg.size() <= 400) // unit: bytes, not characters!
 	{
 		bSent = pUser->PutIRC(sType + " " + sTo + " :" + sMsg);
 
@@ -216,6 +252,36 @@ _ZNCJSFUNC(RemoveEventHandler)
 	bool bRemoved = pScript->RemoveEventHandler(szEvent, argv[1]);
 
 	*rval = BOOLEAN_TO_JSVAL(bRemoved);
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(GetModName)
+{
+	GET_SCRIPT(pScript);
+	const CString sModName = pScript->GetName();
+	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sModName.c_str()));
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(GetModNick)
+{
+	GET_SCRIPT(pScript);
+	const CString sModNick = pScript->GetUser()->GetStatusPrefix() + pScript->GetName();
+	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sModNick.c_str()));
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(GetStatusPrefix)
+{
+	GET_SCRIPT(pScript);
+	const CString sPrefix = pScript->GetUser()->GetStatusPrefix();
+	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sPrefix.c_str()));
 
 	return JS_TRUE;
 }

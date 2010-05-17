@@ -4,11 +4,16 @@ ZNC.SendNotice(string to_nick_or_chan, string message[, auto_split = true])
 	will automatically be split.
 
 ZNC.PutModule(string message[, string module_name])
+ZNC.PutModNotice(string message[, string module_name])
 ZNC.PutIRC(string line)
 ZNC.PutUser(string line)
+ZNC.PutStatus(string line)
 ZNC.AddEventHandler(string event_name, function callback)
 ZNC.RemoveEventHandler(string event_name, function callback)
 
+string ZNC.GetModName()
+string ZNC.GetModNick()
+string ZNC.GetStatusPrefix()
 string ZNC.GetVersion()
 string ZNC.GetTag([include_version = true])
 string ZNC.GetUptime()
