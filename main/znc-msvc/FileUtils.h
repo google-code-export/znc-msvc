@@ -10,6 +10,7 @@
 #define _FILEUTILS_H
 
 #include "Socket.h"
+#include "ZNCString.h"
 #include <dirent.h>
 #include <map>
 #include <signal.h>
@@ -81,6 +82,7 @@ public:
 	static time_t GetCTime(const CString& sFile);
 	static uid_t GetUID(const CString& sFile);
 	static gid_t GetGID(const CString& sFile);
+	static int GetInfo(const CString& sFile, struct stat& st);
 
 	//
 	// Functions to manipulate the file on the filesystem

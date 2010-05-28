@@ -9,7 +9,6 @@
 #ifndef _IRCSOCK_H
 #define _IRCSOCK_H
 
-#include "znc.h"
 #include "Socket.h"
 #include "Nick.h"
 

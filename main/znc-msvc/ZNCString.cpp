@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+#include "ZNCString.h"
 #include "FileUtils.h"
 #include "Utils.h"
 #ifndef HAVE_LIBSSL
