@@ -149,3 +149,56 @@ std::string getpass(const char *prompt)
 	return result;
 }
 
+
+/* Microsoft's strftime does not handle user defined error-prone format input very well, and
+according to http://msdn.microsoft.com/en-us/library/fe06s4ak%28VS.71%29.aspx is not supposed to,
+so we use this wrapper. */
+size_t strftime_validating(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr)
+{
+	CString l_safeFormat;
+	const char* p = format;
+
+	while(*p)
+	{
+		if(*p == '%')
+		{
+			bool l_hash = (*(p + 1) == '#');
+			char c = *(p + (l_hash ? 2 : 1));
+
+			switch(c)
+			{
+			case 'a': case 'A': case 'b': case 'B': case 'c': case 'd': case 'H': case 'I': case 'j': case 'm': case 'M':
+			case 'p': case 'S': case 'U': case 'w': case 'W': case 'x': case 'X': case 'y': case 'Y': case 'z': case 'Z':
+			case '%':
+				// formatting code is fine
+				if(l_hash)
+				{
+					l_safeFormat += *p;
+					++p;
+				}
+				// the current loop run will append % (and maybe #), and the next one will do the actual char.
+				break;
+			default: // replace bad formatting code with itself, escaped, e.g. "%V" --> "%%V"
+				l_safeFormat.append("%%");
+				++p;
+				break;
+			}
+
+			// if c == '%', append it in this run to avoid confusion in the next one (p has already been incremented now!)
+			if(c == '%')
+			{
+				l_safeFormat += *p;
+				++p;
+			}
+		}
+
+		if(*p)
+		{
+			l_safeFormat += *p;
+			++p;
+		}
+	}
+
+	return strftime(strDest, maxsize, l_safeFormat.c_str(), timeptr);
+}
+

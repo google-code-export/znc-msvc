@@ -52,6 +52,8 @@ int ZNC_API gettimeofday(struct timeval *tv, struct timezone *tz);
 ZNC_API struct tm* localtime_r(const time_t *clock, struct tm *result);
 #define localtime localtime_locked
 ZNC_API struct tm* localtime_locked(const time_t *timer);
+size_t ZNC_API strftime_validating(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr);
+
 
 int ZNC_API rand_r(unsigned int* seed);
 long long ZNC_API rand_r(unsigned long long* seed);
