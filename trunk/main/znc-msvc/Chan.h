@@ -11,6 +11,7 @@
 
 #include "FileUtils.h"
 #include "Nick.h"
+#include "ZNCString.h"
 #include <map>
 #include <set>
 #include <vector>
