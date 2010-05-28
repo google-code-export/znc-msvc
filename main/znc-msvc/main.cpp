@@ -12,15 +12,15 @@
 #include <conio.h>
 
 static const struct option g_LongOpts[] = {
-	{ "help",			no_argument,	0,	'h' },
-	{ "version",			no_argument,	0,	'v' },
-	{ "debug",			no_argument,	0,	'D' },
-	{ "makeconf",			no_argument,	0,	'c' },
-	{ "makepass",			no_argument,	0,	's' },
+	{ "help",        no_argument,       0, 'h' },
+	{ "version",     no_argument,       0, 'v' },
+	{ "debug",       no_argument,       0, 'D' },
+	{ "makeconf",    no_argument,       0, 'c' },
+	{ "makepass",    no_argument,       0, 's' },
 #ifdef HAVE_LIBSSL
-	{ "makepem",			no_argument,	0,	'p' },
+	{ "makepem",     no_argument,       0, 'p' },
 #endif /* HAVE_LIBSSL */
-	{ "datadir",                    required_argument,	0,   'd' },
+	{ "datadir",     required_argument, 0, 'd' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -213,6 +213,13 @@ int main(int argc, char** argv) {
 		delete pZNC;
 		return 0;
 	}
+
+#ifndef RUN_FROM_SOURCE
+	if (CFile::Exists(pZNC->GetCurPath() + "/znc-uninstalled.pc")) {
+		CUtils::PrintError("It looks like you are running znc without installing it first.");
+		CUtils::PrintError("Recompile with --enable-run-from-source if you intend to do that.");
+	}
+#endif
 
 	if (bMakeConf) {
 		if (!pZNC->WriteNewConfig(sConfig)) {

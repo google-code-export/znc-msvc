@@ -15,36 +15,36 @@
 #include "znc.h"
 #include "WebModules.h"
 
-#define CALLMOD(MOD, CLIENT, USER, FUNC) {				\
-	CModule* pModule = CZNC::Get().GetModules().FindModule(MOD);	\
-	if (pModule) {							\
-		try {							\
-			pModule->SetClient(CLIENT);			\
-			pModule->SetUser(USER);				\
-			pModule->FUNC;					\
-			pModule->SetClient(NULL);			\
-			pModule->SetUser(NULL);				\
-		} catch (CModule::EModException e) {			\
-			if (e == CModule::UNLOAD) {			\
-				CZNC::Get().GetModules().UnloadModule(MOD);	\
-			}						\
-		}							\
-	} else {							\
-		pModule = (USER)->GetModules().FindModule(MOD);	\
-		if (pModule) {						\
-			try {						\
-				pModule->SetClient(CLIENT);		\
-				pModule->FUNC;				\
-				pModule->SetClient(NULL);		\
-			} catch (CModule::EModException e) {		\
-				if (e == CModule::UNLOAD) {		\
-					(USER)->GetModules().UnloadModule(MOD);	\
-				}					\
-			}						\
-		} else {						\
-			PutStatus("No such module [" + MOD + "]");	\
-		}							\
-	}								\
+#define CALLMOD(MOD, CLIENT, USER, FUNC) {                                      \
+	CModule* pModule = CZNC::Get().GetModules().FindModule(MOD);            \
+	if (pModule) {                                                          \
+		try {                                                           \
+			pModule->SetClient(CLIENT);                             \
+			pModule->SetUser(USER);                                 \
+			pModule->FUNC;                                          \
+			pModule->SetClient(NULL);                               \
+			pModule->SetUser(NULL);                                 \
+		} catch (CModule::EModException e) {                            \
+			if (e == CModule::UNLOAD) {                             \
+				CZNC::Get().GetModules().UnloadModule(MOD);     \
+			}                                                       \
+		}                                                               \
+	} else {                                                                \
+		pModule = (USER)->GetModules().FindModule(MOD);                 \
+		if (pModule) {                                                  \
+			try {                                                   \
+				pModule->SetClient(CLIENT);                     \
+				pModule->FUNC;                                  \
+				pModule->SetClient(NULL);                       \
+			} catch (CModule::EModException e) {                    \
+				if (e == CModule::UNLOAD) {                     \
+					(USER)->GetModules().UnloadModule(MOD); \
+				}                                               \
+			}                                                       \
+		} else {                                                        \
+			PutStatus("No such module [" + MOD + "]");              \
+		}                                                               \
+	}                                                                       \
 }
 
 CClient::~CClient() {
@@ -97,7 +97,7 @@ void CClient::ReadLine(const CString& sData) {
 				AuthUser();
 			}
 
-			return;		// Don't forward this msg.  ZNC has already registered us.
+			return;  // Don't forward this msg.  ZNC has already registered us.
 		}
 	} else if (sCommand.Equals("NICK")) {
 		CString sNick = sLine.Token(1);
@@ -112,7 +112,7 @@ void CClient::ReadLine(const CString& sData) {
 			if ((m_bGotPass) && (m_bGotUser)) {
 				AuthUser();
 			}
-			return;		// Don't forward this msg.  ZNC will handle nick changes until auth is complete
+			return;  // Don't forward this msg.  ZNC will handle nick changes until auth is complete
 		}
 	} else if (sCommand.Equals("USER")) {
 		if (!IsAttached()) {
@@ -130,7 +130,7 @@ void CClient::ReadLine(const CString& sData) {
 					"Try /quote PASS <username>:<password>");
 			}
 
-			return;		// Don't forward this msg.  ZNC has already registered us.
+			return;  // Don't forward this msg.  ZNC has already registered us.
 		}
 	}
 
@@ -190,7 +190,7 @@ void CClient::ReadLine(const CString& sData) {
 			return;
 		}
 	} else if (sCommand.Equals("PONG")) {
-		return;	// Block pong replies, we already responded to the pings
+		return;  // Block pong replies, we already responded to the pings
 	} else if (sCommand.Equals("JOIN")) {
 		CString sChans = sLine.Token(1);
 		CString sKey = sLine.Token(2);
@@ -288,8 +288,8 @@ void CClient::ReadLine(const CString& sData) {
 	} else if (sCommand.Equals("QUIT")) {
 		m_pUser->UserDisconnected(this);
 
-		Close(Csock::CLT_AFTERWRITE);	// Treat a client quit as a detach
-		return;		// Don't forward this msg.  We don't want the client getting us disconnected.
+		Close(Csock::CLT_AFTERWRITE); // Treat a client quit as a detach
+		return;                       // Don't forward this msg.  We don't want the client getting us disconnected.
 	} else if (sCommand.Equals("PROTOCTL")) {
 		VCString vsTokens;
 		VCString::const_iterator it;
@@ -302,7 +302,7 @@ void CClient::ReadLine(const CString& sData) {
 				m_bUHNames = true;
 			}
 		}
-		return;	// If the server understands it, we already enabled namesx / uhnames
+		return;  // If the server understands it, we already enabled namesx / uhnames
 	} else if (sCommand.Equals("NOTICE")) {
 		CString sTarget = sLine.Token(1);
 		CString sMsg = sLine.Token(2, true);
@@ -315,14 +315,10 @@ void CClient::ReadLine(const CString& sData) {
 			if (!sTarget.Equals("status")) {
 				CALLMOD(sTarget, this, m_pUser, OnModNotice(sMsg));
 				
-				m_pUser->SetModRepliesAsNotices(true);
 				CALLMOD(sTarget, this, m_pUser, OnModCommand(sMsg));
-				m_pUser->SetModRepliesAsNotices(false);
 			} else {
-				m_pUser->SetModRepliesAsNotices(true);
 				MODULECALL(OnStatusCommand(sMsg), m_pUser, this, return);
 				UserCommand(sMsg);
-				m_pUser->SetModRepliesAsNotices(false);
 			}
 			return;
 		}
@@ -596,7 +592,7 @@ bool CClient::SendMotd() {
 	}
 
 	for (unsigned int a = 0; a < vsMotd.size(); a++) {
-		PutStatusNotice(vsMotd[a]);
+		PutStatusNotice(m_pUser->ExpandString(vsMotd[a]));
 	}
 
 	return true;
@@ -740,11 +736,7 @@ unsigned int CClient::PutStatus(const CTable& table) {
 }
 
 void CClient::PutStatus(const CString& sLine) {
-	if(m_pUser && m_pUser->ModRepliesAsNotices()) {
-		PutModNotice("status", sLine);
-	} else {
-		PutModule("status", sLine);
-	}
+	PutModule("status", sLine);
 }
 
 void CClient::PutModNotice(const CString& sModule, const CString& sLine) {

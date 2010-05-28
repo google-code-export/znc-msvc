@@ -30,8 +30,8 @@ public:
 	// !Setters
 private:
 protected:
-	bool	m_bNegated;
-	CString	m_sSource;
+	bool    m_bNegated;
+	CString m_sSource;
 };
 
 class CWatchEntry {
@@ -148,11 +148,11 @@ public:
 	// !Setters
 private:
 protected:
-	CString		m_sHostMask;
-	CString		m_sTarget;
-	CString		m_sPattern;
-	bool		m_bDisabled;
-	vector<CWatchSource>	m_vsSources;
+	CString              m_sHostMask;
+	CString              m_sTarget;
+	CString              m_sPattern;
+	bool                 m_bDisabled;
+	vector<CWatchSource> m_vsSources;
 };
 
 class CWatcherMod : public CModule {
@@ -313,7 +313,7 @@ private:
 			return;
 		}
 
-		uIdx--;	// "convert" index to zero based
+		uIdx--; // "convert" index to zero based
 		if (uIdx >= m_lsWatchers.size()) {
 			PutModule("Invalid Id");
 			return;
@@ -389,7 +389,7 @@ private:
 	}
 
 	void SetSources(unsigned int uIdx, const CString& sSources) {
-		uIdx--;	// "convert" index to zero based
+		uIdx--; // "convert" index to zero based
 		if (uIdx >= m_lsWatchers.size()) {
 			PutModule("Invalid Id");
 			return;
@@ -405,7 +405,7 @@ private:
 	}
 
 	void Remove(unsigned int uIdx) {
-		uIdx--;	// "convert" index to zero based
+		uIdx--; // "convert" index to zero based
 		if (uIdx >= m_lsWatchers.size()) {
 			PutModule("Invalid Id");
 			return;
@@ -550,8 +550,8 @@ private:
 			PutModule("WARNING: malformed entry found while loading");
 	}
 
-	list<CWatchEntry>	m_lsWatchers;
-	CBuffer				m_Buffer;
+	list<CWatchEntry>  m_lsWatchers;
+	CBuffer            m_Buffer;
 };
 
 MODULEDEFS(CWatcherMod, "Copy activity from a specific user into a separate window")

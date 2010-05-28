@@ -110,6 +110,11 @@ LIBPATHS=$(LIBPATHS) /LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\debug" \
 # List of target files
 # --------------------
 
+# how to get the following two lists:
+# cd znc-msvc\trunk\main\znc-msvc\win32\project
+# Modules_get_make_lists > temp.txt
+# copy here & adjust (remove leading new line and last backslash)
+
 DLLS=$(MAKDIR)\admin.dll \
 $(MAKDIR)\adminlog.dll \
 $(MAKDIR)\autoattach.dll \
@@ -118,45 +123,29 @@ $(MAKDIR)\autoop.dll \
 $(MAKDIR)\autoreply.dll \
 $(MAKDIR)\away.dll \
 $(MAKDIR)\awaynick.dll \
-$(MAKDIR)\blockserver.dll \
 $(MAKDIR)\blockuser.dll \
-$(MAKDIR)\block_lagchk.dll \
 $(MAKDIR)\buffextras.dll \
-$(MAKDIR)\certauth.dll \
-$(MAKDIR)\certchecker.dll \
 $(MAKDIR)\chansaver.dll \
 $(MAKDIR)\clientnotify.dll \
-$(MAKDIR)\clientpart.dll \
-$(MAKDIR)\colloquy.dll \
 $(MAKDIR)\crypt.dll \
 $(MAKDIR)\disconkick.dll \
 $(MAKDIR)\fail2ban.dll \
-$(MAKDIR)\fish.dll \
 $(MAKDIR)\fixfreenode.dll \
-$(MAKDIR)\fix_lagchk.dll \
-$(MAKDIR)\highlightattach.dll \
-$(MAKDIR)\identserver.dll \
 $(MAKDIR)\keepnick.dll \
 $(MAKDIR)\kickrejoin.dll \
 $(MAKDIR)\lastseen.dll \
 $(MAKDIR)\nickserv.dll \
-$(MAKDIR)\noctcp.dll \
 $(MAKDIR)\notes.dll \
-$(MAKDIR)\notify.dll \
 $(MAKDIR)\partyline.dll \
 $(MAKDIR)\perform.dll \
-$(MAKDIR)\prowl.dll \
 $(MAKDIR)\q.dll \
 $(MAKDIR)\raw.dll \
-$(MAKDIR)\rawlog.dll \
 $(MAKDIR)\route_replies.dll \
 $(MAKDIR)\savebuff.dll \
 $(MAKDIR)\schat.dll \
 $(MAKDIR)\simple_away.dll \
 $(MAKDIR)\stickychan.dll \
-$(MAKDIR)\twitter.dll \
 $(MAKDIR)\watch.dll \
-$(MAKDIR)\watch_only_detached.dll \
 $(MAKDIR)\webadmin.dll \
 $(MAKDIR)\extra\antiidle.dll \
 $(MAKDIR)\extra\autovoice.dll \
@@ -169,7 +158,24 @@ $(MAKDIR)\extra\listsockets.dll \
 $(MAKDIR)\extra\log.dll \
 $(MAKDIR)\extra\motdfile.dll \
 $(MAKDIR)\extra\notify_connect.dll \
-$(MAKDIR)\extra\send_raw.dll
+$(MAKDIR)\extra\send_raw.dll \
+$(MAKDIR)\extra_win32\blockserver.dll \
+$(MAKDIR)\extra_win32\block_lagchk.dll \
+$(MAKDIR)\extra_win32\certauth.dll \
+$(MAKDIR)\extra_win32\certchecker.dll \
+$(MAKDIR)\extra_win32\clientpart.dll \
+$(MAKDIR)\extra_win32\colloquy.dll \
+$(MAKDIR)\extra_win32\fish.dll \
+$(MAKDIR)\extra_win32\fix_lagchk.dll \
+$(MAKDIR)\extra_win32\highlightattach.dll \
+$(MAKDIR)\extra_win32\identserver.dll \
+$(MAKDIR)\extra_win32\noctcp.dll \
+$(MAKDIR)\extra_win32\noreconnectonkill.dll \
+$(MAKDIR)\extra_win32\notify.dll \
+$(MAKDIR)\extra_win32\prowl.dll \
+$(MAKDIR)\extra_win32\rawlog.dll \
+$(MAKDIR)\extra_win32\twitter.dll \
+$(MAKDIR)\extra_win32\watch_only_detached.dll
 
 OBJS=$(MAKDIR)\admin.obj \
 $(MAKDIR)\adminlog.obj \
@@ -179,45 +185,29 @@ $(MAKDIR)\autoop.obj \
 $(MAKDIR)\autoreply.obj \
 $(MAKDIR)\away.obj \
 $(MAKDIR)\awaynick.obj \
-$(MAKDIR)\blockserver.obj \
 $(MAKDIR)\blockuser.obj \
-$(MAKDIR)\block_lagchk.obj \
 $(MAKDIR)\buffextras.obj \
-$(MAKDIR)\certauth.obj \
-$(MAKDIR)\certchecker.obj \
 $(MAKDIR)\chansaver.obj \
 $(MAKDIR)\clientnotify.obj \
-$(MAKDIR)\clientpart.obj \
-$(MAKDIR)\colloquy.obj \
 $(MAKDIR)\crypt.obj \
 $(MAKDIR)\disconkick.obj \
 $(MAKDIR)\fail2ban.obj \
-$(MAKDIR)\fish.obj \
 $(MAKDIR)\fixfreenode.obj \
-$(MAKDIR)\fix_lagchk.obj \
-$(MAKDIR)\highlightattach.obj \
-$(MAKDIR)\identserver.obj \
 $(MAKDIR)\keepnick.obj \
 $(MAKDIR)\kickrejoin.obj \
 $(MAKDIR)\lastseen.obj \
 $(MAKDIR)\nickserv.obj \
-$(MAKDIR)\noctcp.obj \
 $(MAKDIR)\notes.obj \
-$(MAKDIR)\notify.obj \
 $(MAKDIR)\partyline.obj \
 $(MAKDIR)\perform.obj \
-$(MAKDIR)\prowl.obj \
 $(MAKDIR)\q.obj \
 $(MAKDIR)\raw.obj \
-$(MAKDIR)\rawlog.obj \
 $(MAKDIR)\route_replies.obj \
 $(MAKDIR)\savebuff.obj \
 $(MAKDIR)\schat.obj \
 $(MAKDIR)\simple_away.obj \
 $(MAKDIR)\stickychan.obj \
-$(MAKDIR)\twitter.obj \
 $(MAKDIR)\watch.obj \
-$(MAKDIR)\watch_only_detached.obj \
 $(MAKDIR)\webadmin.obj \
 $(MAKDIR)\extra\antiidle.obj \
 $(MAKDIR)\extra\autovoice.obj \
@@ -230,8 +220,24 @@ $(MAKDIR)\extra\listsockets.obj \
 $(MAKDIR)\extra\log.obj \
 $(MAKDIR)\extra\motdfile.obj \
 $(MAKDIR)\extra\notify_connect.obj \
-$(MAKDIR)\extra\send_raw.obj
-
+$(MAKDIR)\extra\send_raw.obj \
+$(MAKDIR)\extra_win32\blockserver.obj \
+$(MAKDIR)\extra_win32\block_lagchk.obj \
+$(MAKDIR)\extra_win32\certauth.obj \
+$(MAKDIR)\extra_win32\certchecker.obj \
+$(MAKDIR)\extra_win32\clientpart.obj \
+$(MAKDIR)\extra_win32\colloquy.obj \
+$(MAKDIR)\extra_win32\fish.obj \
+$(MAKDIR)\extra_win32\fix_lagchk.obj \
+$(MAKDIR)\extra_win32\highlightattach.obj \
+$(MAKDIR)\extra_win32\identserver.obj \
+$(MAKDIR)\extra_win32\noctcp.obj \
+$(MAKDIR)\extra_win32\noreconnectonkill.obj \
+$(MAKDIR)\extra_win32\notify.obj \
+$(MAKDIR)\extra_win32\prowl.obj \
+$(MAKDIR)\extra_win32\rawlog.obj \
+$(MAKDIR)\extra_win32\twitter.obj \
+$(MAKDIR)\extra_win32\watch_only_detached.obj
 
 # ----------------
 # Makefile targets
@@ -242,12 +248,13 @@ build: _dir_check $(DLLS)
 clean:
   echo Deleting intermediate files for configuration: $(CFG)
   if exist $(INTDIR) rmdir /S /Q $(INTDIR)
-  
+
 rebuild: clean build
 
 _dir_check:
   if not exist $(INTDIR) md $(INTDIR)
   if not exist $(INTDIR)\extra md $(INTDIR)\extra
+  if not exist $(INTDIR)\extra_win32 md $(INTDIR)\extra_win32
   if not exist $(BUILDOUT) md $(BUILDOUT)
 
 # compile .obj files using inference rules
@@ -271,7 +278,7 @@ $(OBJS):
   echo $< >>$(RSP)
   cl @$(RSP)
   del $(RSP)
-  
+
 # extra\ cpp => obj
 {$(SRCDIR)\extra}.cpp{$(MAKDIR)\extra}.obj:
   if exist $(RSP) del $(RSP)
@@ -281,6 +288,20 @@ $(OBJS):
   echo /Yc"stdafx.hpp" >>$(RSP)
   echo /Fp$(INTDIR)ZNC_mods.pch >>$(RSP)
   echo /Fo$(INTDIR)extra\ >>$(RSP)
+  echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
+  echo $< >>$(RSP)
+  cl @$(RSP)
+  del $(RSP)
+
+# extra_win32\ cpp => obj
+{$(SRCDIR)\extra_win32}.cpp{$(MAKDIR)\extra_win32}.obj:
+  if exist $(RSP) del $(RSP)
+  echo $(CXXFLAGS) >>$(RSP)
+  echo $(INCLUDES) >>$(RSP)
+  echo $(DEFINES) >>$(RSP)
+  echo /Yc"stdafx.hpp" >>$(RSP)
+  echo /Fp$(INTDIR)ZNC_mods.pch >>$(RSP)
+  echo /Fo$(INTDIR)extra_win32\ >>$(RSP)
   echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
   echo $< >>$(RSP)
   cl @$(RSP)
@@ -307,6 +328,20 @@ $(OBJS):
   echo $(LIBPATHS) >>$(RSP)
   echo $(LINKFLAGS) >>$(RSP)
   echo /PDB:$(INTDIR)extra\$(@B).pdb >>$(RSP)
+  echo $(LIBS) >>$(RSP)
+  echo $< >>$(RSP)
+  link @$(RSP)
+  xcopy /y /c $(@R).dll $(BUILDOUT)
+  if exist $(@R).pdb xcopy /y /c $(@R).pdb $(BUILDOUT)
+  del $(RSP)
+
+# extra_win32\ obj => dll
+{$(MAKDIR)\extra_win32}.obj{$(MAKDIR)\extra_win32}.dll:
+  if exist $(RSP) del $(RSP)
+  echo /OUT:$(INTDIR)$@ >>$(RSP)
+  echo $(LIBPATHS) >>$(RSP)
+  echo $(LINKFLAGS) >>$(RSP)
+  echo /PDB:$(INTDIR)extra_win32\$(@B).pdb >>$(RSP)
   echo $(LIBS) >>$(RSP)
   echo $< >>$(RSP)
   link @$(RSP)

@@ -11,6 +11,55 @@
 
 #include "znc.h"
 
+// Forward Declarations
+class CRealListener;
+// !Forward Declarations
+
+class ZNC_API CListener {
+public:
+	typedef enum {
+		ACCEPT_IRC,
+		ACCEPT_HTTP,
+		ACCEPT_ALL
+	} EAcceptType;
+
+	CListener(unsigned short uPort, const CString& sBindHost, bool bSSL, EAddrType eAddr, EAcceptType eAccept) {
+		m_uPort = uPort;
+		m_sBindHost = sBindHost;
+		m_bSSL = bSSL;
+		m_eAddr = eAddr;
+		m_pListener = NULL;
+		m_eAcceptType = eAccept;
+	}
+
+	~CListener();
+
+	// Getters
+	bool IsSSL() const { return m_bSSL; }
+	EAddrType GetAddrType() const { return m_eAddr; }
+	unsigned short GetPort() const { return m_uPort; }
+	const CString& GetBindHost() const { return m_sBindHost; }
+	CRealListener* GetRealListener() const { return m_pListener; }
+	EAcceptType GetAcceptType() const { return m_eAcceptType; }
+	// !Getters
+
+	// It doesn't make sense to change any of the settings after Listen()
+	// except this one, so don't add other setters!
+	void SetAcceptType(EAcceptType eType) { m_eAcceptType = eType; }
+
+	bool Listen();
+	void ResetRealListener();
+
+private:
+protected:
+	bool            m_bSSL;
+	EAddrType       m_eAddr;
+	unsigned short  m_uPort;
+	CString         m_sBindHost;
+	CRealListener*  m_pListener;
+	EAcceptType     m_eAcceptType;
+};
+
 class CRealListener : public CZNCSock {
 public:
 	CRealListener(CListener *pParent) : CZNCSock(), m_pParent(pParent) {}
@@ -24,53 +73,14 @@ private:
 	CListener* m_pParent;
 };
 
-class CListener {
-public:
-	CListener(unsigned short uPort, const CString& sBindHost, bool bSSL, EAddrType eAddr) {
-		m_uPort = uPort;
-		m_sBindHost = sBindHost;
-		m_bSSL = bSSL;
-		m_eAddr = eAddr;
-		m_pListener = NULL;
-	}
-
-	~CListener() {
-		if (m_pListener)
-			CZNC::Get().GetManager().DelSockByAddr(m_pListener);
-	}
-
-	// Setters
-	void SetSSL(bool b) { m_bSSL = b; }
-	void SetAddrType(EAddrType eAddr) { m_eAddr = eAddr; }
-	void SetPort(unsigned short u) { m_uPort = u; }
-	void SetBindHost(const CString& s) { m_sBindHost = s; }
-	void SetRealListener(CRealListener* p) { m_pListener = p; }
-	// !Setters
-
-	// Getters
-	bool IsSSL() const { return m_bSSL; }
-	EAddrType GetAddrType() const { return m_eAddr; }
-	unsigned short GetPort() const { return m_uPort; }
-	const CString& GetBindHost() const { return m_sBindHost; }
-	CRealListener* GetRealListener() const { return m_pListener; }
-	// !Getters
-
-	bool Listen();
-
-private:
-protected:
-	bool			m_bSSL;
-	EAddrType		m_eAddr;
-	unsigned short	m_uPort;
-	CString			m_sBindHost;
-	CRealListener*	m_pListener;
-};
-
 class CIncomingConnection : public CZNCSock {
 public:
-	CIncomingConnection(const CString& sHostname, unsigned short uPort);
+	CIncomingConnection(const CString& sHostname, unsigned short uPort, CListener::EAcceptType eAcceptType);
 	virtual ~CIncomingConnection() {}
 	virtual void ReadLine(const CString& sData);
+
+private:
+	CListener::EAcceptType m_eAcceptType;
 };
 
 #endif // !_LISTENER_H

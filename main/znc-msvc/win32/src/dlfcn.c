@@ -295,7 +295,7 @@ void *dlsym( void *handle, const char *name )
             }
         }
 
-        CloseHandle( hModule );
+        /* CloseHandle( hModule ); has no effect */
     }
 
     if( symbol == NULL )

@@ -43,7 +43,7 @@ typedef _W64 signed int ssize_t;
 #define strtoll _strtoi64
 #define strtoull _strtoui64
 #define snprintf _snprintf
-int ZNC_API strncasecmp(const char *s1, const char *s2, size_t n);
+#define strncasecmp _strnicmp
 
 int ZNC_API usleep(int useconds);
 int ZNC_API sleep(int seconds);

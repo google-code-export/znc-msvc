@@ -12,7 +12,7 @@
 
 class CAutoOpMod;
 
-#define AUTOOP_CHALLENGE_LENGTH	32
+#define AUTOOP_CHALLENGE_LENGTH 32
 
 class CAutoOpTimer : public CTimer {
 public:
@@ -28,7 +28,7 @@ private:
 protected:
 	virtual void RunJob();
 
-	CAutoOpMod*		m_pParent;
+	CAutoOpMod* m_pParent;
 };
 
 class CAutoOpUser {
@@ -122,10 +122,10 @@ public:
 	}
 private:
 protected:
-	CString			m_sUsername;
-	CString			m_sUserKey;
-	CString			m_sHostmask;
-	set<CString>	m_ssChans;
+	CString      m_sUsername;
+	CString      m_sUserKey;
+	CString      m_sHostmask;
+	set<CString> m_ssChans;
 };
 
 class CAutoOpMod : public CModule {
@@ -168,7 +168,10 @@ public:
 						PutIRC("MODE " + Channel.GetName() + " +o " + Nick.GetNick());
 					} else {
 						// then insert this nick into the queue, the timer does the rest
-						m_msQueue[Nick.GetNick().AsLower()] = "";
+						CString sNick = Nick.GetNick().AsLower();
+						if (m_msQueue.find(sNick) == m_msQueue.end()) {
+							m_msQueue[sNick] = "";
+						}
 					}
 
 					break;
@@ -453,8 +456,8 @@ public:
 		}
 	}
 private:
-	map<CString, CAutoOpUser*>		m_msUsers;
-	MCString						m_msQueue;
+	map<CString, CAutoOpUser*> m_msUsers;
+	MCString                   m_msQueue;
 };
 
 void CAutoOpTimer::RunJob() {

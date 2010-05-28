@@ -12,6 +12,9 @@
 #include "znc.h"
 #include <sstream>
 
+/// @todo Do we want to make this a configure option?
+#define _SKINDIR_ _DATADIR_ "/webskins"
+
 // Sessions are valid for a day, (24h, ...)
 CWebSessionMap CWebSock::m_mspSessions(24 * 60 * 60 * 1000);
 
@@ -140,6 +143,10 @@ CWebSock::~CWebSock() {
 		CZNC::Get().AddBytesWritten(GetBytesWritten());
 		CZNC::Get().AddBytesRead(GetBytesRead());
 	}
+
+	// bytes have been accounted for, so make sure they don't get again:
+	ResetBytesWritten();
+	ResetBytesRead();
 
 	// If the module IsFake() then it was created as a dummy and needs to be deleted
 	if (m_pModule && m_pModule->IsFake()) {
@@ -275,9 +282,9 @@ void CWebSock::SetPaths(CModule* pModule, bool bIsTemplate) {
 		//
 		m_Template.AppendPath(GetSkinPath("_default_") + "/mods/" + sModName + "/");
 
-		// 3. ./modules/<mod_name>/
+		// 3. ./modules/<mod_name>/tmpl/
 		//
-		m_Template.AppendPath(GetModWebPath(sModName));
+		m_Template.AppendPath(pModule->GetModDataDir() + "/tmpl/");
 
 		// 4. ~/.znc/webskins/<user_skin_setting>/mods/<mod_name>/
 		//
@@ -363,7 +370,7 @@ bool CWebSock::AddModLoop(const CString& sLoopName, CModule& Module) {
 			bool bActive = (m_sModName == Module.GetModName() && m_sPage == SubPage->GetName());
 
 			if (SubPage->RequiresAdmin() && !GetSession()->IsAdmin()) {
-				continue;	// Don't add admin-only subpages to requests from non-admin users
+				continue;  // Don't add admin-only subpages to requests from non-admin users
 			}
 
 			CTemplate& SubRow = Row.AddRow("SubPageLoop");
@@ -445,16 +452,6 @@ CWebSock::EPageReqResult CWebSock::PrintTemplate(const CString& sPageName, CStri
 	}
 }
 
-CString CWebSock::GetModWebPath(const CString& sModName) const {
-	CString sRet = CZNC::Get().GetCurPath() + "/modules/www/" + sModName;
-
-	if (!CFile::IsDir(sRet)) {
-		sRet = CString(_MODDIR_) + "/www/" + sModName;
-	}
-
-	return sRet + "/";
-}
-
 CString CWebSock::GetSkinPath(const CString& sSkinName) const {
 	CString sRet = CZNC::Get().GetZNCPath() + "/webskins/" + sSkinName;
 
@@ -511,7 +508,9 @@ void CWebSock::OnPageRequest(const CString& sURI) {
 		// Something else will later call Close()
 		break;
 	case PAGE_DONE:
-		// Redirect or something like that, it's done, Close() has been called
+		// Redirect or something like that, it's done, just make sure
+		// the connection will be closed
+		Close(CLT_AFTERWRITE);
 		break;
 	default:
 		PrintNotFound();
@@ -641,9 +640,8 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 
 		if (sURI.Left(10) == "/modfiles/") {
 			m_Template.AppendPath(GetSkinPath(GetSkinName()) + "/mods/" + m_sModName + "/files/");
-			m_Template.AppendPath(GetModWebPath(m_sModName) + "/files/");
+			m_Template.AppendPath(pModule->GetModDataDir() + "/files/");
 
-			std::cerr << "===================== fffffffffffffffffffff   [" << m_sModName << "]  [" << m_sPage << "]" << std::endl;
 			if (PrintFile(m_Template.ExpandFile(m_sPage.TrimLeft_n("/")))) {
 				return PAGE_PRINT;
 			} else {
@@ -655,6 +653,11 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 			/* if a module returns false from OnWebRequest, it does not
 			   want the template to be printed, usually because it did a redirect. */
 			if (pModule->OnWebRequest(*this, m_sPage, m_Template)) {
+				// If they already sent a reply, let's assume
+				// they did what they wanted to do.
+				if (SentHeader()) {
+					return PAGE_DONE;
+				}
 				return PrintTemplate(m_sPage, sPageRet, pModule);
 			}
 
@@ -662,7 +665,6 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 				sPageRet = GetErrorPage(404, "Not Implemented", "The requested module does not acknowledge web requests");
 				return PAGE_PRINT;
 			} else {
-				Close(CLT_AFTERWRITE); // make sure the connection is going to be closed
 				return PAGE_DONE;
 			}
 		}

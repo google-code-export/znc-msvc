@@ -9,6 +9,7 @@
  */
 
 #include "stdafx.hpp"
+
 #include "znc.h"
 #include "User.h"
 #include "Chan.h"

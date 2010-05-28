@@ -51,9 +51,9 @@ protected:
 	virtual void RefusedLogin(const CString& sReason) = 0;
 
 private:
-	CString		m_sUsername;
-	CString		m_sPassword;
-	Csock*		m_pSock;
+	CString  m_sUsername;
+	CString  m_sPassword;
+	Csock*   m_pSock;
 };
 
 
@@ -67,7 +67,7 @@ public:
 	void RefusedLogin(const CString& sReason);
 private:
 protected:
-	CClient*	m_pClient;
+	CClient* m_pClient;
 };
 
 class ZNC_API CClient : public CZNCSock {
@@ -97,7 +97,8 @@ public:
 	bool HasNamesx() const { return m_bNamesx; }
 	bool HasUHNames() const { return m_bUHNames; }
 
-	void UserCommand(CString& sCommand);
+	void UserCommand(CString& sLine);
+	void UserPortCommand(CString& sLine);
 	void StatusCTCP(const CString& sCommand);
 	void BouncedOff();
 	bool IsAttached() const { return m_pUser != NULL; }
@@ -127,16 +128,16 @@ public:
 private:
 
 protected:
-	bool		m_bGotPass;
-	bool		m_bGotNick;
-	bool		m_bGotUser;
-	bool		m_bNamesx;
-	bool		m_bUHNames;
-	CUser*		m_pUser;
-	CString		m_sNick;
-	CString		m_sPass;
-	CString		m_sUser;
-	CSmartPtr<CAuthBase>	m_spAuth;
+	bool                 m_bGotPass;
+	bool                 m_bGotNick;
+	bool                 m_bGotUser;
+	bool                 m_bNamesx;
+	bool                 m_bUHNames;
+	CUser*               m_pUser;
+	CString              m_sNick;
+	CString              m_sPass;
+	CString              m_sUser;
+	CSmartPtr<CAuthBase> m_spAuth;
 };
 
 #endif // !_CLIENT_H

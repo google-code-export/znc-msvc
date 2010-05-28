@@ -99,9 +99,9 @@ public:
 	}
 private:
 protected:
-	CString			m_sUsername;
-	CString			m_sHostmask;
-	set<CString>	m_ssChans;
+	CString      m_sUsername;
+	CString      m_sHostmask;
+	set<CString> m_ssChans;
 };
 
 class CAutoVoiceMod : public CModule {
@@ -273,7 +273,7 @@ public:
 	}
 
 private:
-	map<CString, CAutoVoiceUser*>		m_msUsers;
+	map<CString, CAutoVoiceUser*> m_msUsers;
 };
 
 MODULEDEFS(CAutoVoiceMod, "Auto voice the good guys")

@@ -188,8 +188,8 @@ private:
 		LOG_TO_SYSLOG = 1 << 1,
 		LOG_TO_BOTH   = LOG_TO_FILE | LOG_TO_SYSLOG
 	};
-	LogMode	m_eLogMode;
-	CString	m_sLogFile;
+	LogMode m_eLogMode;
+	CString m_sLogFile;
 };
 
 #ifndef _WIN32

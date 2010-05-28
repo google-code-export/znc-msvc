@@ -116,18 +116,23 @@ public:
 					Row["LastSeen"] = buf;
 				}
 
-				Row["Info"] = CString(pUser->GetClients().size()) + " client(s)";
+				Row["Info"] = CString(pUser->GetClients().size()) +
+					" client" + CString(pUser->GetClients().size() == 1 ? "" : "s");
 				if(!pUser->GetCurrentServer()) {
 					Row["Info"] += ", not connected to IRC";
 				} else {
-					unsigned int uChans = 0;
+					size_t uChans = 0;
 					const vector<CChan*>& vChans = pUser->GetChans();
 					for (unsigned int a = 0; a < vChans.size(); ++a) {
 						if (vChans[a]->IsOn()) ++uChans;
 					}
+					size_t n = uChans;
 					Row["Info"] += ", joined to " + CString(uChans);
-					if(uChans != vChans.size()) Row["Info"] += " out of " + CString(vChans.size()) + " configured";
-					Row["Info"] += " channel(s)";
+					if(uChans != vChans.size()) {
+						Row["Info"] += " out of " + CString(vChans.size()) + " configured";
+						n = vChans.size();
+					}
+					Row["Info"] += " channel" + CString(n == 1 ? "" : "s");
 				}
 			}
 
