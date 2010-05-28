@@ -558,6 +558,8 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 DATADIR
 MODDIR
+LIBICONV
+CHARSET
 SASL
 TCL_FLAGS
 EXTRA
@@ -2819,6 +2821,9 @@ if test "${enable_run_from_source+set}" = set; then :
   enableval=$enable_run_from_source; if test "x$enableval" = "xyes" ; then
 		appendCXX -DRUN_FROM_SOURCE
 	fi
+	RUNFROMSOURCE="$enableval"
+else
+  RUNFROMSOURCE="no"
 fi
 
 
@@ -2890,6 +2895,68 @@ if test "x$ac_cv_func_lstat" = x""yes; then :
   appendCXX -DHAVE_LSTAT
 fi
 
+
+# ----- Check for dlopen
+
+FOUND_DL=no
+# Don't use any libs like -lssl -lcrypto when checking for dlopen(),
+# because they might change the test results
+SAVED_LIBS="$LIBS"
+LIBS=""
+
+ac_fn_cxx_check_func "$LINENO" "dlopen" "ac_cv_func_dlopen"
+if test "x$ac_cv_func_dlopen" = x""yes; then :
+  FOUND_DL=yes
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
+$as_echo_n "checking for dlopen in -ldl... " >&6; }
+if test "${ac_cv_lib_dl_dlopen+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char dlopen ();
+int
+main ()
+{
+return dlopen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_dl_dlopen=yes
+else
+  ac_cv_lib_dl_dlopen=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dl_dlopen" >&5
+$as_echo "$ac_cv_lib_dl_dlopen" >&6; }
+if test "x$ac_cv_lib_dl_dlopen" = x""yes; then :
+  FOUND_DL=yes ; appendLib -ldl
+fi
+
+
+appendLib "$SAVED_LIBS"
+
+if test $FOUND_DL = "no" ; then
+	as_fn_error "Could not find dlopen. Try --disable-modules" "$LINENO" 5
+fi
+
+# ----- Check for c-ares
 
 if test "x$ARES" != "xno"; then
 	old_ARES=$ARES
@@ -3012,6 +3079,17 @@ fi
 	if test -z "$PKG_CONFIG"
 	then
 		ARES=no
+
+	# This looks better in the summary at the end
+	ARES="not found"
+	if test "x$old_ARES" != "xauto" ; then
+		as_fn_error "pkg-config not found. Try --disable-c-ares.
+Disabling c-ares may result in a slight performance decrease but will not have any other side-effects" "$LINENO" 5
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: pkg-config was not found and thus c-ares was disabled" >&5
+$as_echo "$as_me: WARNING: pkg-config was not found and thus c-ares was disabled" >&2;}
+	fi
+
 	else
 
 pkg_failed=no
@@ -3084,9 +3162,8 @@ else
 $as_echo "yes" >&6; }
 	:
 fi
-	fi
 
-	if test "x$ARES" = "xno" ; then
+		if test "x$ARES" = "xno" ; then
 
 	# This looks better in the summary at the end
 	ARES="not found"
@@ -3098,12 +3175,15 @@ Disabling c-ares may result in a slight performance decrease but will not have a
 $as_echo "$as_me: WARNING: c-ares was not found and thus disabled" >&2;}
 	fi
 
-	else
-		appendCXX $c_ares_CFLAGS -DHAVE_C_ARES
-		appendLib $c_ares_LIBS
-		ARES=yes
+		else
+			appendCXX $c_ares_CFLAGS -DHAVE_C_ARES
+			appendLib $c_ares_LIBS
+			ARES=yes
+		fi
 	fi
 fi
+
+# ----- Check for openssl
 
 if test "x$SSL" != "xno"; then
 	if test -n "$OPENSSL"; then
@@ -3247,65 +3327,6 @@ else
 fi
 
 
-
-FOUND_DL=no
-# Don't use any libs like -lssl -lcrypto when checking for dlopen(),
-# because they might change the test results
-SAVED_LIBS="$LIBS"
-LIBS=""
-
-ac_fn_cxx_check_func "$LINENO" "dlopen" "ac_cv_func_dlopen"
-if test "x$ac_cv_func_dlopen" = x""yes; then :
-  FOUND_DL=yes
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dlopen in -ldl" >&5
-$as_echo_n "checking for dlopen in -ldl... " >&6; }
-if test "${ac_cv_lib_dl_dlopen+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ldl  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char dlopen ();
-int
-main ()
-{
-return dlopen ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_dl_dlopen=yes
-else
-  ac_cv_lib_dl_dlopen=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dl_dlopen" >&5
-$as_echo "$ac_cv_lib_dl_dlopen" >&6; }
-if test "x$ac_cv_lib_dl_dlopen" = x""yes; then :
-  FOUND_DL=yes ; appendLib -ldl
-fi
-
-
-appendLib "$SAVED_LIBS"
-
-if test $FOUND_DL = "no" ; then
-	as_fn_error "Could not find dlopen. Try --disable-modules" "$LINENO" 5
-fi
-
 appendMod "$CXXFLAGS"
 
 if test -z "$ISSUN" -a -z "$ISDARWIN"; then
@@ -3416,12 +3437,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_perl_perl_alloc" >&5
 $as_echo "$ac_cv_lib_perl_perl_alloc" >&6; }
 if test "x$ac_cv_lib_perl_perl_alloc" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBPERL 1
-_ACEOF
-
-  LIBS="-lperl $LIBS"
-
+  : No, we do not want autoconf to do sth automatically
 else
   PERL="no"
 fi
@@ -3564,8 +3580,100 @@ $as_echo "$TCL_FLAGS" >&6; }
 	fi
 fi
 
+if test x"$EXTRA" = "xyes"
+then
+	ac_fn_cxx_check_func "$LINENO" "iconv" "ac_cv_func_iconv"
+if test "x$ac_cv_func_iconv" = x""yes; then :
+  CHARSET=1
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for iconv_open in -liconv" >&5
+$as_echo_n "checking for iconv_open in -liconv... " >&6; }
+if test "${ac_cv_lib_iconv_iconv_open+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-liconv  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char iconv_open ();
+int
+main ()
+{
+return iconv_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_iconv_iconv_open=yes
+else
+  ac_cv_lib_iconv_iconv_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_iconv_iconv_open" >&5
+$as_echo "$ac_cv_lib_iconv_iconv_open" >&6; }
+if test "x$ac_cv_lib_iconv_iconv_open" = x""yes; then :
+  LIBICONV=-liconv ; CHARSET=1
+fi
+
+	if test "x$CHARSET" = "x1"
+	then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether iconv expects a const second argument" >&5
+$as_echo_n "checking whether iconv expects a const second argument... " >&6; }
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+		#include <iconv.h>
+
+int
+main ()
+{
+
+			const char input[] = "X"; const char *inptr = input; size_t inbytes = 1;
+			char buf[1]; char *outptr = buf; size_t outbytes = 1;
+			iconv_t ic = iconv_open("ISO8859-1", "UTF8");
+			iconv(ic, (char**)&inptr, &inbytes, &outptr, &outbytes);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			appendMod -DICONV_CONST=
+
+else
+
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+			appendMod -DICONV_CONST=const
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: libiconv was not found, disabling the charset module" >&5
+$as_echo "$as_me: WARNING: libiconv was not found, disabling the charset module" >&2;}
+	fi
+fi
+
 appendCXX "-D_MODDIR_=\\\"${MODDIR}\\\""
 appendCXX "-D_DATADIR_=\\\"${DATADIR}\\\""
+
+
 
 
 
@@ -4742,19 +4850,26 @@ fi
 echo
 echo znc 0.089 configured
 echo
-echo "debug:   $DEBUG"
-echo "ipv6:    $IPV6"
-echo "openssl: $SSL"
-echo "c-ares:  $ARES"
-echo "perl:    $PERL"
+echo "debug:        $DEBUG"
+echo "ipv6:         $IPV6"
+echo "openssl:      $SSL"
+echo "c-ares:       $ARES"
+echo "perl:         $PERL"
 if test x"$SASL" = "x" ; then
-	echo "sasl:    no"
+	echo "sasl:         no"
 else
-	echo "sasl:    yes"
+	echo "sasl:         yes"
 fi
-echo "extra:   $EXTRA"
+echo "extra:        $EXTRA"
 if test x"$TCL_FLAGS" = "x" ; then
-	echo "tcl:     no"
+	echo "tcl:          no"
 else
-	echo "tcl:     yes"
+	echo "tcl:          yes"
 fi
+if test x"$CHARSET" = "x" ; then
+	echo "charset:      no"
+else
+	echo "charset:      yes"
+fi
+echo "run from src: $RUNFROMSOURCE"
+

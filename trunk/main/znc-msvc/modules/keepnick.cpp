@@ -21,7 +21,7 @@ public:
 	void RunJob();
 
 private:
-	CKeepNickMod*	m_pMod;
+	CKeepNickMod* m_pMod;
 };
 
 class CKeepNickMod : public CModule {
@@ -181,7 +181,7 @@ public:
 
 private:
 	// If this is NULL, we are turned off for some reason
-	CKeepNickTimer*	m_pTimer;
+	CKeepNickTimer* m_pTimer;
 };
 
 CKeepNickTimer::CKeepNickTimer(CKeepNickMod *pMod) : CTimer(pMod, 30, 0,
@@ -194,4 +194,3 @@ void CKeepNickTimer::RunJob() {
 }
 
 MODULEDEFS(CKeepNickMod, "Keep trying for your primary nick")
-

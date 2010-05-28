@@ -111,7 +111,9 @@ AC_ARG_ENABLE( [run-from-source],
 	AS_HELP_STRING([--enable-run-from-source], [znc will be runnable without installation]),
 	[if test "x$enableval" = "xyes" ; then
 		appendCXX -DRUN_FROM_SOURCE
-	fi])
+	fi
+	RUNFROMSOURCE="$enableval"],
+	[RUNFROMSOURCE="no"])
 
 if test "$DEBUG" != "no"; then
 	appendCXX -ggdb -D_DEBUG
@@ -134,27 +136,52 @@ fi
 AC_CHECK_LIB( gnugetopt, getopt_long,)
 AC_CHECK_FUNC([lstat], [appendCXX -DHAVE_LSTAT])
 
+# ----- Check for dlopen
+
+FOUND_DL=no
+# Don't use any libs like -lssl -lcrypto when checking for dlopen(),
+# because they might change the test results
+SAVED_LIBS="$LIBS"
+LIBS=""
+
+AC_CHECK_FUNC(dlopen, FOUND_DL=yes,)
+AC_CHECK_LIB( dl, dlopen, FOUND_DL=yes ; appendLib -ldl,)
+
+appendLib "$SAVED_LIBS"
+
+if test $FOUND_DL = "no" ; then
+	AC_MSG_ERROR([Could not find dlopen. Try --disable-modules])
+fi
+
+# ----- Check for c-ares
+
 if test "x$ARES" != "xno"; then
 	old_ARES=$ARES
 	PKG_PROG_PKG_CONFIG()
 	if test -z "$PKG_CONFIG"
 	then
 		ARES=no
+		ZNC_AUTO_FAIL([ARES],
+			[pkg-config not found. Try --disable-c-ares.
+Disabling c-ares may result in a slight performance decrease but will not have any other side-effects],
+			[pkg-config was not found and thus c-ares was disabled])
 	else
 		PKG_CHECK_MODULES([c_ares], [libcares],, ARES=no)
-	fi
 
-	if test "x$ARES" = "xno" ; then
-		ZNC_AUTO_FAIL([ARES],
-			[c-ares not found. Try --disable-c-ares.
+		if test "x$ARES" = "xno" ; then
+			ZNC_AUTO_FAIL([ARES],
+				[c-ares not found. Try --disable-c-ares.
 Disabling c-ares may result in a slight performance decrease but will not have any other side-effects],
-			[c-ares was not found and thus disabled])
-	else
-		appendCXX $c_ares_CFLAGS -DHAVE_C_ARES
-		appendLib $c_ares_LIBS
-		ARES=yes
+				[c-ares was not found and thus disabled])
+		else
+			appendCXX $c_ares_CFLAGS -DHAVE_C_ARES
+			appendLib $c_ares_LIBS
+			ARES=yes
+		fi
 	fi
 fi
+
+# ----- Check for openssl
 
 if test "x$SSL" != "xno"; then
 	if test -n "$OPENSSL"; then
@@ -192,22 +219,6 @@ AC_ARG_WITH( [module-data-prefix],
 	[DATADIR=$withval],
 	[DATADIR="${datadir}/znc"] )
 
-
-FOUND_DL=no
-# Don't use any libs like -lssl -lcrypto when checking for dlopen(),
-# because they might change the test results
-SAVED_LIBS="$LIBS"
-LIBS=""
-
-AC_CHECK_FUNC(dlopen, FOUND_DL=yes,)
-AC_CHECK_LIB( dl, dlopen, FOUND_DL=yes ; appendLib -ldl,)
-
-appendLib "$SAVED_LIBS"
-
-if test $FOUND_DL = "no" ; then
-	AC_MSG_ERROR([Could not find dlopen. Try --disable-modules])
-fi
-
 appendMod "$CXXFLAGS"
 
 if test -z "$ISSUN" -a -z "$ISDARWIN"; then
@@ -242,7 +253,9 @@ if test "x$PERL" != "xno"; then
 	if test -n "$PERL_BINARY"; then
 		my_saved_LDFLAGS="$LDFLAGS"
 		appendLD `$PERL_BINARY -MExtUtils::Embed -e ccopts -e ldopts`
-		AC_CHECK_LIB(perl, perl_alloc,, PERL="no")
+		AC_CHECK_LIB(perl, perl_alloc,
+			     [: No, we do not want autoconf to do sth automatically],
+			     PERL="no")
 		LDFLAGS="$my_saved_LDFLAGS"
 	else
 		PERL="no"
@@ -304,6 +317,33 @@ then
 	fi
 fi
 
+if test x"$EXTRA" = "xyes"
+then
+	AC_CHECK_FUNC( iconv, CHARSET=1 )
+	AC_CHECK_LIB( iconv, iconv_open, LIBICONV=-liconv ; CHARSET=1 )
+	if test "x$CHARSET" = "x1"
+	then
+		AC_MSG_CHECKING([whether iconv expects a const second argument])
+		AC_COMPILE_IFELSE([
+			AC_LANG_PROGRAM([[
+		#include <iconv.h>
+		]], [[
+			const char input[] = "X"; const char *inptr = input; size_t inbytes = 1;
+			char buf[1]; char *outptr = buf; size_t outbytes = 1;
+			iconv_t ic = iconv_open("ISO8859-1", "UTF8");
+			iconv(ic, (char**)&inptr, &inbytes, &outptr, &outbytes);
+		]])], [
+			AC_MSG_RESULT([no])
+			appendMod -DICONV_CONST=
+		], [
+			AC_MSG_RESULT([yes])
+			appendMod -DICONV_CONST=const
+		])
+	else
+		AC_MSG_WARN([libiconv was not found, disabling the charset module])
+	fi
+fi
+
 appendCXX "-D_MODDIR_=\\\"${MODDIR}\\\""
 appendCXX "-D_DATADIR_=\\\"${DATADIR}\\\""
 
@@ -319,6 +359,8 @@ AC_SUBST([NOSSL])
 AC_SUBST([EXTRA])
 AC_SUBST([TCL_FLAGS])
 AC_SUBST([SASL])
+AC_SUBST([CHARSET])
+AC_SUBST([LIBICONV])
 AC_SUBST([MODDIR])
 AC_SUBST([DATADIR])
 AC_CONFIG_FILES([Makefile])
@@ -333,19 +375,26 @@ AC_OUTPUT
 echo
 echo znc AC_PACKAGE_VERSION configured
 echo
-echo "debug:   $DEBUG"
-echo "ipv6:    $IPV6"
-echo "openssl: $SSL"
-echo "c-ares:  $ARES"
-echo "perl:    $PERL"
+echo "debug:        $DEBUG"
+echo "ipv6:         $IPV6"
+echo "openssl:      $SSL"
+echo "c-ares:       $ARES"
+echo "perl:         $PERL"
 if test x"$SASL" = "x" ; then
-	echo "sasl:    no"
+	echo "sasl:         no"
 else
-	echo "sasl:    yes"
+	echo "sasl:         yes"
 fi
-echo "extra:   $EXTRA"
+echo "extra:        $EXTRA"
 if test x"$TCL_FLAGS" = "x" ; then
-	echo "tcl:     no"
+	echo "tcl:          no"
 else
-	echo "tcl:     yes"
+	echo "tcl:          yes"
 fi
+if test x"$CHARSET" = "x" ; then
+	echo "charset:      no"
+else
+	echo "charset:      yes"
+fi
+echo "run from src: $RUNFROMSOURCE"
+

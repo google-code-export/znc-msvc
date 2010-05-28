@@ -29,6 +29,7 @@ public:
 		vParams.push_back(make_pair("user", ""));
 		AddSubPage(new CWebSubPage("settings", "Global Settings", CWebSubPage::F_ADMIN));
 		AddSubPage(new CWebSubPage("edituser", "Your Settings", vParams));
+		AddSubPage(new CWebSubPage("traffic", "Traffic Info", CWebSubPage::F_ADMIN));
 		AddSubPage(new CWebSubPage("listusers", "List Users", CWebSubPage::F_ADMIN));
 		AddSubPage(new CWebSubPage("adduser", "Add User", CWebSubPage::F_ADMIN));
 	}
@@ -37,6 +38,79 @@ public:
 	}
 
 	virtual bool OnLoad(const CString& sArgStr, CString& sMessage) {
+		if (sArgStr.empty())
+			return true;
+
+		// We don't accept any arguments, but for backwards
+		// compatibility we have to do some magic here.
+		sMessage = "Arguments converted to new syntax";
+
+		bool bSSL = false;
+		bool bIPv6 = false;
+		bool bShareIRCPorts = true;
+		unsigned short uPort = 8080;
+		CString sArgs(sArgStr);
+		CString sPort;
+		CString sListenHost;
+
+		while (sArgs.Left(1) == "-") {
+			CString sOpt = sArgs.Token(0);
+			sArgs = sArgs.Token(1, true);
+
+			if (sOpt.Equals("-IPV6")) {
+				bIPv6 = true;
+			} else if (sOpt.Equals("-IPV4")) {
+				bIPv6 = false;
+			} else if (sOpt.Equals("-noircport")) {
+				bShareIRCPorts = false;
+			} else {
+				// Uhm... Unknown option? Let's just ignore all
+				// arguments, older versions would have returned
+				// an error and denied loading
+				return true;
+			}
+		}
+
+		// No arguments left: Only port sharing
+		if (sArgs.empty() && bShareIRCPorts)
+			return true;
+
+		if (sArgs.find(" ") != CString::npos) {
+			sListenHost = sArgs.Token(0);
+			sPort = sArgs.Token(1, true);
+		} else {
+			sPort = sArgs;
+		}
+
+		if (sPort.Left(1) == "+") {
+			sPort.TrimLeft("+");
+			bSSL = true;
+		}
+
+		if (!sPort.empty()) {
+			uPort = sPort.ToUShort();
+		}
+
+		if (!bShareIRCPorts) {
+			// Make all existing listeners IRC-only
+			const vector<CListener*>& vListeners = CZNC::Get().GetListeners();
+			vector<CListener*>::const_iterator it;
+			for (it = vListeners.begin(); it != vListeners.end(); ++it) {
+				(*it)->SetAcceptType(CListener::ACCEPT_IRC);
+			}
+		}
+
+		// Now turn that into a listener instance
+		CListener *pListener = new CListener(uPort, sListenHost, bSSL,
+				(!bIPv6 ? ADDR_IPV4ONLY : ADDR_ALL), CListener::ACCEPT_HTTP);
+
+		if (!pListener->Listen()) {
+			sMessage = "Failed to add backwards-compatible listener";
+			return false;
+		}
+		CZNC::Get().AddListener(pListener);
+
+		SetArgs("");
 		return true;
 	}
 
@@ -363,12 +437,10 @@ public:
 
 			WebSock.PrintErrorPage("No such username");
 			return true;
-		} else if (sPageName == "listusers") {
-			if (!spSession->IsAdmin()) {
-				return false;
-			}
-
+		} else if (sPageName == "listusers" && spSession->IsAdmin()) {
 			return ListUsersPage(WebSock, Tmpl);
+		} else if (sPageName == "traffic" && spSession->IsAdmin()) {
+			return TrafficPage(WebSock, Tmpl);
 		} else if (sPageName.empty() || sPageName == "index") {
 			return true;
 		}
@@ -747,6 +819,58 @@ public:
 		return true;
 	}
 
+	bool TrafficPage(CWebSock& WebSock, CTemplate& Tmpl) {
+		CSmartPtr<CWebSession> spSession = WebSock.GetSession();
+		Tmpl["Uptime"] = CZNC::Get().GetUptime();
+
+		const map<CString,CUser*>& msUsers = CZNC::Get().GetUserMap();
+		Tmpl["TotalUsers"] = CString(msUsers.size());
+
+		size_t uiAttached = 0, uiClients = 0, uiServers = 0;
+
+		for (map<CString,CUser*>::const_iterator it = msUsers.begin(); it != msUsers.end(); ++it) {
+			CUser& User = *it->second;
+			if (User.IsUserAttached()) {
+				uiAttached++;
+			}
+			if (User.IsIRCConnected()) {
+				uiServers++;
+			}
+			uiClients += User.GetClients().size();
+		}
+
+		Tmpl["AttachedUsers"] = CString(uiAttached);
+		Tmpl["TotalCConnections"] = CString(uiClients);
+		Tmpl["TotalIRCConnections"] = CString(uiServers);
+
+		CZNC::TrafficStatsPair Users, ZNC, Total;
+		CZNC::TrafficStatsMap traffic = CZNC::Get().GetTrafficStats(Users, ZNC, Total);
+		CZNC::TrafficStatsMap::const_iterator it;
+
+		for (it = traffic.begin(); it != traffic.end(); ++it) {
+			CTemplate& l = Tmpl.AddRow("TrafficLoop");
+
+			l["Username"] = it->first;
+			l["In"] = CString::ToByteStr(it->second.first);
+			l["Out"] = CString::ToByteStr(it->second.second);
+			l["Total"] = CString::ToByteStr(it->second.first + it->second.second);
+		}
+
+		Tmpl["UserIn"] = CString::ToByteStr(Users.first);
+		Tmpl["UserOut"] = CString::ToByteStr(Users.second);
+		Tmpl["UserTotal"] = CString::ToByteStr(Users.first + Users.second);
+
+		Tmpl["ZNCIn"] = CString::ToByteStr(ZNC.first);
+		Tmpl["ZNCOut"] = CString::ToByteStr(ZNC.second);
+		Tmpl["ZNCTotal"] = CString::ToByteStr(ZNC.first + ZNC.second);
+
+		Tmpl["AllIn"] = CString::ToByteStr(Total.first);
+		Tmpl["AllOut"] = CString::ToByteStr(Total.second);
+		Tmpl["AllTotal"] = CString::ToByteStr(Total.first + Total.second);
+
+		return true;
+	}
+
 	bool SettingsPage(CWebSock& WebSock, CTemplate& Tmpl) {
 		if (!WebSock.GetParam("submitted").ToUInt()) {
 			CString sVHosts, sMotd;
@@ -775,6 +899,9 @@ public:
 
 				l["Port"] = CString(pListener->GetPort());
 				l["BindHost"] = pListener->GetBindHost();
+
+				l["IsWeb"] = CString(pListener->GetAcceptType() != CListener::ACCEPT_IRC);
+				l["IsIRC"] = CString(pListener->GetAcceptType() != CListener::ACCEPT_HTTP);
 
 #ifdef HAVE_LIBSSL
 				if (pListener->IsSSL()) {
@@ -914,7 +1041,7 @@ public:
 	}
 
 private:
-	map<CString, unsigned int>	m_suSwitchCounters;
+	map<CString, unsigned int>  m_suSwitchCounters;
 };
 
 GLOBALMODULEDEFS(CWebAdminMod, "Web based administration module")

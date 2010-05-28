@@ -23,10 +23,10 @@ namespace
 { // private namespace for local things
 	struct CGlobalModuleConfigLine
 	{
-		CString	m_sName;
-		CString	m_sValue;
-		CUser	*m_pUser;
-		CChan	*m_pChan;
+		CString  m_sName;
+		CString  m_sValue;
+		CUser   *m_pUser;
+		CChan   *m_pChan;
 	};
 }
 
@@ -150,8 +150,8 @@ bool CZNC::ConnectUser(CUser *pUser) {
 
 	m_sConnectThrottle.AddItem(pServer->GetName());
 
-	DEBUG("User [" << pUser->GetUserName() << "] is connecting to [" << pServer->GetName() << ":" << pServer->GetPort() << "] ...");
-	pUser->PutStatus("Attempting to connect to [" + pServer->GetName() + ":" + CString(pServer->GetPort()) + "] ...");
+	DEBUG("User [" << pUser->GetUserName() << "] is connecting to [" << pServer->GetName() << " " << pServer->GetPort() << "] ...");
+	pUser->PutStatus("Attempting to connect to [" + pServer->GetName() + " " + CString(pServer->GetPort()) + "] ...");
 
 	pIRCSock = new CIRCSock(pUser);
 	pIRCSock->SetPass(pServer->GetPass());
@@ -619,6 +619,12 @@ bool CZNC::WriteConfig() {
 			sHostPortion = sHostPortion.FirstLine() + " ";
 		}
 
+		CString sAcceptProtocol;
+		if(pListener->GetAcceptType() == CListener::ACCEPT_IRC)
+			sAcceptProtocol = "irc_only ";
+		else if(pListener->GetAcceptType() == CListener::ACCEPT_HTTP)
+			sAcceptProtocol = "web_only ";
+
 		CString s6;
 		switch (pListener->GetAddrType()) {
 			case ADDR_IPV4ONLY:
@@ -632,7 +638,8 @@ bool CZNC::WriteConfig() {
 				break;
 		}
 
-		m_LockFile.Write("Listen" + s6 + "      = " + sHostPortion + CString((pListener->IsSSL()) ? "+" : "") + CString(pListener->GetPort()) + "\n");
+		m_LockFile.Write("Listener" + s6 + "    = " + sAcceptProtocol + sHostPortion +
+			CString((pListener->IsSSL()) ? "+" : "") + CString(pListener->GetPort()) + "\n");
 	}
 
 	m_LockFile.Write("ConnectDelay = " + CString(m_uiConnectDelay) + "\n");
@@ -764,7 +771,7 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 		sListenHost += " ";
 	}
 
-	vsLines.push_back("Listen" + s6 + "    = " + sListenHost + sSSL + CString(uListenPort));
+	vsLines.push_back("Listener" + s6 + "  = " + sListenHost + sSSL + CString(uListenPort));
 	// !Listen
 
 	set<CModInfo> ssGlobalMods;
@@ -1163,12 +1170,12 @@ bool CZNC::DoRehash(CString& sError)
 	}
 
 	CString sLine;
-	bool bCommented = false;	// support for /**/ style comments
-	CUser* pUser = NULL;	// Used to keep track of which user block we are in
-	CUser* pRealUser = NULL;	// If we rehash a user, this is the real one
-	CChan* pChan = NULL;	// Used to keep track of which chan block we are in
+	bool bCommented = false;     // support for /**/ style comments
+	CUser* pUser = NULL;         // Used to keep track of which user block we are in
+	CUser* pRealUser = NULL;     // If we rehash a user, this is the real one
+	CChan* pChan = NULL;         // Used to keep track of which chan block we are in
 	unsigned int uLineNum = 0;
-	MCString msModules;	// Modules are queued for later loading
+	MCString msModules;          // Modules are queued for later loading
 
 	std::list<CGlobalModuleConfigLine> lGlobalModuleConfigLine;
 
@@ -1503,6 +1510,13 @@ bool CZNC::DoRehash(CString& sError)
 						continue;
 					} else if (sName.Equals("LoadModule")) {
 						CString sModName = sValue.Token(0);
+
+						// XXX Legacy crap, added in znc 0.089
+						if (sModName == "discon_kick") {
+							CUtils::PrintMessage("NOTICE: [discon_kick] was renamed, loading [disconkick] instead");
+							sModName = "disconkick";
+						}
+
 						CUtils::PrintAction("Loading Module [" + sModName + "]");
 						CString sModRet;
 						CString sArgs = sValue.Token(1, true);
@@ -1523,17 +1537,24 @@ bool CZNC::DoRehash(CString& sError)
 					}
 				}
 			} else {
-				if (sName.Equals("Listen") || sName.Equals("ListenPort") || sName.Equals("Listen6") || sName.Equals("Listen4")) {
-					bool bSSL = false;
+				if (sName.Equals("Listen") || sName.Equals("Listen6") || sName.Equals("Listen4")
+						|| sName.Equals("Listener") || sName.Equals("Listener6") || sName.Equals("Listener4")) {
 					EAddrType eAddr = ADDR_ALL;
-					if (sName.Equals("Listen4")) {
+					if (sName.Equals("Listen4") || sName.Equals("Listen") || sName.Equals("Listener4")) {
 						eAddr = ADDR_IPV4ONLY;
 					}
-					if (sName.Equals("Listen6")) {
+					if (sName.Equals("Listener6")) {
 						eAddr = ADDR_IPV6ONLY;
 					}
-					CString sPort;
 
+					CListener::EAcceptType eAccept = CListener::ACCEPT_ALL;
+					if (sValue.TrimPrefix("irc_only "))
+						eAccept = CListener::ACCEPT_IRC;
+					else if (sValue.TrimPrefix("web_only "))
+						eAccept = CListener::ACCEPT_HTTP;
+
+					bool bSSL = false;
+					CString sPort;
 					CString sBindHost;
 
 					if (ADDR_IPV4ONLY == eAddr) {
@@ -1613,10 +1634,11 @@ bool CZNC::DoRehash(CString& sError)
 						return false;
 					}
 
-					CListener* pListener = new CListener(uPort, sBindHost, bSSL, eAddr);
+					CListener* pListener = new CListener(uPort, sBindHost, bSSL, eAddr, eAccept);
 
 					if (!pListener->Listen()) {
-						sError = "Unable to bind [" + CString(strerror(errno)) + "]";
+						sError = (errno == 0 ? CString("unknown error, check the host name") : CString(strerror(errno)));
+						sError = "Unable to bind [" + sError + "]";
 						CUtils::PrintStatus(false, sError);
 						delete pListener;
 						return false;
@@ -2100,7 +2122,7 @@ protected:
 	}
 
 private:
-	size_t	m_uiPosNextUser;
+	size_t m_uiPosNextUser;
 };
 
 void CZNC::EnableConnectUser() {

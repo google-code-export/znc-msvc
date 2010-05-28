@@ -28,7 +28,7 @@ void CClient::UserCommand(CString& sLine) {
 
 	MODULECALL(OnStatusCommand(sLine), m_pUser, this, return);
 
-	CString sCommand = sLine.Token(0);
+	const CString sCommand = sLine.Token(0);
 
 	if (sCommand.Equals("HELP")) {
 		HelpUser();
@@ -976,13 +976,24 @@ void CClient::UserCommand(CString& sLine) {
 		PutStatus(Table);
 	} else if (sCommand.Equals("UPTIME")) {
 		PutStatus("Running for " + CZNC::Get().GetUptime());
-	} else if (m_pUser->IsAdmin() && sCommand.Equals("LISTPORTS")) {
+	} else if (m_pUser->IsAdmin() &&
+			(sCommand.Equals("LISTPORTS") || sCommand.Equals("ADDPORT") || sCommand.Equals("DELPORT"))) {
+		UserPortCommand(sLine);
+	} else {
+		PutStatus("Unknown command [" + sCommand + "] try 'Help'");
+	}
+}
+
+void CClient::UserPortCommand(CString& sLine) {
+	const CString sCommand = sLine.Token(0);
+
+	if (sCommand.Equals("LISTPORTS")) {
 		CTable Table;
 		Table.AddColumn("Port");
 		Table.AddColumn("BindHost");
 		Table.AddColumn("SSL");
-		Table.AddColumn("IPv4");
-		Table.AddColumn("IPv6");
+		Table.AddColumn("Proto");
+		Table.AddColumn("IRC/Web");
 
 		vector<CListener*>::const_iterator it;
 		const vector<CListener*>& vpListeners = CZNC::Get().GetListeners();
@@ -990,48 +1001,62 @@ void CClient::UserCommand(CString& sLine) {
 		for (it = vpListeners.begin(); it < vpListeners.end(); ++it) {
 			Table.AddRow();
 			Table.SetCell("Port", CString((*it)->GetPort()));
-			Table.SetCell("BindHost", (*it)->GetBindHost());
+			Table.SetCell("BindHost", ((*it)->GetBindHost().empty() ? CString("*") : (*it)->GetBindHost()));
 			Table.SetCell("SSL", CString((*it)->IsSSL()));
 
 			EAddrType eAddr = (*it)->GetAddrType();
-			bool bIPv4 = (eAddr == ADDR_IPV4ONLY || eAddr == ADDR_ALL);
-			bool bIPv6 = (eAddr == ADDR_IPV6ONLY || eAddr == ADDR_ALL);
+			Table.SetCell("Proto", (eAddr == ADDR_ALL ? "All" : (eAddr == ADDR_IPV4ONLY ? "IPv4" : "IPv6")));
 
-			Table.SetCell("IPv4", CString(bIPv4));
-			Table.SetCell("IPv6", CString(bIPv6));
+			CListener::EAcceptType eAccept = (*it)->GetAcceptType();
+			Table.SetCell("IRC/Web", (eAccept == CListener::ACCEPT_ALL ? "All" : (eAccept == CListener::ACCEPT_IRC ? "IRC" : "Web")));
 		}
 
 		PutStatus(Table);
-	} else if (m_pUser->IsAdmin() && sCommand.Equals("ADDPORT")) {
-		CString sPort = sLine.Token(1);
-		CString sAddr = sLine.Token(2);
-		EAddrType eAddr = ADDR_ALL;
 
-		if (sAddr.Equals("IPV4")) {
-			eAddr = ADDR_IPV4ONLY;
-		} else if (sAddr.Equals("IPV6")) {
-			eAddr = ADDR_IPV6ONLY;
-		} else if (sAddr.Equals("ALL")) {
-			eAddr = ADDR_ALL;
+		return;
+	}
+
+	CString sPort = sLine.Token(1);
+	CString sAddr = sLine.Token(2);
+	EAddrType eAddr = ADDR_ALL;
+
+	if (sAddr.Equals("IPV4")) {
+		eAddr = ADDR_IPV4ONLY;
+	} else if (sAddr.Equals("IPV6")) {
+		eAddr = ADDR_IPV6ONLY;
+	} else if (sAddr.Equals("ALL")) {
+		eAddr = ADDR_ALL;
+	} else {
+		sAddr.clear();
+	}
+
+	unsigned short uPort = sPort.ToUShort();
+
+	if (sCommand.Equals("ADDPORT")) {
+		CListener::EAcceptType eAccept = CListener::ACCEPT_ALL;
+		CString sAccept = sLine.Token(3);
+
+		if (sAccept.Equals("WEB")) {
+			eAccept = CListener::ACCEPT_HTTP;
+		} else if (sAccept.Equals("IRC")) {
+			eAccept = CListener::ACCEPT_IRC;
+		} else if (sAccept.Equals("ALL")) {
+			eAccept = CListener::ACCEPT_ALL;
 		} else {
-			sAddr.clear();
+			sAccept.clear();
 		}
 
-		if (sPort.empty() || sAddr.empty()) {
-			PutStatus("Usage: AddPort <[+]port> <ipv4|ipv6|all> [bindhost]");
+		if (sPort.empty() || sAddr.empty() || sAccept.empty()) {
+			PutStatus("Usage: AddPort <[+]port> <ipv4|ipv6|all> <web|irc|all> [bindhost]");
 		} else {
-			bool bSSL = false;
-			if(sPort.Left(1).Equals("+")) {
-				bSSL = true;
-			}
+			bool bSSL = (sPort.Left(1).Equals("+"));
+			const CString sBindHost = sLine.Token(4);
 
-			u_short uPort = sPort.ToUShort();
-			CString sBindHost = sLine.Token(3);
-			CListener* pListener = new CListener(uPort, sBindHost, bSSL, eAddr);
+			CListener* pListener = new CListener(uPort, sBindHost, bSSL, eAddr, eAccept);
 
 			if (!pListener->Listen()) {
 				delete pListener;
-				PutStatus("Unable to bind ["+CString(strerror(errno))+"]");
+				PutStatus("Unable to bind [" + CString(strerror(errno)) + "]");
 			} else {
 				if (CZNC::Get().AddListener(pListener))
 					PutStatus("Port Added");
@@ -1039,26 +1064,12 @@ void CClient::UserCommand(CString& sLine) {
 					PutStatus("Error?!");
 			}
 		}
-	} else if (m_pUser->IsAdmin() && sCommand.Equals("DELPORT")) {
-		CString sPort = sLine.Token(1);
-		CString sAddr = sLine.Token(2);
-		EAddrType eAddr = ADDR_ALL;
-
-		if (sAddr.Equals("IPV4")) {
-			eAddr = ADDR_IPV4ONLY;
-		} else if (sAddr.Equals("IPV6")) {
-			eAddr = ADDR_IPV6ONLY;
-		} else if (sAddr.Equals("ALL")) {
-			eAddr = ADDR_ALL;
-		} else {
-			sAddr.clear();
-		}
-
+	} else if (sCommand.Equals("DELPORT")) {
 		if (sPort.empty() || sAddr.empty()) {
 			PutStatus("Usage: DelPort <port> <ipv4|ipv6|all> [bindhost]");
 		} else {
-			u_short uPort = sPort.ToUShort();
-			CString sBindHost = sLine.Token(3);
+			const CString sBindHost = sLine.Token(3);
+
 			CListener* pListener = CZNC::Get().FindListener(uPort, sBindHost, eAddr);
 
 			if (pListener) {
@@ -1068,8 +1079,6 @@ void CClient::UserCommand(CString& sLine) {
 				PutStatus("Unable to find a matching port");
 			}
 		}
-	} else {
-		PutStatus("Unknown command [" + sCommand + "] try 'Help'");
 	}
 }
 
@@ -1262,7 +1271,7 @@ void CClient::HelpUser() {
 
 		Table.AddRow();
 		Table.SetCell("Command", "AddPort");
-		Table.SetCell("Arguments", "<[+]port> <ipv4|ipv6|all> [bindhost]");
+		Table.SetCell("Arguments", "<[+]port> <ipv4|ipv6|all> <web|irc|all> [bindhost]");
 		Table.SetCell("Description", "Add another port for ZNC to listen on");
 
 		Table.AddRow();

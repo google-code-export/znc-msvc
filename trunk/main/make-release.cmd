@@ -1,5 +1,7 @@
 @echo off
 
+set WEBMODULES=lastseen,stickychan,notes,webadmin
+
 echo ************************ Checking folders... *************************
 
 FOR %%d in (build-out\Win32-Release build-out\x64-Release) DO if not exist %%d set xf=%%d && goto :missingfolder
@@ -18,16 +20,16 @@ echo Folders seem to be ok!
 
 echo ************************ Making folders...   *************************
 
-if exist build-temp\x86 echo Deleting temp x86 folder... && rd /s /q build-temp\x86
+if exist build-temp\x86 echo Deleting temp x86 folder... && rd /S /Q build-temp\x86
 md build-temp\x86\znc
 md build-temp\x86\znc\webskins
 md build-temp\x86\znc\modules
-md build-temp\x86\znc\modules\www
-if exist build-temp\x64 echo Deleting temp x64 folder... && rd /s /q build-temp\x64
+FOR %%M IN (%WEBMODULES%) DO md build-temp\x86\znc\modules\%%M
+if exist build-temp\x64 echo Deleting temp x64 folder... && rd /S /Q build-temp\x64
 md build-temp\x64\znc
 md build-temp\x64\znc\webskins
 md build-temp\x64\znc\modules
-md build-temp\x64\znc\modules\www
+FOR %%M IN (%WEBMODULES%) DO md build-temp\x64\znc\modules\%%M
 
 
 echo ************************ Copying binaries... *************************
@@ -56,8 +58,10 @@ echo ****************** Copying web interface skin files... ********************
 echo .svn > build-temp\xcopyskipsvn.txt
 xcopy znc-msvc\webskins build-temp\x86\znc\webskins /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
 xcopy znc-msvc\webskins build-temp\x64\znc\webskins /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
-xcopy znc-msvc\modules\www build-temp\x86\znc\modules\www /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
-xcopy znc-msvc\modules\www build-temp\x64\znc\modules\www /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+FOR %%M IN (%WEBMODULES%) DO (
+	xcopy znc-msvc\modules\%%M build-temp\x86\znc\modules\%%M /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+	xcopy znc-msvc\modules\%%M build-temp\x64\znc\modules\%%M /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+)
 del build-temp\xcopyskipsvn.txt
 
 

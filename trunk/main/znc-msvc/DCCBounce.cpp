@@ -112,7 +112,7 @@ void CDCCBounce::Timeout() {
 	if (IsRemote()) {
 		CString sHost = Csock::GetHostName();
 		if (!sHost.empty()) {
-			sHost = " to [" + sHost + ":" + CString(Csock::GetPort()) + "]";
+			sHost = " to [" + sHost + " " + CString(Csock::GetPort()) + "]";
 		} else {
 			sHost = ".";
 		}
@@ -129,7 +129,7 @@ void CDCCBounce::ConnectionRefused() {
 	CString sType = (m_bIsChat) ? "Chat" : "Xfer";
 	CString sHost = Csock::GetHostName();
 	if (!sHost.empty()) {
-		sHost = " to [" + sHost + ":" + CString(Csock::GetPort()) + "]";
+		sHost = " to [" + sHost + " " + CString(Csock::GetPort()) + "]";
 	} else {
 		sHost = ".";
 	}
@@ -144,7 +144,7 @@ void CDCCBounce::SockError(int iErrno) {
 	if (IsRemote()) {
 		CString sHost = Csock::GetHostName();
 		if (!sHost.empty()) {
-			sHost = "[" + sHost + ":" + CString(Csock::GetPort()) + "]";
+			sHost = "[" + sHost + " " + CString(Csock::GetPort()) + "]";
 		}
 
 		m_pUser->PutStatus("DCC " + sType + " Bounce (" + m_sRemoteNick + "): Socket error [" + CString(strerror(iErrno)) + "]" + sHost);

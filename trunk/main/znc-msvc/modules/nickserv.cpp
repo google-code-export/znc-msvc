@@ -74,7 +74,7 @@ public:
 	}
 
 private:
-	CString	m_sPass;
+	CString m_sPass;
 };
 
 MODULEDEFS(CNickServ, "Auths you with NickServ")

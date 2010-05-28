@@ -120,12 +120,12 @@ private:
 	// flock() wrapper
 	bool Lock(int iOperation);
 
-	CString	m_sBuffer;
-	int		m_iFD;
+	CString m_sBuffer;
+	int     m_iFD;
 
 protected:
-	CString	m_sLongName;	//!< Absolute filename (m_sPath + "/" + m_sShortName)
-	CString	m_sShortName;	//!< Filename alone, without path
+	CString m_sLongName;  //!< Absolute filename (m_sPath + "/" + m_sShortName)
+	CString m_sShortName; //!< Filename alone, without path
 };
 
 class ZNC_API CDir : public vector<CFile*> {
@@ -157,46 +157,6 @@ public:
 	size_t Fill(const CString& sDir) {
 		return FillByWildcard(sDir, "*");
 	}
-
-/*	static bool Create(const CString& sDir, mode_t mode = 0755) {
-		VCCString vSubDirs = sDir.split("[/\\\\]+");
-		CCString sCurDir;
-
-		for (unsigned int a = 0; a < vSubDirs.size(); a++) {
-			sCurDir += vSubDirs[a] + "/";
-			if ((!CDir::Exists(sCurDir)) && (mkdir(sCurDir.c_str(), mode) != 0)) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	int FillByRegex(const CCString& sDir, const CCString& sRegex, const CCString& sFlags = "") {
-		CleanUp();
-		DIR* dir = opendir((sDir.empty()) ? "." : sDir.c_str());
-
-		if (!dir) {
-			return 0;
-		}
-
-		struct dirent * de;
-
-		while ((de = readdir(dir)) != 0) {
-			if ((strcmp(de->d_name, ".") == 0) || (strcmp(de->d_name, "..") == 0)) {
-				continue;
-			}
-			if ((!sRegex.empty()) && (!CCString::search(de->d_name, sRegex, sFlags))) {
-				continue;
-			}
-
-			CFile *file = new CFile(sDir, de->d_name, this);
-			push_back(file);
-		}
-
-		closedir(dir);
-		return size();
-	}*/
 
 	size_t FillByWildcard(const CString& sDir, const CString& sWildcard) {
 		CleanUp();
@@ -283,8 +243,8 @@ public:
 
 private:
 protected:
-	CFile::EFileAttr	m_eSortAttr;
-	bool				m_bDesc;
+	CFile::EFileAttr m_eSortAttr;
+	bool             m_bDesc;
 };
 
 #ifndef _WIN32
@@ -319,7 +279,7 @@ public:
 	void close2(int iPid, int iReadFD, int iWriteFD);
 
 private:
-	int			m_iPid;
+	int  m_iPid;
 };
 
 #endif // !_WIN32

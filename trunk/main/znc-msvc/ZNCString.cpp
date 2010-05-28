@@ -200,7 +200,7 @@ CString CString::Escape_n(EEscape eFrom, EEscape eTo) const {
 				if ((*p == '&') && (strnchr((unsigned char*) p, ';', sizeof(pTmp) - 1, pTmp, &iCounted))) {
 					// please note that we do not have any Unicode or UTF-8 support here at all.
 
-					if ((iCounted >= 3) && (pTmp[1] == '#')) {	// do XML and HTML &#97; &#x3c
+					if ((iCounted >= 3) && (pTmp[1] == '#')) {  // do XML and HTML &#97; &#x3c
 						int base = 10;
 
 						if ((pTmp[2] & 0xDF) == 'X') {
@@ -227,7 +227,7 @@ CString CString::Escape_n(EEscape eFrom, EEscape eTo) const {
 					if (ch > 0) {
 						a += iCounted;
 					} else {
-						ch = *p;	 // Not a valid escape, just record the &
+						ch = *p;   // Not a valid escape, just record the &
 					}
 				} else {
 					ch = *p;
@@ -924,10 +924,10 @@ CString CString::ToTimeStr(time_t s) {
 	const time_t y = d * 365;
 	CString sRet;
 
-#define TIMESPAN(time, str)			\
-	if (s >= time) {		\
+#define TIMESPAN(time, str)                          \
+	if (s >= time) {                             \
 		sRet += CString(s / time) + str " "; \
-		s = s % time;		\
+		s = s % time;                        \
 	}
 	TIMESPAN(y, "y");
 	TIMESPAN(w, "w");

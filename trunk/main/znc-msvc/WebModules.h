@@ -49,10 +49,10 @@ public:
 	size_t AddError(const CString& sMessage);
 	size_t AddSuccess(const CString& sMessage);
 private:
-	CString		m_sId;
-	CUser*		m_pUser;
-	VCString	m_vsErrorMsgs;
-	VCString	m_vsSuccessMsgs;
+	CString         m_sId;
+	CUser*          m_pUser;
+	VCString        m_vsErrorMsgs;
+	VCString        m_vsSuccessMsgs;
 };
 
 
@@ -82,10 +82,10 @@ public:
 	const CString& GetTitle() const { return m_sTitle; }
 	const VPair& GetParams() const { return m_vParams; }
 private:
-	unsigned int	m_uFlags;
-	CString			m_sName;
-	CString			m_sTitle;
-	VPair			m_vParams;
+	unsigned int    m_uFlags;
+	CString         m_sName;
+	CString         m_sTitle;
+	VPair           m_vParams;
 };
 
 class CWebAuth : public CAuthBase {
@@ -99,7 +99,7 @@ public:
 	void Invalidate();
 private:
 protected:
-	CWebSock*	m_pWebSock;
+	CWebSock*   m_pWebSock;
 };
 
 class CWebSessionMap : public TCacheMap<CString, CSmartPtr<CWebSession> > {
@@ -112,9 +112,9 @@ class ZNC_API CWebSock : public CHTTPSock {
 public:
 	enum EPageReqResult {
 		PAGE_NOTFOUND, // print 404 and Close()
-		PAGE_PRINT, // print page contents and Close()
+		PAGE_PRINT,    // print page contents and Close()
 		PAGE_DEFERRED, // async processing, Close() will be called from a different place
-		PAGE_DONE // all stuff has been done and Close() has been called (e.g. by CHTTPSock::Redirect)
+		PAGE_DONE      // all stuff has been done
 	};
 
 	CWebSock(CModule* pModule);
@@ -125,7 +125,7 @@ public:
 	virtual bool OnLogin(const CString& sUser, const CString& sPass);
 	virtual void OnPageRequest(const CString& sURI);
 
-	void ParsePath();	// This parses the path portion of the url into some member vars
+	void ParsePath();   // This parses the path portion of the url into some member vars
 	CModule* ResolveModule();
 
 	//virtual bool PrintFile(const CString& sFileName, CString sContentType = "");
@@ -150,7 +150,6 @@ public:
 	CString GetCSRFCheck();
 
 	virtual Csock* GetSockObj(const CString& sHost, unsigned short uPort);
-	CString GetModWebPath(const CString& sModName) const;
 	CString GetSkinPath(const CString& sSkinName) const;
 	CModule* GetModule() const { return (CModule*) m_pModule; }
 	size_t GetAvailSkins(vector<CFile>& vRet);
@@ -166,16 +165,16 @@ public:
 private:
 	EPageReqResult OnPageRequestInternal(const CString& sURI, CString& sPageRet);
 
-	bool					m_bPathsSet;
-	CTemplate				m_Template;
-	CSmartPtr<CAuthBase>	m_spAuth;
+	bool                    m_bPathsSet;
+	CTemplate               m_Template;
+	CSmartPtr<CAuthBase>    m_spAuth;
 	CString                 m_sForceUser;   // Gets filled by ResolveModule()
 	CString                 m_sModName;     // Gets filled by ResolveModule()
 	CString                 m_sPath;        // Gets filled by ResolveModule()
 	CString                 m_sPage;        // Gets filled by ResolveModule()
-	CSmartPtr<CWebSession>	m_spSession;
+	CSmartPtr<CWebSession>  m_spSession;
 
-	static CWebSessionMap m_mspSessions;
+	static CWebSessionMap   m_mspSessions;
 };
 
 #endif // !_WEBMODULES_H
