@@ -198,7 +198,7 @@ public:
 
 		// offset is in hours
 		tm += (time_t)(m_pUser->GetTimezoneOffset() * 60 * 60);
-		strftime(szTimestamp, sizeof(szTimestamp) / sizeof(char),
+		strftime_validating(szTimestamp, sizeof(szTimestamp) / sizeof(char),
 				sFormat.c_str(), localtime(&tm));
 
 		return szTimestamp;
