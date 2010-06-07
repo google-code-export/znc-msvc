@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1250"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Modules"
 	ProjectGUID="{1F28EB13-7603-4103-97E7-E8DC786F63B7}"
 	Keyword="MakeFileProj"
@@ -148,19 +148,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\block_lagchk.cpp"
+				RelativePath="..\..\modules\extra_win32\block_lagchk.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\block_motd.cpp"
+				RelativePath="..\..\modules\extra\block_motd.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\blockserver.cpp"
+				RelativePath="..\..\modules\extra_win32\blockserver.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\extra\blockuser.cpp"
+				RelativePath="..\..\modules\blockuser.cpp"
 				>
 			</File>
 			<File
@@ -168,11 +168,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\certauth.cpp"
+				RelativePath="..\..\modules\extra_win32\certauth.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\certchecker.cpp"
+				RelativePath="..\..\modules\extra_win32\certchecker.cpp"
 				>
 			</File>
 			<File
@@ -180,11 +180,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\clientpart.cpp"
+				RelativePath="..\..\modules\clientnotify.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\colloquy.cpp"
+				RelativePath="..\..\modules\extra_win32\clientpart.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\modules\extra_win32\colloquy.cpp"
 				>
 			</File>
 			<File
@@ -196,11 +200,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\extra\discon_kick.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\modules\extra\droproot.cpp"
+				RelativePath="..\..\modules\disconkick.cpp"
 				>
 			</File>
 			<File
@@ -212,11 +212,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\fish.cpp"
+				RelativePath="..\..\modules\extra_win32\fish.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\fix_lagchk.cpp"
+				RelativePath="..\..\modules\extra_win32\fix_lagchk.cpp"
 				>
 			</File>
 			<File
@@ -224,19 +224,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\flooddetach.cpp"
+				RelativePath="..\..\modules\extra\flooddetach.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\highlightattach.cpp"
+				RelativePath="..\..\modules\extra_win32\highlightattach.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\identserver.cpp"
+				RelativePath="..\..\modules\extra_win32\identserver.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\imapauth.cpp"
+				RelativePath="..\..\modules\extra\imapauth.cpp"
 				>
 			</File>
 			<File
@@ -248,7 +248,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\extra\lastseen.cpp"
+				RelativePath="..\..\modules\lastseen.cpp"
 				>
 			</File>
 			<File
@@ -268,11 +268,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\noctcp.cpp"
+				RelativePath="..\..\modules\extra_win32\noctcp.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\notify.cpp"
+				RelativePath="..\..\modules\extra_win32\noreconnectonkill.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\modules\notes.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\modules\extra_win32\notify.cpp"
 				>
 			</File>
 			<File
@@ -288,7 +296,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\prowl.cpp"
+				RelativePath="..\..\modules\extra_win32\prowl.cpp"
 				>
 			</File>
 			<File
@@ -296,15 +304,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\qauth.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\modules\raw.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\rawlog.cpp"
+				RelativePath="..\..\modules\extra_win32\rawlog.cpp"
 				>
 			</File>
 			<File
@@ -332,7 +336,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\twitter.cpp"
+				RelativePath="..\..\modules\extra_win32\twitter.cpp"
 				>
 			</File>
 			<File
@@ -340,7 +344,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\modules\watch_only_detached.cpp"
+				RelativePath="..\..\modules\extra_win32\watch_only_detached.cpp"
 				>
 			</File>
 			<File
