@@ -1,0 +1,29 @@
+<? INC Header.tmpl ?>
+
+<div class="toptable">
+	<table class="data">
+		<thead>
+			<tr>
+				<td>User</td>
+				<td>Last Seen</td>
+				<td>Info</td>
+				<td>Action</td>
+			</tr>
+		</thead>
+		<tbody>
+			<? LOOP UserLoop ?>
+			<tr class="<? IF __EVEN__ ?>evenrow<? ELSE ?>oddrow<? ENDIF ?>">
+				<td><? VAR Username ?></td>
+				<td><? VAR LastSeen DEFAULT="- unknown -" ?></td>
+				<td><? VAR Info ?></td>
+				<td><span class="nowrap">
+					[<a href="/mods/webadmin/edituser?user=<?VAR Username ESC=URL?>">Edit</a>]
+					<? IF !IsSelf ?>[<a href="/mods/webadmin/deluser?user=<?VAR Username ESC=URL?>">Delete</a>]<? ENDIF ?>
+					</span></td>
+			</tr>
+			<? ENDLOOP ?>
+		</tbody>
+	</table>
+</div>
+
+<? INC Footer.tmpl ?>
