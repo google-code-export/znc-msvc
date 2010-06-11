@@ -1,6 +1,11 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2010-06-11 (0.090) (rev 2007) ==
+  * See previous temp release
+  * See [http://en.znc.in/wiki/ChangeLog/0.090 changelog on znc.in]
+  * Made sure invalid time format strings don't crash
+
 == 2010-04-26 (0.089-r 1944) ==
   * Upstream fixed and added like a million things, check out the changelog on znc.in
   * Updated OpenSSL to 1.0.0
