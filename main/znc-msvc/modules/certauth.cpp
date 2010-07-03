@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2004-2009  See the AUTHORS file for details.
+ * Copyright (C) 2004-2010  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  */
 
-#include "stdafx.hpp"
+#define REQUIRESSL
 
 #include "Modules.h"
 #include "User.h"
-#include "znc.h"
+#include "Listener.h"
 
 class CSSLClientCertMod : public CGlobalModule {
 public:
@@ -81,7 +81,7 @@ public:
 		if (pSock == NULL || pUser == NULL)
 			return CONTINUE;
 
-		CString sPubKey = pSock->GetPeerPubKey();
+		CString sPubKey = GetKey(pSock);
 		DEBUG("User: " << sUser << " Key: " << sPubKey);
 
 		if (sPubKey.empty()) {
@@ -112,22 +112,22 @@ public:
 		CString sCmd = sCommand.Token(0);
 
 		if (sCmd.Equals("show")) {
-			CString sPubKey = m_pClient->GetPeerPubKey();
+			CString sPubKey = GetKey(m_pClient);
 			if (sPubKey.empty())
-				PutModule("You are not connected with any public key");
+				PutModule("You are not connected with any valid public key");
 			else
 				PutModule("Your current public key is: " + sPubKey);
 		} else if (sCmd.Equals("add")) {
-			CString sPubKey = m_pClient->GetPeerPubKey();
+			CString sPubKey = GetKey(m_pClient);
 			if (sPubKey.empty())
-				PutModule("You are not connected with any public key");
+				PutModule("You are not connected with any valid public key");
 			else {
 				pair<SCString::iterator, bool> res = m_PubKeys[m_pUser->GetUserName()].insert(sPubKey);
 				if (res.second) {
 					PutModule("Added your current public key to the list");
 					Save();
 				} else
-					PutModule("You key was already added");
+					PutModule("Your key was already added");
 			}
 		} else if (sCmd.Equals("list")) {
 			CTable Table;
@@ -184,10 +184,28 @@ public:
 		}
 	}
 
+	CString GetKey(Csock *pSock) {
+		CString sRes;
+		int res = pSock->GetPeerFingerprint(sRes);
+
+		DEBUG("GetKey() returned status " << res << " with key " << sRes);
+
+		// This is 'inspired' by charybdis' libratbox
+		switch (res) {
+		case X509_V_OK:
+		case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
+		case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
+		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+			return sRes;
+		default:
+			return "";
+		}
+	}
+
 private:
 	// Maps user names to a list of allowed pubkeys
 	typedef map<CString, set<CString> > MSCString;
-	MSCString	m_PubKeys;
+	MSCString                           m_PubKeys;
 };
 
 GLOBALMODULEDEFS(CSSLClientCertMod, "Allow users to authenticate via SSL client certificates")
