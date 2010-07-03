@@ -25,7 +25,8 @@ CZNCWindowsService::~CZNCWindowsService()
 
 DWORD CZNCWindowsService::Init()
 {
-	srand((unsigned int)time(NULL));
+	CUtils::SeedPRNG();
+
 	_set_fmode(_O_BINARY);
 #ifdef HAVE_LIBSSL
 	CRYPTO_malloc_init();
