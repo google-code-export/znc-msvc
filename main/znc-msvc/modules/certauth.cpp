@@ -6,6 +6,8 @@
  * by the Free Software Foundation.
  */
 
+#include "stdafx.hpp"
+
 #define REQUIRESSL
 
 #include "Modules.h"
