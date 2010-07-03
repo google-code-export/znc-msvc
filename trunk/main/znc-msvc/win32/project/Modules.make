@@ -125,6 +125,7 @@ $(MAKDIR)\away.dll \
 $(MAKDIR)\awaynick.dll \
 $(MAKDIR)\blockuser.dll \
 $(MAKDIR)\buffextras.dll \
+$(MAKDIR)\certauth.dll \
 $(MAKDIR)\chansaver.dll \
 $(MAKDIR)\clientnotify.dll \
 $(MAKDIR)\crypt.dll \
@@ -161,7 +162,6 @@ $(MAKDIR)\extra\notify_connect.dll \
 $(MAKDIR)\extra\send_raw.dll \
 $(MAKDIR)\extra_win32\blockserver.dll \
 $(MAKDIR)\extra_win32\block_lagchk.dll \
-$(MAKDIR)\extra_win32\certauth.dll \
 $(MAKDIR)\extra_win32\certchecker.dll \
 $(MAKDIR)\extra_win32\clientpart.dll \
 $(MAKDIR)\extra_win32\colloquy.dll \
@@ -187,6 +187,7 @@ $(MAKDIR)\away.obj \
 $(MAKDIR)\awaynick.obj \
 $(MAKDIR)\blockuser.obj \
 $(MAKDIR)\buffextras.obj \
+$(MAKDIR)\certauth.obj \
 $(MAKDIR)\chansaver.obj \
 $(MAKDIR)\clientnotify.obj \
 $(MAKDIR)\crypt.obj \
@@ -223,7 +224,6 @@ $(MAKDIR)\extra\notify_connect.obj \
 $(MAKDIR)\extra\send_raw.obj \
 $(MAKDIR)\extra_win32\blockserver.obj \
 $(MAKDIR)\extra_win32\block_lagchk.obj \
-$(MAKDIR)\extra_win32\certauth.obj \
 $(MAKDIR)\extra_win32\certchecker.obj \
 $(MAKDIR)\extra_win32\clientpart.obj \
 $(MAKDIR)\extra_win32\colloquy.obj \
