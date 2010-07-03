@@ -25,7 +25,7 @@ static const struct option g_LongOpts[] = {
 };
 
 static void GenerateHelp(const char *appname) {
-	CUtils::PrintMessage("USAGE: " + CString(appname) + " [options] [config]");
+	CUtils::PrintMessage("USAGE: " + CString(appname) + " [options]");
 	CUtils::PrintMessage("Options are:");
 	CUtils::PrintMessage("\t-h, --help         List available command line options (this page)");
 	CUtils::PrintMessage("\t-v, --version      Output version information and exit");
@@ -184,7 +184,9 @@ int main(int argc, char** argv) {
 	}
 
 	if (optind < argc) {
-		sConfig = argv[optind];
+		CUtils::PrintError("Specifying a config file as an argument isn't supported anymore.");
+		CUtils::PrintError("Use --datadir instead.");
+		return 1;
 	}
 
 	if (!InitCsocket()) {
@@ -276,7 +278,6 @@ int main(int argc, char** argv) {
 					NULL,
 					NULL,
 					NULL,
-					NULL,
 					NULL
 				};
 				int pos = 3;
@@ -290,7 +291,6 @@ int main(int argc, char** argv) {
 				if (bAllowRoot)
 					args[pos++] = strdup("--allow-root");
 #endif
-				args[pos++] = strdup(pZNC->GetConfigFile().c_str());
 				// The above code adds 4 entries to args tops
 				// which means the array should be big enough
 

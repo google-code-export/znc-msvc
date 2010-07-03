@@ -72,7 +72,7 @@ bool CChan::WriteConfig(CFile& File) {
 
 void CChan::Clone(CChan& chan) {
 	// We assume that m_sName and m_pUser are equal
-	SetBufferCount(chan.GetBufferCount());
+	SetBufferCount(chan.GetBufferCount(), true);
 	SetKeepBuffer(chan.KeepBuffer());
 	SetKey(chan.GetKey());
 	SetDefaultModes(chan.GetDefaultModes());
@@ -90,6 +90,13 @@ void CChan::Clone(CChan& chan) {
 		}
 		SetDetached(chan.IsDetached());
 	}
+}
+
+bool CChan::SetBufferCount(size_t u, bool bForce) {
+	if (!bForce && u > CZNC::Get().GetMaxBufferSize())
+		return false;
+	m_uBufferCount = u;
+	return true;
 }
 
 void CChan::Cycle() const {

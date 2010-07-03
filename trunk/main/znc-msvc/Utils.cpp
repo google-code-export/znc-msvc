@@ -405,9 +405,14 @@ bool CTable::AddColumn(const CString& sName) {
 }
 
 size_t CTable::AddRow() {
+	// Don't add a row if no headers are defined
+	if (m_vsHeaders.empty()) {
+		return (unsigned int) -1;
+	}
+
 	// Add a vector with enough space for each column
 	push_back(vector<CString>(m_vsHeaders.size()));
-	return size() -1;
+	return size() - 1;
 }
 
 bool CTable::SetCell(const CString& sColumn, const CString& sValue, size_t uRowIdx) {
@@ -419,7 +424,12 @@ bool CTable::SetCell(const CString& sColumn, const CString& sValue, size_t uRowI
 		uRowIdx = size() -1;
 	}
 
-	(*this)[uRowIdx][GetColumnIndex(sColumn)] = sValue;
+	unsigned int uColIdx = GetColumnIndex(sColumn);
+
+	if (uColIdx == (unsigned int) -1)
+		return false;
+
+	(*this)[uRowIdx][uColIdx] = sValue;
 
 	if (m_msuWidths[sColumn] < sValue.size())
 		m_msuWidths[sColumn] = sValue.size();
@@ -480,33 +490,6 @@ bool CTable::GetLine(size_t uIdx, CString& sLine) const {
 	return false;
 }
 
-/*
-bool CTable::Output(std::ostream oOut) {
-	stringstream ssSep;
-
-	ssSep << "-+-";
-
-	oOut << endl << ssSep.str() << endl;
-
-	for (unsigned int b = 0; b < size(); b++) {
-		map<CString, CString>* pRow = (*this)[b];
-
-		oOut << " | ";
-
-		for (unsigned int c = 0; c < m_vsHeaders.size(); c++) {
-			oOut.width(GetColumnWidth(c));
-			oOut << (*pRow)[m_vsHeaders[c]];
-			oOut << " | ";
-		}
-
-		oOut << endl;
-	}
-
-	oOut << ssSep.str() << endl;
-	return true;
-}
-*/
-
 unsigned int CTable::GetColumnIndex(const CString& sName) const {
 	for (unsigned int i = 0; i < m_vsHeaders.size(); i++) {
 		if (m_vsHeaders[i] == sName)
@@ -515,7 +498,7 @@ unsigned int CTable::GetColumnIndex(const CString& sName) const {
 
 	DEBUG("CTable::GetColumnIndex(" + sName + ") failed");
 
-	return 0;
+	return (unsigned int) -1;
 }
 
 size_t CTable::GetColumnWidth(size_t uIdx) const {

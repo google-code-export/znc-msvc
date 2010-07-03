@@ -117,8 +117,7 @@ public:
 		PAGE_DONE      // all stuff has been done
 	};
 
-	CWebSock(CModule* pModule);
-	CWebSock(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout = 60);
+	CWebSock();
 	virtual ~CWebSock();
 
 	virtual bool ForceLogin();
@@ -155,12 +154,15 @@ public:
 	size_t GetAvailSkins(vector<CFile>& vRet);
 	CString GetSkinName();
 
-	CString GetRequestCookie(const CString& sKey) const;
+	CString GetRequestCookie(const CString& sKey);
 	bool SendCookie(const CString& sKey, const CString& sValue);
 
 	static void FinishUserSessions(const CUser& User) {
 		m_mspSessions.FinishUserSessions(User);
 	}
+
+protected:
+	using CHTTPSock::PrintErrorPage;
 
 private:
 	EPageReqResult OnPageRequestInternal(const CString& sURI, CString& sPageRet);
