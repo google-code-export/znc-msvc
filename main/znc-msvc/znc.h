@@ -44,7 +44,6 @@ public:
 	void ReleaseISpoof();
 	bool WritePidFile(int iPid);
 	bool DeletePidFile();
-	CUser* GetUser(const CString& sUser);
 	Csock* FindSockByName(const CString& sSockName);
 	bool IsHostAllowed(const CString& sHostMask) const;
 	// This returns false if there are too many anonymous connections from this ip
@@ -91,6 +90,7 @@ public:
 	void SetStatusPrefix(const CString& s) { m_sStatusPrefix = (s.empty()) ? "*" : s; }
 	void SetISpoofFile(const CString& s) { m_sISpoofFile = s; }
 	void SetISpoofFormat(const CString& s) { m_sISpoofFormat = (s.empty()) ? "global { reply \"%\" }" : s; }
+	void SetMaxBufferSize(size_t i) { m_uiMaxBufferSize = i; }
 	// !Setters
 
 	// Getters
@@ -115,6 +115,7 @@ public:
 	const VCString& GetVHosts() const { return m_vsVHosts; }
 	const vector<CListener*>& GetListeners() const { return m_vpListeners; }
 	time_t TimeStarted() const { return m_TimeStarted; }
+	size_t GetMaxBufferSize() const { return m_uiMaxBufferSize; }
 	// !Getters
 
 	// Static allocator
@@ -181,6 +182,7 @@ protected:
 	CFile*                 m_pISpoofLockFile;
 	unsigned int           m_uiConnectDelay;
 	unsigned int           m_uiAnonIPLimit;
+	size_t           m_uiMaxBufferSize;
 	CGlobalModules*        m_pModules;
 	unsigned long long     m_uBytesRead;
 	unsigned long long     m_uBytesWritten;

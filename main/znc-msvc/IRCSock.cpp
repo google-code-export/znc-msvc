@@ -80,11 +80,12 @@ void CIRCSock::ReadLine(const CString& sData) {
 	MODULECALL(OnRaw(sLine), m_pUser, NULL, return);
 
 	if (sLine.Equals("PING ", false, 5)) {
+		// Generate a reply and don't forward this to any user,
+		// we don't want any PING forwarded
 		PutIRC("PONG " + sLine.substr(5));
-		m_pUser->PutUser(sLine);
 		return;
-	} else if (sLine.Token(1).Equals("PONG") && sLine.Token(3).Equals(":ZNC")) {
-		// We asked for this so don't forward the reply to clients.
+	} else if (sLine.Token(1).Equals("PONG")) {
+		// Block PONGs, we already responded to the pings
 		return;
 	} else if (sLine.Equals("ERROR ", false, 6)) {
 		//ERROR :Closing Link: nick[24.24.24.24] (Excess Flood)
@@ -518,8 +519,10 @@ void CIRCSock::ReadLine(const CString& sData) {
 			CChan* pChan = m_pUser->FindChan(sChan);
 
 			if (pChan) {
-				pChan->RemNick(sKickedNick);
 				MODULECALL(OnKick(Nick, sKickedNick, *pChan, sMsg), m_pUser, NULL, );
+				// do not remove the nick till after the OnKick call, so modules
+				// can do Chan.FindNick or something to get more info.
+				pChan->RemNick(sKickedNick);
 			}
 
 			if (GetNick().Equals(sKickedNick) && pChan) {
@@ -644,7 +647,16 @@ void CIRCSock::ReadLine(const CString& sData) {
 			// CAP spec don't mention this, but all implementations
 			// I've seen add this extra asterisk
 			CString sSubCmd = sRest.Token(1);
-			CString sArgs = sRest.Token(2, true).TrimPrefix_n(":");
+
+			// If the caplist of a reply is too long, it's split
+			// into multiple replies. A "*" is prepended to show
+			// that the list was split into multiple replies.
+			CString sArgs;
+			if (sRest.Token(2) == "*") {
+				sArgs = sRest.Token(3, true).TrimPrefix_n(":");
+			} else {
+				sArgs = sRest.Token(2, true).TrimPrefix_n(":");
+			}
 
 			if (sSubCmd == "LS" && !m_bAuthed) {
 				VCString vsTokens;
@@ -653,7 +665,7 @@ void CIRCSock::ReadLine(const CString& sData) {
 
 				for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
 					if (*it == "multi-prefix" || *it == "userhost-in-names") {
-						PutIRC("CAP REQ " + *it);
+						PutIRC("CAP REQ :" + *it);
 					}
 				}
 
@@ -672,6 +684,9 @@ void CIRCSock::ReadLine(const CString& sData) {
 					}
 				}
 			}
+
+			// Don't forward any CAP stuff to the client
+			return;
 		}
 	}
 

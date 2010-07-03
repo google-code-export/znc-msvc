@@ -38,6 +38,7 @@ CZNC::CZNC() {
 	SetISpoofFormat(""); // Set ISpoofFormat to default
 	m_uBytesRead = 0;
 	m_uBytesWritten = 0;
+	m_uiMaxBufferSize = 500;
 	m_pConnectUserTimer = NULL;
 	m_eConfigState = ECONFIG_NOTHING;
 	m_TimeStarted = time(NULL);
@@ -429,12 +430,6 @@ void CZNC::DeleteUsers() {
 	DisableConnectUser();
 }
 
-CUser* CZNC::GetUser(const CString& sUser) {
-	// Todo: make this case insensitive
-	map<CString,CUser*>::iterator it = m_msUsers.find(sUser);
-	return (it == m_msUsers.end()) ? NULL : it->second;
-}
-
 Csock* CZNC::FindSockByName(const CString& sSockName) {
 	return m_Manager.FindSockByName(sSockName);
 }
@@ -610,6 +605,7 @@ bool CZNC::WriteConfig() {
 	}
 
 	m_LockFile.Write("AnonIPLimit  = " + CString(m_uiAnonIPLimit) + "\n");
+	m_LockFile.Write("MaxBufferSize= " + CString(m_uiMaxBufferSize) + "\n");
 
 	for (size_t l = 0; l < m_vpListeners.size(); l++) {
 		CListener* pListener = m_vpListeners[l];
@@ -825,6 +821,7 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 	// User
 	CUtils::PrintMessage("");
 	CUtils::PrintMessage("Now we need to setup a user...");
+	CUtils::PrintMessage("ZNC needs one user per IRC network.");
 	CUtils::PrintMessage("");
 
 	bool bFirstUser = true;
@@ -944,13 +941,13 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 			CUtils::GetInput("[" + sHost + "] Password (probably empty)", sPass);
 
 #ifdef HAVE_LIBSSL
-			bSSL = CUtils::GetBoolInput("Does this server use SSL? (probably no)", false);
+			bSSL = CUtils::GetBoolInput("Does this server use SSL?", false);
 #endif
 
 			vsLines.push_back("\tServer     = " + sHost + ((bSSL) ? " +" : " ") + CString(uServerPort) + " " + sPass);
 
 			CUtils::PrintMessage("");
-		} while (CUtils::GetBoolInput("Would you like to add another server?", false));
+		} while (CUtils::GetBoolInput("Would you like to add another server for this IRC network?", false));
 
 		vsLines.push_back("");
 		CUtils::PrintMessage("");
@@ -974,7 +971,7 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 
 		CUtils::PrintMessage("");
 		bFirstUser = false;
-	} while (CUtils::GetBoolInput("Would you like to setup another user?", false));
+	} while (CUtils::GetBoolInput("Would you like to setup another user (e.g. for connecting to another network)?", false));
 	// !User
 
 	CFile File;
@@ -1182,8 +1179,9 @@ bool CZNC::DoRehash(CString& sError)
 	while (File.ReadLine(sLine)) {
 		uLineNum++;
 
-		// Remove all leading / trailing spaces and line endings
-		sLine.Trim();
+		// Remove all leading spaces and trailing line endings
+		sLine.TrimLeft();
+		sLine.TrimRight("\r\n");
 
 		if ((sLine.empty()) || (sLine[0] == '#') || (sLine.Left(2) == "//")) {
 			continue;
@@ -1327,14 +1325,21 @@ bool CZNC::DoRehash(CString& sError)
 		// If we have a regular line, figure out where it goes
 		CString sName = sLine.Token(0, false, "=");
 		CString sValue = sLine.Token(1, true, "=");
+
+		// Only remove the first space, people might want
+		// leading spaces (e.g. in the MOTD).
+		if (sValue.Left(1) == " ")
+			sValue.LeftChomp();
+
+		// We don't have any names with spaces, trim all
+		// leading/trailing spaces.
 		sName.Trim();
-		sValue.Trim();
 
 		if ((!sName.empty()) && (!sValue.empty())) {
 			if (pUser) {
 				if (pChan) {
 					if (sName.Equals("Buffer")) {
-						pChan->SetBufferCount(sValue.ToUInt());
+						pChan->SetBufferCount(sValue.ToUInt(), true);
 						continue;
 					} else if (sName.Equals("KeepBuffer")) {
 						pChan->SetKeepBuffer(sValue.Equals("true"));
@@ -1356,7 +1361,7 @@ bool CZNC::DoRehash(CString& sError)
 					}
 				} else {
 					if (sName.Equals("Buffer")) {
-						pUser->SetBufferCount(sValue.ToUInt());
+						pUser->SetBufferCount(sValue.ToUInt(), true);
 						continue;
 					} else if (sName.Equals("KeepBuffer")) {
 						pUser->SetKeepBuffer(sValue.Equals("true"));
@@ -1694,6 +1699,9 @@ bool CZNC::DoRehash(CString& sError)
 				} else if (sName.Equals("AnonIPLimit")) {
 					m_uiAnonIPLimit = sValue.ToUInt();
 					continue;
+				} else if (sName.Equals("MaxBufferSize")) {
+					m_uiMaxBufferSize = sValue.ToUInt();
+					continue;
 				}
 			}
 
@@ -1997,18 +2005,18 @@ CZNC::TrafficStatsMap CZNC::GetTrafficStats(TrafficStatsPair &Users,
 	}
 
 	for (CSockManager::const_iterator it = m_Manager.begin(); it != m_Manager.end(); ++it) {
+		CUser *pUser = NULL;
 		if ((*it)->GetSockName().Left(5) == "IRC::") {
-			CIRCSock *p = (CIRCSock *) *it;
-			ret[p->GetUser()->GetUserName()].first  += p->GetBytesRead();
-			ret[p->GetUser()->GetUserName()].second += p->GetBytesWritten();
-			uiUsers_in  += p->GetBytesRead();
-			uiUsers_out += p->GetBytesWritten();
+			pUser = ((CIRCSock *) *it)->GetUser();
 		} else if ((*it)->GetSockName().Left(5) == "USR::") {
-			CClient *p = (CClient *) *it;
-			ret[p->GetUser()->GetUserName()].first  += p->GetBytesRead();
-			ret[p->GetUser()->GetUserName()].second += p->GetBytesWritten();
-			uiUsers_in  += p->GetBytesRead();
-			uiUsers_out += p->GetBytesWritten();
+			pUser = ((CClient*) *it)->GetUser();
+		}
+
+		if (pUser) {
+			ret[pUser->GetUserName()].first  += (*it)->GetBytesRead();
+			ret[pUser->GetUserName()].second += (*it)->GetBytesWritten();
+			uiUsers_in  += (*it)->GetBytesRead();
+			uiUsers_out += (*it)->GetBytesWritten();
 		} else {
 			uiZNC_in  += (*it)->GetBytesRead();
 			uiZNC_out += (*it)->GetBytesWritten();
@@ -2028,7 +2036,7 @@ void CZNC::AuthUser(CSmartPtr<CAuthBase> AuthClass) {
 		return;
 	}
 
-	CUser* pUser = GetUser(AuthClass->GetUsername());
+	CUser* pUser = FindUser(AuthClass->GetUsername());
 
 	if (!pUser || !pUser->CheckPass(AuthClass->GetPassword())) {
 		AuthClass->RefuseLogin("Invalid Password");

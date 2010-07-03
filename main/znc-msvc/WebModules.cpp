@@ -115,16 +115,7 @@ void CWebAuth::Invalidate() {
 	m_pWebSock = NULL;
 }
 
-CWebSock::CWebSock(CModule* pModule) : CHTTPSock(pModule) {
-	m_pModule = pModule;
-	m_bPathsSet = false;
-
-	m_Template.AddTagHandler(new CZNCTagHandler(*this));
-}
-
-CWebSock::CWebSock(CModule* pModule, const CString& sHostname, unsigned short uPort, int iTimeout)
-		: CHTTPSock(pModule, sHostname, uPort, iTimeout) {
-	m_pModule = pModule;
+CWebSock::CWebSock() : CHTTPSock(NULL) {
 	m_bPathsSet = false;
 
 	m_Template.AddTagHandler(new CZNCTagHandler(*this));
@@ -135,6 +126,8 @@ CWebSock::~CWebSock() {
 		m_spAuth->Invalidate();
 	}
 
+	// we have to account for traffic here because CSocket does
+	// not have a valid CModule* pointer.
 	CUser *pUser = GetSession()->GetUser();
 	if (pUser) {
 		pUser->AddBytesWritten(GetBytesWritten());
@@ -147,13 +140,6 @@ CWebSock::~CWebSock() {
 	// bytes have been accounted for, so make sure they don't get again:
 	ResetBytesWritten();
 	ResetBytesRead();
-
-	// If the module IsFake() then it was created as a dummy and needs to be deleted
-	if (m_pModule && m_pModule->IsFake()) {
-		m_pModule->UnlinkSocket(this);
-		delete m_pModule;
-		m_pModule = NULL;
-	}
 }
 
 void CWebSock::ParsePath() {
@@ -217,9 +203,6 @@ CModule* CWebSock::ResolveModule() {
 
 	if (!pModRet) {
 		DEBUG("Module not found");
-	} else if (pModRet->IsFake()) {
-		DEBUG("Fake module found, ignoring");
-		pModRet = NULL;
 	}
 
 	return pModRet;
@@ -476,25 +459,29 @@ bool CWebSock::ForceLogin() {
 	return false;
 }
 
-CString CWebSock::GetRequestCookie(const CString& sKey) const {
+CString CWebSock::GetRequestCookie(const CString& sKey) {
+	const CString sPrefixedKey = CString(GetLocalPort()) + "-" + sKey;
 	CString sRet;
 
 	if (!m_sModName.empty()) {
-		sRet = CHTTPSock::GetRequestCookie("Mod::" + m_sModName + "::" + sKey);
+		sRet = CHTTPSock::GetRequestCookie("Mod-" + m_sModName + "-" + sPrefixedKey);
 	}
 
 	if (sRet.empty()) {
-		return CHTTPSock::GetRequestCookie(sKey);
+		return CHTTPSock::GetRequestCookie(sPrefixedKey);
 	}
+
 	return sRet;
 }
 
 bool CWebSock::SendCookie(const CString& sKey, const CString& sValue) {
+	const CString sPrefixedKey = CString(GetLocalPort()) + "-" + sKey;
+
 	if (!m_sModName.empty()) {
-		return CHTTPSock::SendCookie("Mod::" + m_sModName + "::" + sKey, sValue);
+		return CHTTPSock::SendCookie("Mod-" + m_sModName + "-" + sPrefixedKey, sValue);
 	}
 
-	return CHTTPSock::SendCookie(sKey, sValue);
+	return CHTTPSock::SendCookie(sPrefixedKey, sValue);
 }
 
 void CWebSock::OnPageRequest(const CString& sURI) {
@@ -524,9 +511,9 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 	// CSRF against the login form makes no sense and the login form does a
 	// cookies-enabled check which would break otherwise.
 	if (IsPost() && GetParam("_CSRF_Check") != GetCSRFCheck() && sURI != "/login") {
-		sPageRet = GetErrorPage(403, "Access denied", "POST requests need to send "
+		PrintErrorPage(403, "Access denied", "POST requests need to send "
 				"a secret token to prevent cross-site request forgery attacks.");
-		return PAGE_PRINT;
+		return PAGE_DONE;
 	}
 
 	SendCookie("SessionId", GetSession()->GetId());
@@ -612,11 +599,11 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 		} else if (pModule->WebRequiresLogin() && !ForceLogin()) {
 			return PAGE_PRINT;
 		} else if (pModule->WebRequiresAdmin() && !GetSession()->IsAdmin()) {
-			sPageRet = GetErrorPage(403, "Forbidden", "You need to be an admin to access this module");
-			return PAGE_PRINT;
+			PrintErrorPage(403, "Forbidden", "You need to be an admin to access this module");
+			return PAGE_DONE;
 		} else if (!pModule->IsGlobal() && pModule->GetUser() != GetSession()->GetUser()) {
-			sPageRet = GetErrorPage(403, "Forbidden", "You must login as " + pModule->GetUser()->GetUserName() + " in order to view this page");
-			return PAGE_PRINT;
+			PrintErrorPage(403, "Forbidden", "You must login as " + pModule->GetUser()->GetUserName() + " in order to view this page");
+			return PAGE_DONE;
 		} else if (pModule->OnWebPreRequest(*this, m_sPage)) {
 			return PAGE_DEFERRED;
 		}
@@ -629,8 +616,8 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 			bool bActive = (m_sModName == pModule->GetModName() && m_sPage == SubPage->GetName());
 
 			if (bActive && SubPage->RequiresAdmin() && !GetSession()->IsAdmin()) {
-				sPageRet = GetErrorPage(403, "Forbidden", "You need to be an admin to access this page");
-				return PAGE_PRINT;
+				PrintErrorPage(403, "Forbidden", "You need to be an admin to access this page");
+				return PAGE_DONE;
 			}
 		}
 
@@ -662,11 +649,9 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 			}
 
 			if (!SentHeader()) {
-				sPageRet = GetErrorPage(404, "Not Implemented", "The requested module does not acknowledge web requests");
-				return PAGE_PRINT;
-			} else {
-				return PAGE_DONE;
+				PrintErrorPage(404, "Not Implemented", "The requested module does not acknowledge web requests");
 			}
+			return PAGE_DONE;
 		}
 	} else {
 		CString sPage(sURI.Trim_n("/"));
@@ -748,11 +733,10 @@ bool CWebSock::OnLogin(const CString& sUser, const CString& sPass) {
 }
 
 Csock* CWebSock::GetSockObj(const CString& sHost, unsigned short uPort) {
-	CWebSock* pSock = new CWebSock(GetModule(), sHost, uPort);
-	pSock->SetSockName("Web::Client");
-	pSock->SetTimeout(120);
-
-	return pSock;
+	// All listening is done by CListener, thus CWebSock should never have
+	// to listen, but since GetSockObj() is pure virtual...
+	DEBUG("CWebSock::GetSockObj() called - this should never happen!");
+	return NULL;
 }
 
 CString CWebSock::GetSkinName() {
