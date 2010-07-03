@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
 {
 	CZNCWindowsService Svc;
 
+	CUtils::SeedPRNG();
 	CUtils::SetStdoutIsTTY(false);
 
 	// process command line options first, only accept a single command,

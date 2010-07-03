@@ -80,6 +80,7 @@ public:
 	static void PrintPrompt(const CString& sMessage);
 	static void PrintAction(const CString& sMessage);
 	static void PrintStatus(bool bSuccess, const CString& sMessage = "");
+	static void SeedPRNG();
 
 	static const CString sDefaultHash;
 

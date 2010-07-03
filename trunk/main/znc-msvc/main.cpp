@@ -56,57 +56,11 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType)
 	}
 }
 
-
-static void seedPRNG() {
-#ifdef _WIN32
-	HCRYPTPROV hProv;
-	bool l_failed = true;
-
-	if(CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_SILENT))
-	{
-		unsigned int l_seed;
-
-		if(CryptGenRandom(hProv, sizeof(unsigned int), (LPBYTE)&l_seed))
-		{
-			srand(l_seed);
-
-			l_failed = false;
-		}
-
-		CryptReleaseContext(hProv, 0);
-	}
-
-	if(l_failed)
-	{
-		srand((unsigned int)time(NULL));
-	}
-#else
-	struct timeval tv;
-	unsigned int seed;
-
-	// Try to find a seed which can't be as easily guessed as only time()
-
-	if (gettimeofday(&tv, NULL) == 0) {
-		seed  = tv.tv_sec;
-
-		// This is in [0:1e6], which means that roughly 20 bits are
-		// actually used, let's try to shuffle the high bits.
-		seed ^= (tv.tv_usec << 10) | tv.tv_usec;
-	} else
-		seed = time(NULL);
-
-	seed ^= rand();
-	seed ^= getpid();
-
-	srand(seed);
-#endif
-}
-
 int main(int argc, char** argv) {
 	CString sConfig;
 	CString sDataDir = "";
 
-	seedPRNG();
+	CUtils::SeedPRNG();
 	// Win32 doesn't support shell escape codes, so we do this.
 	CUtils::SetStdoutIsTTY(false);
 
