@@ -1,9 +1,10 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
-== 2010-07-?? (0.93-r 2060) ==
+== 2010-07-04 (0.93-r 2060) ==
   * Upstream [http://en.znc.in/wiki/ChangeLog/0.092 fixed] a crash in 0.090 and a 100% CPU bug (means all changes from ZNC 0.092 are in here as well).
   * Other [http://github.com/znc/znc/compare/501c76a4d50f1c8e7c6f4795301f9bca5f4793b7...17e7b0f4cf0b3824bae4578ee35ce7a16271d706 changes] from upstream, e.g. improved CAP support.
+  * Added three new 3rd party modules: broadcastquery, clearbuffersonmsg and ignore.
   * Updated OpenSSL to 1.0.0a
   * Updated c-ares to 1.7.3
 
