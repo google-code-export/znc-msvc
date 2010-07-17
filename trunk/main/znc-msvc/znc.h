@@ -44,6 +44,7 @@ public:
 	void ReleaseISpoof();
 	bool WritePidFile(int iPid);
 	bool DeletePidFile();
+	bool WaitForChildLock();
 	Csock* FindSockByName(const CString& sSockName);
 	bool IsHostAllowed(const CString& sHostMask) const;
 	// This returns false if there are too many anonymous connections from this ip
@@ -107,7 +108,7 @@ public:
 	CString GetConfPath(bool bAllowMkDir = true) const;
 	CString GetUserPath() const;
 	CString GetModPath() const;
-	CString GetPemLocation() const { return GetZNCPath() + "/znc.pem"; }
+	CString GetPemLocation() const { return m_sSSLCertFile; }
 	const CString& GetConfigFile() const { return m_sConfigFile; }
 	bool WritePemFile();
 	const CString& GetISpoofFile() const { return m_sISpoofFile; }
@@ -176,6 +177,7 @@ protected:
 	CString                m_sOrigISpoof;
 	CString                m_sISpoofFormat;
 	CString                m_sPidFile;
+	CString                m_sSSLCertFile;
 	VCString               m_vsVHosts;
 	VCString               m_vsMotd;
 	CFile                  m_LockFile;

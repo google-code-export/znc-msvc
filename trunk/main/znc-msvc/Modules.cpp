@@ -145,14 +145,13 @@ CModule::~CModule() {
 
 void CModule::SetUser(CUser* pUser) { m_pUser = pUser; }
 void CModule::SetClient(CClient* pClient) { m_pClient = pClient; }
-void CModule::Unload() { throw UNLOAD; }
 
 bool CModule::LoadRegistry() {
 	//CString sPrefix = (m_pUser) ? m_pUser->GetUserName() : ".global";
 	return (m_mssRegistry.ReadFromDisk(GetSavePath() + "/.registry", 0600) == MCString::MCS_SUCCESS);
 }
 
-bool CModule::SaveRegistry() {
+bool CModule::SaveRegistry() const {
 	//CString sPrefix = (m_pUser) ? m_pUser->GetUserName() : ".global";
 	return (m_mssRegistry.WriteToDisk(GetSavePath() + "/.registry", 0600) == MCString::MCS_SUCCESS);
 }
@@ -166,8 +165,8 @@ bool CModule::SetNV(const CString & sName, const CString & sValue, bool bWriteTo
 	return true;
 }
 
-CString CModule::GetNV(const CString & sName) {
-	MCString::iterator it = m_mssRegistry.find(sName);
+CString CModule::GetNV(const CString & sName) const {
+	MCString::const_iterator it = m_mssRegistry.find(sName);
 
 	if (it != m_mssRegistry.end()) {
 		return it->second;
@@ -457,7 +456,6 @@ CModule::EModRet CModule::OnChanNotice(CNick& Nick, CChan& Channel, CString& sMe
 CModule::EModRet CModule::OnTopic(CNick& Nick, CChan& Channel, CString& sTopic) { return CONTINUE; }
 CModule::EModRet CModule::OnTimerAutoJoin(CChan& Channel) { return CONTINUE; }
 
-ModHandle CModule::GetDLL() { return m_pDLL; }
 bool CModule::PutIRC(const CString& sLine) {
 	return (m_pUser) ? m_pUser->PutIRC(sLine) : false;
 }
@@ -503,7 +501,10 @@ CModule::EModRet CGlobalModule::OnDeleteUser(CUser& User) { return CONTINUE; }
 void CGlobalModule::OnClientConnect(CZNCSock* pClient, const CString& sHost, unsigned short uPort) {}
 CModule::EModRet CGlobalModule::OnLoginAttempt(CSmartPtr<CAuthBase> Auth) { return CONTINUE; }
 void CGlobalModule::OnFailedLogin(const CString& sUsername, const CString& sRemoteIP) {}
-CModule::EModRet CGlobalModule::OnUnknownUserRaw(CClient* pClient, CString& sLine) { return CONTINUE; }
+CModule::EModRet CGlobalModule::OnUnknownUserRaw(CString& sLine) { return CONTINUE; }
+void CGlobalModule::OnClientCapLs(SCString& ssCaps) {}
+bool CGlobalModule::IsClientCapSupported(const CString& sCap, bool bState) { return false; }
+void CGlobalModule::OnClientCapRequest(const CString& sCap, bool bState) {}
 
 
 CModules::CModules() {
@@ -527,7 +528,7 @@ bool CModules::OnBoot() {
 	for (unsigned int a = 0; a < size(); a++) {
 		try {
 			if (!(*this)[a]->OnBoot()) {
-				return false;
+				return true;
 			}
 		} catch (CModule::EModException e) {
 			if (e == CModule::UNLOAD) {
@@ -536,7 +537,7 @@ bool CModules::OnBoot() {
 		}
 	}
 
-	return true;
+	return false;
 }
 
 bool CModules::OnPreRehash() { MODUNLOADCHK(OnPreRehash()); return false; }
@@ -612,21 +613,61 @@ bool CGlobalModules::OnDeleteUser(CUser& User) {
 	GLOBALMODHALTCHK(OnDeleteUser(User));
 }
 
-void CGlobalModules::OnClientConnect(CZNCSock* pClient, const CString& sHost, unsigned short uPort) {
+bool CGlobalModules::OnClientConnect(CZNCSock* pClient, const CString& sHost, unsigned short uPort) {
 	GLOBALMODCALL(OnClientConnect(pClient, sHost, uPort));
+	return false;
 }
 
 bool CGlobalModules::OnLoginAttempt(CSmartPtr<CAuthBase> Auth) {
 	GLOBALMODHALTCHK(OnLoginAttempt(Auth));
 }
 
-void CGlobalModules::OnFailedLogin(const CString& sUsername, const CString& sRemoteIP) {
+bool CGlobalModules::OnFailedLogin(const CString& sUsername, const CString& sRemoteIP) {
 	GLOBALMODCALL(OnFailedLogin(sUsername, sRemoteIP));
+	return false;
 }
 
-bool CGlobalModules::OnUnknownUserRaw(CClient* pClient, CString& sLine) {
-	GLOBALMODHALTCHK(OnUnknownUserRaw(pClient, sLine));
+bool CGlobalModules::OnUnknownUserRaw(CString& sLine) {
+	GLOBALMODHALTCHK(OnUnknownUserRaw(sLine));
 }
+
+bool CGlobalModules::OnClientCapLs(SCString& ssCaps) {
+	GLOBALMODCALL(OnClientCapLs(ssCaps));
+	return false;
+}
+
+// Maybe create new macro for this?
+bool CGlobalModules::IsClientCapSupported(const CString& sCap, bool bState) {
+	bool bResult = false;
+	for (unsigned int a = 0; a < size(); ++a) {
+		try {
+			CGlobalModule* pMod = (CGlobalModule*) (*this)[a];
+			CClient* pOldClient = pMod->GetClient();
+			pMod->SetClient(m_pClient);
+			if (m_pUser) {
+				CUser* pOldUser = pMod->GetUser();
+				pMod->SetUser(m_pUser);
+				bResult |= pMod->IsClientCapSupported(sCap, bState);
+				pMod->SetUser(pOldUser);
+			} else {
+				// WTF? Is that possible?
+				bResult |= pMod->IsClientCapSupported(sCap, bState);
+			}
+			pMod->SetClient(pOldClient);
+		} catch (CModule::EModException e) {
+			if (CModule::UNLOAD == e) {
+				UnloadModule((*this)[a]->GetModName());
+			}
+		}
+	}
+	return bResult;
+}
+
+bool CGlobalModules::OnClientCapRequest(const CString& sCap, bool bState) {
+	GLOBALMODCALL(OnClientCapRequest(sCap, bState));
+	return false;
+}
+
 
 CModule* CModules::FindModule(const CString& sModule) const {
 	for (unsigned int a = 0; a < size(); a++) {

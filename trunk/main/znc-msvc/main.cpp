@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
 				if (bAllowRoot)
 					args[pos++] = strdup("--allow-root");
 #endif
-				// The above code adds 4 entries to args tops
+				// The above code adds 3 entries to args tops
 				// which means the array should be big enough
 
 				CUtils::PrintMessage("************** Restarting ZNC... **************");
