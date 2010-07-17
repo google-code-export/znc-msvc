@@ -251,7 +251,7 @@ public:
 
 	/** This function throws CModule::UNLOAD which causes this module to be unloaded.
 	 */
-	void Unload();
+	void Unload() { throw UNLOAD; }
 
 	/** This module hook is called when a module is loaded
 	 *  @param sArgsi The arguments for the modules.
@@ -641,7 +641,7 @@ public:
 	 */
 	virtual EModRet OnTimerAutoJoin(CChan& Channel);
 
-	ModHandle GetDLL();
+	ModHandle GetDLL() { return m_pDLL; }
 	static double GetCoreVersion() { return MODVERSION; }
 
 	/** This function sends a given raw IRC line to the IRC server, if we
@@ -730,9 +730,9 @@ public:
 	// !Socket stuff
 
 	bool LoadRegistry();
-	bool SaveRegistry();
+	bool SaveRegistry() const;
 	bool SetNV(const CString & sName, const CString & sValue, bool bWriteToDisk = true);
-	CString GetNV(const CString & sName);
+	CString GetNV(const CString & sName) const;
 	bool DelNV(const CString & sName, bool bWriteToDisk = true);
 	MCString::iterator FindNV(const CString & sName) { return m_mssRegistry.find(sName); }
 	MCString::iterator EndNV() { return m_mssRegistry.end(); }
@@ -949,12 +949,28 @@ public:
 	/** This function behaves like CModule::OnRaw(), but is also called
 	 *  before the client successfully logged in to ZNC. You should always
 	 *  prefer to use CModule::OnRaw() if possible.
-	 *  @param pClient The client.
 	 *  @param sLine The raw traffic line which the client sent.
 	 *  @todo Why doesn't this use m_pUser and m_pClient?
 	 *        (Well, ok, m_pUser isn't known yet...)
 	 */
-	virtual EModRet OnUnknownUserRaw(CClient* pClient, CString& sLine);
+	virtual EModRet OnUnknownUserRaw(CString& sLine);
+
+	/** Called when a client told us CAP LS. Use ssCaps.insert("cap-name")
+	 *  for announcing capabilities which your module supports.
+	 *  @param ssCaps set of caps which will be sent to client.
+	 */
+	virtual void OnClientCapLs(SCString& ssCaps);
+	/** Called only to check if your module supports turning on/off named capability.
+	 *  @param sCap name of capability.
+	 *  @param bState On or off, depending on which case is interesting for client.
+	 *  @return true if your module supports this capability in the specified state.
+	 */
+	virtual bool IsClientCapSupported(const CString& sCap, bool bState);
+	/** Called when we actually need to turn a capability on or off for a client.
+	 *  @param sCap name of wanted capability.
+	 *  @param bState On or off, depending on which case client needs.
+	 */
+	virtual void OnClientCapRequest(const CString& sCap, bool bState);
 private:
 };
 
@@ -966,10 +982,13 @@ public:
 	bool OnWriteConfig(CFile& Config);
 	bool OnAddUser(CUser& User, CString& sErrorRet);
 	bool OnDeleteUser(CUser& User);
-	void OnClientConnect(CZNCSock* pSock, const CString& sHost, unsigned short uPort);
+	bool OnClientConnect(CZNCSock* pSock, const CString& sHost, unsigned short uPort);
 	bool OnLoginAttempt(CSmartPtr<CAuthBase> Auth);
-	void OnFailedLogin(const CString& sUsername, const CString& sRemoteIP);
-	bool OnUnknownUserRaw(CClient* pClient, CString& sLine);
+	bool OnFailedLogin(const CString& sUsername, const CString& sRemoteIP);
+	bool OnUnknownUserRaw(CString& sLine);
+	bool OnClientCapLs(SCString& ssCaps);
+	bool IsClientCapSupported(const CString& sCap, bool bState);
+	bool OnClientCapRequest(const CString& sCap, bool bState);
 private:
 };
 

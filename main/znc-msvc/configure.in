@@ -16,6 +16,7 @@ AC_DEFUN([ZNC_AUTO_FAIL], [
 # AC_PROG_CXX sets CXXFLAGS to "-O2 -g" if it is unset which we don't want
 CXXFLAGS="$CXXFLAGS "
 AC_PROG_CXX
+AC_PROG_INSTALL
 AC_CANONICAL_HOST
 AC_SYS_LARGEFILE
 
@@ -196,7 +197,6 @@ if test "x$SSL" != "xno"; then
 		appendLib "$openssl_LIBS"
 		appendCXX "$openssl_CFLAGS"
 	], [
-		AC_MSG_RESULT([no])
 		# Don't reorder this!
 		# On some arches libssl depends on libcrypto without linking to it :(
 		AC_CHECK_LIB( crypto, BIO_new,, SSL=no )
@@ -384,6 +384,7 @@ AC_OUTPUT
 echo
 echo znc AC_PACKAGE_VERSION configured
 echo
+echo "prefix:       $prefix"
 echo "debug:        $DEBUG"
 echo "ipv6:         $IPV6"
 echo "openssl:      $SSL"

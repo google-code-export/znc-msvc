@@ -68,9 +68,7 @@ void CClient::ReadLine(const CString& sData) {
 	if (IsAttached()) {
 		MODULECALL(OnUserRaw(sLine), m_pUser, this, return);
 	} else {
-		if (CZNC::Get().GetModules().OnUnknownUserRaw(this, sLine)) {
-			return;
-		}
+		GLOBALMODULECALL(OnUnknownUserRaw(sLine), m_pUser, this, return);
 	}
 
 	CString sCommand = sLine.Token(0);
@@ -640,7 +638,7 @@ void CAuthBase::RefuseLogin(const CString& sReason) {
 				"to login as you, but was rejected [" + sReason + "].");
 	}
 
-	CZNC::Get().GetModules().OnFailedLogin(GetUsername(), GetRemoteIP());
+	GLOBALMODULECALL(OnFailedLogin(GetUsername(), GetRemoteIP()), NULL, NULL, );
 	RefusedLogin(sReason);
 	Invalidate();
 }
@@ -784,33 +782,34 @@ void CClient::HandleCap(const CString& sLine)
 	CString sSubCmd = sLine.Token(1);
 
 	if (sSubCmd.Equals("LS")) {
-		RespondCap("LS :userhost-in-names multi-prefix");
+		SCString ssOfferCaps;
+		GLOBALMODULECALL(OnClientCapLs(ssOfferCaps), m_pUser, this, );
+		CString sRes;
+		for (SCString::iterator i = ssOfferCaps.begin(); i != ssOfferCaps.end(); ++i) {
+			sRes += *i + " ";
+		}
+		RespondCap("LS :" + sRes + "userhost-in-names multi-prefix");
 		m_bInCap = true;
 	} else if (sSubCmd.Equals("END")) {
 		m_bInCap = false;
 		AuthUser();
 	} else if (sSubCmd.Equals("REQ")) {
-		bool bReqUHNames = false;
-		bool bReqNamesx = false;
-		bool bValueUHNames = false;
-		bool bValueNamesx = false;
-
 		VCString vsTokens;
 		VCString::iterator it;
 		sLine.Token(2, true).TrimPrefix_n(":").Split(" ", vsTokens, false);
 
 		for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
 			bool bVal = true;
-			if (it->TrimPrefix("-"))
+			CString sCap = *it;
+			if (sCap.TrimPrefix("-"))
 				bVal = false;
 
-			if (*it == "multi-prefix") {
-				bReqNamesx = true;
-				bValueNamesx = bVal;
-			} else if (*it == "userhost-in-names") {
-				bReqUHNames = true;
-				bValueUHNames = bVal;
-			} else {
+			bool bAccepted = ("multi-prefix" == sCap) || ("userhost-in-names" == sCap);
+			if (!bAccepted) {
+				GLOBALMODULECALL(IsClientCapSupported(sCap, bVal), m_pUser, this, bAccepted = true);
+			}
+
+			if (!bAccepted) {
 				// Some unsupported capability is requested
 				RespondCap("NAK :" + sLine.Token(2, true).TrimPrefix_n(":"));
 				return;
@@ -818,17 +817,32 @@ void CClient::HandleCap(const CString& sLine)
 		}
 
 		// All is fine, we support what was requested
+		for (it = vsTokens.begin(); it != vsTokens.end(); ++it) {
+			bool bVal = true;
+			if (it->TrimPrefix("-"))
+				bVal = false;
+
+			if ("multi-prefix" == *it) {
+				m_bNamesx = bVal;
+			} else if ("userhost-in-names" == *it) {
+				m_bUHNames = bVal;
+			} else {
+				GLOBALMODULECALL(OnClientCapRequest(*it, bVal), m_pUser, this, );
+			}
+
+			if (bVal) {
+				m_ssAcceptedCaps.insert(*it);
+			} else {
+				m_ssAcceptedCaps.erase(*it);
+			}
+		}
+
 		RespondCap("ACK :" + sLine.Token(2, true).TrimPrefix_n(":"));
-		if (bReqUHNames)
-			m_bUHNames = bValueUHNames;
-		if (bReqNamesx)
-			m_bNamesx = bValueNamesx;
 	} else if (sSubCmd.Equals("LIST")) {
 		CString sList = "";
-		if (m_bNamesx)
-			sList += "multi-prefix ";
-		if (m_bUHNames)
-			sList += "userhost-in-names ";
+		for (SCString::iterator i = m_ssAcceptedCaps.begin(); i != m_ssAcceptedCaps.end(); ++i) {
+			sList += *i + " ";
+		}
 		RespondCap("LIST :" + sList.TrimSuffix_n(" "));
 	}
 }

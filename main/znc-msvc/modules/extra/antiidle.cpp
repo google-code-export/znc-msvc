@@ -69,7 +69,7 @@ public:
 	{
 		if(Nick.GetNick() == GetUser()->GetIRCNick().GetNick()
 				&& sMessage == "\xAE")
-			return HALTCORE;
+			return HALT;
 
 		return CONTINUE;
 	}

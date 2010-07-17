@@ -63,6 +63,7 @@ CUser::CUser(const CString& sUserName) {
 	m_pModules = new CModules;
 	m_RawBuffer.SetLineCount(100);   // This should be more than enough raws, especially since we are buffering the MOTD separately
 	m_MotdBuffer.SetLineCount(200);  // This should be more than enough motd lines
+	m_QueryBuffer.SetLineCount(250);
 	m_bMultiClients = true;
 	m_bBounceDCCs = true;
 	m_eHashType = HASH_NONE;
@@ -108,10 +109,8 @@ CUser::~CUser() {
 }
 
 void CUser::DelModules() {
-	if (m_pModules) {
-		delete m_pModules;
-		m_pModules = NULL;
-	}
+	delete m_pModules;
+	m_pModules = NULL;
 }
 
 bool CUser::UpdateModule(const CString &sModule) {
@@ -603,7 +602,7 @@ bool CUser::DelChan(const CString& sName) {
 	return false;
 }
 
-bool CUser::PrintLine(CFile& File, CString sName, CString sValue) {
+bool CUser::PrintLine(CFile& File, CString sName, CString sValue) const {
 	sName.Trim();
 	sValue.Trim();
 
@@ -675,7 +674,7 @@ bool CUser::WriteConfig(CFile& File) {
 
 	// CTCP Replies
 	if (!m_mssCTCPReplies.empty()) {
-		for (MCString::iterator itb = m_mssCTCPReplies.begin(); itb != m_mssCTCPReplies.end(); ++itb) {
+		for (MCString::const_iterator itb = m_mssCTCPReplies.begin(); itb != m_mssCTCPReplies.end(); ++itb) {
 			PrintLine(File, "CTCPReply", itb->first.AsUpper() + " " + itb->second);
 		}
 
