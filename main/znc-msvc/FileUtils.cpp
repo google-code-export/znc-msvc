@@ -38,6 +38,8 @@
 #  define LOCK_WRITE   128
 #  define LOCK_RW      192
 #  define flock(a, b)  0
+#  define F_WRLCK      1
+#  define F_UNLCK      2
 #endif
 
 CFile::CFile() {
@@ -435,6 +437,9 @@ bool CFile::UnLock() {
 }
 
 bool CFile::Lock(int iType, bool bBlocking) {
+#ifdef _WIN32
+	return true;
+#else
 	struct flock fl;
 
 	if (m_iFD == -1) {
@@ -450,6 +455,7 @@ bool CFile::Lock(int iType, bool bBlocking) {
 	} else {
 		return true;
 	}
+#endif
 }
 
 bool CFile::IsOpen() const { return (m_iFD != -1); }
