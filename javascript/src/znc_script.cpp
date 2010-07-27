@@ -70,7 +70,11 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	JS_SetOptions(m_jsContext, JSOPTION_VAROBJFIX | JSOPTION_STRICT);
 #endif
 
+#if JS_VERSION >= 180
 	JS_SetVersion(m_jsContext, JSVERSION_LATEST);
+#else
+	JS_SetVersion(m_jsContext, JSVERSION_DEFAULT);
+#endif
 
 	// save pointer to this instance for error callback etc:
 	JS_SetContextPrivate(m_jsContext, this);

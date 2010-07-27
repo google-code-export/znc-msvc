@@ -8,7 +8,7 @@
 
 #include "main.h"
 #include "Modules.h"
-#include "jsapi.h"
+#include "znc_smjs.h"
 #include "znc_js_mod.h"
 #include "znc_js_mod_events.h"
 #include "util.h"
@@ -30,7 +30,15 @@ bool CJavaScriptMod::OnLoad(const CString& sArgs, CString& sMessage)
 {
 	if(!ms_jsRuntime)
 	{
+#if JS_VERSION >= 180
 		JS_SetCStringsAreUTF8();
+#else
+		if(!JS_CStringsAreUTF8())
+		{
+			sMessage = "SpiderMonkey 1.7 needs to be compiled with JS_C_STRINGS_ARE_UTF8.";
+			return false;
+		}
+#endif
 
 		// 8 MB RAM ought to be enough for anybody!
 		ms_jsRuntime = JS_NewRuntime(8L * 1024L * 1024L);

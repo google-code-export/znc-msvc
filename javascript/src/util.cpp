@@ -72,10 +72,12 @@ CString CUtil::WideToUtf8(const wstring& a_wideStr)
 	return WideToStr(a_wideStr.c_str(), CP_UTF8);
 }
 
+#if 0
 CString CUtil::WideToUtf8(const jschar* jswszWideStr)
 {
 	return WideToStr((wchar_t*)jswszWideStr, CP_UTF8);
 }
+#endif
 
 CString CUtil::WideToUtf8(const JSString* jsstrWideStr)
 {
@@ -145,12 +147,19 @@ CString CUtil::WideToUtf8(const wstring& a_wideStr)
 	return "";
 }
 
+#if 0
 CString CUtil::WideToUtf8(const jschar* jswszWideStr)
 {
 	char *szResult = NULL;
+
+/*	size_t l_len = 0;
+	for(jschar* p = jswszWideStr; *p; p++)
+	{
+		l_len++;
+	}*/
+
 	if(iconv_string("UTF-8", "UTF-16", (char*)jswszWideStr,
-		HOW THE FUCK DO WE GET THE LENGTH HERE, ADD OWN UTILITY SHIT
-		(char*)(jswszWideStr + strlen(jswszWideStr) + 1), &szResult, NULL) >= 0)
+		/*(char*)(jswszWideStr + strlen(jswszWideStr) + 1)*/, &szResult, NULL) >= 0)
 	{
 		CString sResult = szResult;
 		free(szResult);
@@ -158,11 +167,12 @@ CString CUtil::WideToUtf8(const jschar* jswszWideStr)
 	}
 	return "";
 }
+#endif
 
 CString CUtil::WideToUtf8(const JSString* jsstrWideStr)
 {
 	char *szResult = NULL;
-	if(iconv_string("UTF-8", "UTF-16", (char*)JS_GetStringChars(const_cast<JSString*>(jsstrWideStr))),
+	if(iconv_string("UTF-8", "UTF-16", (char*)JS_GetStringChars(const_cast<JSString*>(jsstrWideStr)),
 		(char*)(JS_GetStringLength(const_cast<JSString*>(jsstrWideStr)) + 1), &szResult, NULL) >= 0)
 	{
 		CString sResult = szResult;

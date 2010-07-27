@@ -41,8 +41,8 @@ static void znc_nick_finalize(JSContext *cx, JSObject *obj)
 }
 
 
-JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 
 static JSClass s_nick_class = {
 	"znc_nick_class", JSCLASS_HAS_PRIVATE | JSCLASS_CONSTRUCT_PROTOTYPE,

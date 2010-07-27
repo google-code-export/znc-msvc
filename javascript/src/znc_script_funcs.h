@@ -9,7 +9,7 @@
 #ifndef _ZNC_JS_SCRIPT_FUNCS_H
 #define _ZNC_JS_SCRIPT_FUNCS_H
 
-#include "jsapi.h"
+#include "znc_smjs.h"
 
 #define _ZNCJSFUNC_H(FUNC_NAME) static JSBool Script_##FUNC_NAME(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 #define ZNCJSFUNC_NAME(FUNC_NAME) CZNCScriptFuncs::Script_##FUNC_NAME

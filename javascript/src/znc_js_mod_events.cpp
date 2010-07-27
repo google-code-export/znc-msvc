@@ -8,7 +8,7 @@
 
 #include "main.h"
 #include "Modules.h"
-#include "jsapi.h"
+#include "znc_smjs.h"
 #include "znc_js_mod.h"
 #include "znc_js_mod_events.h"
 #include "util.h"

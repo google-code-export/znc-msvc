@@ -9,7 +9,7 @@
 /* WARNING: The contents and their order of this array have to be in
 	sync with the contents of the EModEvId enum, as defined in znc_js_mod_events.h! */
 
-static char* s_mod_event_names[] = {
+static const char* s_mod_event_names[] = {
 	"OnLoad",
 	"OnPreRehash",
 	"OnPostRehash",
