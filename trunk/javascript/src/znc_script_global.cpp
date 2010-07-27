@@ -43,7 +43,7 @@ static JSFunctionSpec s_global_functions[] = {
 /* ZNC CLASS                                                            */
 /************************************************************************/
 
-JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 
 static JSClass s_znc_class = {
 	"znc_class", 0,

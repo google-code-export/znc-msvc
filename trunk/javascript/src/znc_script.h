@@ -9,9 +9,14 @@
 #ifndef _ZNC_JS_SCRIPT_H
 #define _ZNC_JS_SCRIPT_H
 
-#include "jsapi.h"
+#include "znc_smjs.h"
 #include "znc_js_mod_events.h"
 #include "znc_script_timer.h"
+
+// ZNC headers:
+#include "User.h"
+#include "Chan.h"
+#include "znc.h"
 
 class CJavaScriptMod;
 

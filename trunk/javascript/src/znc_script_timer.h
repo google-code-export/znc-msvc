@@ -10,7 +10,7 @@
 #define _ZNC_SCRIPT_TIMER_H
 
 #include "Modules.h"
-#include "jsapi.h"
+#include "znc_smjs.h"
 
 class CZNCScript;
 

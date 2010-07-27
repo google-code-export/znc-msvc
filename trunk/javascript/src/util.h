@@ -10,13 +10,13 @@
 #define _UTIL_H
 
 #include "ZNCString.h"
-#include "jsapi.h"
+#include "znc_smjs.h"
 
 class CUtil
 {
 public:
 	static CString WideToUtf8(const std::wstring& wWideStr);
-	static CString WideToUtf8(const jschar* jswszWideStr);
+//	static CString WideToUtf8(const jschar* jswszWideStr);
 	static CString WideToUtf8(const JSString* jsstrWideStr);
 	static std::wstring Utf8ToWide(const CString& sUtfStr);
 	static jschar* MsgCpyToWide(const CString& sMessage);
