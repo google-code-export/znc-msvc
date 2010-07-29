@@ -104,7 +104,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	if(!cFile.Exists() || !cFile.Open())
 	{
 		srErrorMessage = "Opening the script file [" + m_sFilePath + "] failed.";
-		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
@@ -167,7 +167,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	if(!szBuf)
 	{
 		srErrorMessage = "The script file seems to be empty.";
-		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
@@ -201,7 +201,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 	if(!m_jsScript ||
 		!(m_jsScriptObj = JS_NewScriptObject(m_jsContext, m_jsScript)) ||
-		!JS_AddRoot(m_jsContext, &m_jsScriptObj))
+		!JS_AddObjectRoot(m_jsContext, &m_jsScriptObj))
 	{
 		srErrorMessage = "Loading " + m_sName + ".js failed!";
 
@@ -211,7 +211,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 			m_jsScript = NULL;
 		}
 
-		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 
@@ -222,14 +222,14 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	{
 		srErrorMessage = "Running the script failed!";
 
-		JS_RemoveRoot(m_jsContext, &m_jsScriptObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsScriptObj);
 
 		// clear any (rooted) function objects that may have been added before the error:
 		ClearEventHandlers();
 		// and the same thing for timers:
 		ClearTimers();
 
-		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
 
 		JS_GC(m_jsContext); // invoke other destructors
 
@@ -403,7 +403,7 @@ bool CZNCScript::RemoveEventHandler(const char* szEventName, const jsval& jvCall
 	{
 		if(it->first == uModId && *it->second == jvCallback)
 		{
-			JS_RemoveRoot(m_jsContext, it->second);
+			JS_RemoveValueRoot(m_jsContext, it->second);
 			delete it->second;
 			m_eventHandlers.erase(it);
 			return true;
@@ -418,7 +418,7 @@ void CZNCScript::ClearEventHandlers()
 {
 	for(multimap<EModEvId, jsval*>::iterator it = m_eventHandlers.begin(); it != m_eventHandlers.end(); it++)
 	{
-		JS_RemoveRoot(m_jsContext, it->second);
+		JS_RemoveValueRoot(m_jsContext, it->second);
 		delete it->second;
 	}
 	m_eventHandlers.clear();
@@ -584,8 +584,8 @@ CZNCScript::~CZNCScript()
 	{
 		ClearTimers();
 		ClearEventHandlers();
-		JS_RemoveRoot(m_jsContext, &m_jvUserObj);
-		JS_RemoveRoot(m_jsContext, &m_jsScriptObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsScriptObj);
 		JS_DestroyContext(m_jsContext);
 	}
 }

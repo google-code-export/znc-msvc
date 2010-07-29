@@ -44,17 +44,21 @@ CXXFLAGS="$CXXFLAGS $ZNC_CFLAGS $ZNC_INC"
 
 AC_MSG_NOTICE([*** Looking for SpiderMonkey... ***])
 
-AC_SEARCH_LIBS([JS_NewContext], [js])
+AC_SEARCH_LIBS([JS_NewContext], [mozjs, js])
 
 AC_CHECK_HEADER([jsapi.h], [], [
 	AC_CHECK_HEADER([js/jsapi.h], [CXXFLAGS="$CXXFLAGS -DJSAPI_SUBDIR"], [], [#define XP_UNIX])
 ], [#define XP_UNIX])
 
-AC_MSG_CHECKING([whether SpiderMonkey headers are ok])
+AC_MSG_CHECKING([whether SpiderMonkey setup is ok])
 AC_COMPILE_IFELSE([
 	AC_LANG_PROGRAM([[
 		#define XP_UNIX
+		#ifdef JSAPI_SUBDIR
 		#include "js/jsapi.h"
+		#else
+		#include "jsapi.h"
+		#endif
 		static JSClass global_class = { "global", JSCLASS_GLOBAL_FLAGS, JS_PropertyStub, JS_PropertyStub,
 			JS_PropertyStub, JS_PropertyStub, JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
 			JS_FinalizeStub, JSCLASS_NO_OPTIONAL_MEMBERS };

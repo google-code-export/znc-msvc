@@ -583,7 +583,7 @@ void CJavaScriptMod::_OnOneCNickAndOneStringAndOneChanList(EModEvId eEventId,
 
 		// as per Notes at:
 		// https://developer.mozilla.org/en/SpiderMonkey/JSAPI_Reference/JS_NewArrayObject
-		JS_AddRoot(pScript->GetContext(), &joChans);
+		JS_AddObjectRoot(pScript->GetContext(), &joChans);
 		jsint i = 0;
 		for(vector<CChan*>::const_iterator cit = vChans.begin(); cit != vChans.end(); cit++, i++)
 		{
@@ -594,7 +594,7 @@ void CJavaScriptMod::_OnOneCNickAndOneStringAndOneChanList(EModEvId eEventId,
 
 		pScript->InvokeEventHandler(eEventId, 3, jvArgs, false);
 
-		JS_RemoveRoot(pScript->GetContext(), &joChans);
+		JS_RemoveObjectRoot(pScript->GetContext(), &joChans);
 	}
 }
 
