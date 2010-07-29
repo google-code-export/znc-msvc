@@ -19,4 +19,11 @@
 #define JS_FS(name,call,nargs,flags,extra) {name, call, nargs, flags, extra}
 #endif
 
+#if JS_VERSION <= 180
+#define JS_AddObjectRoot JS_AddRoot
+#define JS_AddValueRoot JS_AddRoot
+#define JS_RemoveValueRoot JS_RemoveRoot
+#define JS_RemoveObjectRoot JS_RemoveRoot
+#endif
+
 #endif

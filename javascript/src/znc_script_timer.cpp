@@ -11,7 +11,7 @@ CJSTimer::CJSTimer(CZNCScript* pScript, unsigned int uInterval, bool bRepeat, co
 	m_pCallback = new jsval;
 	*m_pCallback = jvCallback;
 
-	JS_AddRoot(m_pScript->GetContext(), m_pCallback);
+	JS_AddValueRoot(m_pScript->GetContext(), m_pCallback);
 }
 
 
@@ -23,6 +23,6 @@ void CJSTimer::RunJob()
 
 CJSTimer::~CJSTimer()
 {
-	JS_RemoveRoot(m_pScript->GetContext(), m_pCallback);
+	JS_RemoveValueRoot(m_pScript->GetContext(), m_pCallback);
 	m_pScript->DeleteExpiredTimer(this);
 }

@@ -210,7 +210,7 @@ _ZNCJSFUNC(AddEventHandler)
 
 	if(jvStored != NULL)
 	{
-		if(JS_AddRoot(cx, jvStored))
+		if(JS_AddValueRoot(cx, jvStored))
 		{
 			*rval = BOOLEAN_TO_JSVAL(JS_TRUE);
 

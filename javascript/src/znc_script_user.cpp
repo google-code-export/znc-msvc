@@ -47,7 +47,7 @@ bool CZNCScript::SetUpUserObject()
 		JS_DefineFunctions(m_jsContext, joUser, s_user_functions);
 
 		m_jvUserObj = OBJECT_TO_JSVAL(joUser);
-		if(JS_AddRoot(m_jsContext, &m_jvUserObj))
+		if(JS_AddValueRoot(m_jsContext, &m_jvUserObj))
 		{
 			return true;
 		}
