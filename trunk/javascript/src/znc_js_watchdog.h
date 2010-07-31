@@ -56,7 +56,27 @@ public:
 };
 
 #else
-	// Linux implementation: using pthreads.
+// Linux implementation: using pthreads.
+
+#include <pthread.h>
+
+class CJSWatchDog : public IJSWatchDog
+{
+protected:
+	pthread_mutex_t m_mutex;
+	pthread_cond_t m_cond;
+	pthread_t m_thread;
+	pthread_attr_t m_attr;
+
+	bool StartWatching();
+	bool StopWatching();
+
+	static void* TimerThreadProc(void*);
+public:
+	CJSWatchDog(JSRuntime* pRuntime);
+	virtual ~CJSWatchDog();
+};
+
 #endif
 
 #endif /* !_ZNC_JS_WATCHDOG_H */

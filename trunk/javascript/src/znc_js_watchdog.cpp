@@ -6,9 +6,16 @@
  * by the Free Software Foundation.
  */
 
+#ifdef _WIN32
 #include "winver.h"
 #include <windows.h>
+#else
+#include <unistd.h>
+#include <errno.h>
+#endif
 #include "znc_js_watchdog.h"
+
+#define WATCHDOG_INTERVAL_IN_SECONDS 1
 
 
 IJSWatchDog::IJSWatchDog(JSRuntime* pRuntime)
@@ -52,7 +59,6 @@ void IJSWatchDog::WatchThat()
 
 IJSWatchDog::~IJSWatchDog()
 {
-	//StopWatching(); // this causes an unresolved external symbol? wtf? why?
 }
 
 
@@ -73,7 +79,8 @@ bool CJSWatchDog::StartWatching()
 	}
 
 	if(CreateTimerQueueTimer(&m_hTimer, NULL, TimerCallback, this,
-		2000, 1000, WT_EXECUTEINTIMERTHREAD))
+		WATCHDOG_INTERVAL_IN_SECONDS * 2 * 1000, WATCHDOG_INTERVAL_IN_SECONDS * 1000,
+		WT_EXECUTEINTIMERTHREAD))
 	{
 		m_bIsWatching = true;
 		return true;
@@ -119,5 +126,80 @@ CJSWatchDog::~CJSWatchDog()
 }
 
 #else
+
+CJSWatchDog::CJSWatchDog(JSRuntime* pRuntime) :
+	IJSWatchDog(pRuntime)
+{
+	pthread_mutex_init(&m_mutex, NULL);
+	pthread_cond_init(&m_cond, NULL);
+
+	pthread_attr_init(&m_attr);
+	pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_JOINABLE);
+}
+
+
+bool CJSWatchDog::StartWatching()
+{
+	if(!m_bIsWatching)
+	{
+		m_bIsWatching = 
+			(pthread_create(&m_thread, &m_attr, TimerThreadProc, NULL) == 0);
+
+		return m_bIsWatching;
+	}
+
+	return false;
+}
+
+
+bool CJSWatchDog::StopWatching()
+{
+	if(m_bIsWatching)
+	{
+		pthread_cancel(m_thread);
+		m_bIsWatching = false;
+
+		return true;
+	}
+
+	return false;
+}
+
+
+/*static*/ void* CJSWatchDog::TimerThreadProc(void* pArg)
+{
+	CJSWatchDog* pDog = reinterpret_cast<CJSWatchDog*>(pArg);
+
+	if(pDog)
+	{
+		pthread_mutex_lock(&pDog->m_mutex);
+
+		struct timespec ts = {0};
+		clock_gettime(CLOCK_REALTIME, &ts);
+		ts.tv_sec += WATCHDOG_INTERVAL_IN_SECONDS * 2;
+
+		while(pthread_cond_timedwait(&pDog->m_cond, &pDog->m_mutex, &ts) == ETIMEDOUT)
+		{
+			clock_gettime(CLOCK_REALTIME, &ts);
+			ts.tv_sec += WATCHDOG_INTERVAL_IN_SECONDS;
+
+			pDog->WatchThat();
+		}
+
+		pthread_mutex_unlock(&pDog->m_mutex);
+	}
+
+	pthread_exit(NULL);
+}
+
+
+CJSWatchDog::~CJSWatchDog()
+{
+	StopWatching();
+
+	pthread_attr_destroy(&m_attr);
+	pthread_mutex_destroy(&m_mutex);
+	pthread_cond_destroy(&m_cond);
+}
 
 #endif
