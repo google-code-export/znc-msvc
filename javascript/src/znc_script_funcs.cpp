@@ -484,7 +484,7 @@ _ZNCJSFUNC(GetUser)
 {
 	GET_SCRIPT(pScript);
 
-	*rval = *pScript->GetJSUser();
+	*rval = OBJECT_TO_JSVAL(pScript->GetJSUser());
 
 	return JS_TRUE;
 }

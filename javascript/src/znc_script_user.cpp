@@ -39,15 +39,17 @@ static JSPropertySpec s_user_properties[] = {
 
 bool CZNCScript::SetUpUserObject()
 {
-	JSObject* joUser = JS_NewObject(m_jsContext, &s_user_class, NULL, NULL);
+	if(m_jsUserObj)
+		return false;
 
-	if(joUser)
+	m_jsUserObj = JS_NewObject(m_jsContext, &s_user_class, NULL, NULL);
+
+	if(m_jsUserObj)
 	{
-		JS_DefineProperties(m_jsContext, joUser, s_user_properties);
-		JS_DefineFunctions(m_jsContext, joUser, s_user_functions);
+		JS_DefineProperties(m_jsContext, m_jsUserObj, s_user_properties);
+		JS_DefineFunctions(m_jsContext, m_jsUserObj, s_user_functions);
 
-		m_jvUserObj = OBJECT_TO_JSVAL(joUser);
-		if(JS_AddValueRoot(m_jsContext, &m_jvUserObj))
+		if(JS_AddObjectRoot(m_jsContext, &m_jsUserObj))
 		{
 			return true;
 		}

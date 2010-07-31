@@ -10,6 +10,9 @@
 #define _ZNC_JS_MOD_H
 
 #include "znc_script.h"
+#if JS_VERSION > 180
+#include "znc_js_watchdog.h"
+#endif
 
 class CJavaScriptMod : public CModule
 {
@@ -21,6 +24,8 @@ public:
 
 	// module specific calls:
 	JSRuntime* GetJSRuntime() const { return ms_jsRuntime; }
+	void ArmWatchDog();
+	void DisArmWatchDog();
 
 	// ZNC module call-ins:
 	bool OnLoad(const CString& sArgsi, CString& sMessage);
@@ -84,6 +89,9 @@ protected:
 
 	static JSRuntime* ms_jsRuntime;
 	static int ms_uNumberOfInstances;
+#if JS_VERSION > 180
+	static CJSWatchDog* ms_pWatchDog;
+#endif
 
 	bool LoadModule(const CString& sName, const CString& sArgs, CString& srErrorMessage);
 	bool UnLoadModule(const CString& sName, CString& srErrorMessage);

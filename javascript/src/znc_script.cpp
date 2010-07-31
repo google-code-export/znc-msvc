@@ -34,6 +34,7 @@ CZNCScript::CZNCScript(CJavaScriptMod* pMod, const CString& sName, const CString
 	m_jsGlobalObj = NULL;
 	m_jsScript = NULL;
 	m_jsScriptObj = NULL;
+	m_jsUserObj = NULL;
 
 	m_uBranchCallbackCount = 0;
 	m_uBranchCallbackTime = 0;
@@ -96,7 +97,11 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		return false;
 	}
 
+#if JS_VERSION <= 180
 	JS_SetBranchCallback(m_jsContext, ScriptBranchCallback);
+#else
+	JS_SetOperationCallback(m_jsContext, ScriptOperationCallback);
+#endif
 
 	/* read the script from disk */
 	CFile cFile(m_sFilePath);
@@ -104,7 +109,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	if(!cFile.Exists() || !cFile.Open())
 	{
 		srErrorMessage = "Opening the script file [" + m_sFilePath + "] failed.";
-		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
@@ -167,7 +172,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	if(!szBuf)
 	{
 		srErrorMessage = "The script file seems to be empty.";
-		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 		return false;
@@ -177,6 +182,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	jsval jvRet;
 
 	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
+	m_pMod->ArmWatchDog();
 
 	if(bUtf16)
 	{
@@ -211,7 +217,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 			m_jsScript = NULL;
 		}
 
-		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsUserObj);
 		JS_DestroyContext(m_jsContext);
 		m_jsContext = NULL;
 
@@ -222,6 +228,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	{
 		srErrorMessage = "Running the script failed!";
 
+		m_pMod->DisArmWatchDog();
+
 		JS_RemoveObjectRoot(m_jsContext, &m_jsScriptObj);
 
 		// clear any (rooted) function objects that may have been added before the error:
@@ -229,7 +237,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		// and the same thing for timers:
 		ClearTimers();
 
-		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsUserObj);
 
 		JS_GC(m_jsContext); // invoke other destructors
 
@@ -242,6 +250,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	{
 		jsval jvModArgs = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(m_jsContext, "<:TODO:>"));
 		InvokeEventHandler(ModEv_OnLoad, 1, &jvModArgs, false);
+
+		m_pMod->DisArmWatchDog();
 
 		JS_GC(m_jsContext);
 
@@ -261,6 +271,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		CString(message ? message : "(unknown error)"));
 }
 
+
+#if JS_VERSION <= 180
 // Source:
 // http://mxr.mozilla.org/firefox2/source/dom/src/base/nsJSEnvironment.cpp#528
 // (GPL v2)
@@ -275,9 +287,16 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 // it's not generally necessary.
 #define INITIALIZE_TIME_BRANCH_COUNT_MASK 0x000000ff // 255
 
+
 /*static*/ JSBool CZNCScript::ScriptBranchCallback(JSContext *cx, JSScript *script)
 {
+	if(!cx)
+		return JS_TRUE;
+
 	CZNCScript* pScript = static_cast<CZNCScript*>(JS_GetContextPrivate(cx));
+
+	if(!pScript)
+		return JS_TRUE;
 
 	uint64_t uCallbackCount = ++pScript->m_uBranchCallbackCount;
 
@@ -311,6 +330,43 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 	return JS_TRUE;
 }
+
+#else
+/*static*/ JSBool CZNCScript::ScriptOperationCallback(JSContext *cx)
+{
+	if(!cx)
+		return JS_TRUE;
+
+	CZNCScript* pScript = static_cast<CZNCScript*>(JS_GetContextPrivate(cx));
+
+	if(!pScript)
+		return JS_TRUE;
+
+	// this will be called roughly once per second, so calling the GC should
+	// not be too much overhead for now.
+	JS_MaybeGC(cx);
+
+	if(pScript->m_uBranchCallbackTime == 0)
+	{
+		pScript->m_uBranchCallbackTime = time(NULL) - 1;
+	}
+	else
+	{
+		time_t tDelta = (time(NULL) - pScript->m_uBranchCallbackTime);
+
+		if(tDelta > MAX_SCRIPT_EXECUTION_SECONDS)
+		{
+			pScript->GetMod()->PutModule("WARNING: The script " +
+				pScript->GetName() + ".js exceeded the maximum run time of " + CString(MAX_SCRIPT_EXECUTION_SECONDS) + 
+				" seconds and has been terminated!");
+
+			return JS_FALSE;
+		}
+	}
+
+	return JS_TRUE;
+}
+#endif
 
 
 /************************************************************************/
@@ -351,6 +407,7 @@ int CZNCScript::InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, boo
 	CModule::EModRet eModRet = CModule::CONTINUE;
 
 	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
+	m_pMod->ArmWatchDog();
 
 	for(multimap<EModEvId, jsval*>::iterator it = find.first; it != find.second; it++)
 	{
@@ -375,6 +432,8 @@ int CZNCScript::InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, boo
 			}
 		}
 	}
+
+	m_pMod->DisArmWatchDog();
 
 	return eModRet;
 }
@@ -447,8 +506,11 @@ void CZNCScript::RunTimerProc(CTimer *pTimer, jsval *pCallback)
 	jsval jvRet;
 
 	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
+	m_pMod->ArmWatchDog();
 
 	bOK = JS_CallFunctionValue(m_jsContext, m_jsGlobalObj, *pCallback, 0, NULL, &jvRet);
+
+	m_pMod->DisArmWatchDog();
 
 	if(!bOK)
 	{
@@ -584,7 +646,7 @@ CZNCScript::~CZNCScript()
 	{
 		ClearTimers();
 		ClearEventHandlers();
-		JS_RemoveObjectRoot(m_jsContext, &m_jvUserObj);
+		JS_RemoveObjectRoot(m_jsContext, &m_jsUserObj);
 		JS_RemoveObjectRoot(m_jsContext, &m_jsScriptObj);
 		JS_DestroyContext(m_jsContext);
 	}
