@@ -36,10 +36,10 @@ protected:
 	JSContext* m_jsContext;
 	JSObject* m_jsGlobalObj;
 
-	JSScript *m_jsScript;
-	JSObject *m_jsScriptObj;
+	JSScript* m_jsScript;
+	JSObject* m_jsScriptObj;
 
-	jsval m_jvUserObj;
+	JSObject* m_jsUserObj;
 
 	std::multimap<EModEvId, jsval*> m_eventHandlers;
 	int m_nextTimerId;
@@ -57,7 +57,11 @@ protected:
 	void ClearTimers();
 
 	static void ScriptErrorCallback(JSContext* cx, const char* message, JSErrorReport* report);
+#if JS_VERSION <= 180
 	static JSBool ScriptBranchCallback(JSContext *cx, JSScript *script);
+#else
+	static JSBool ScriptOperationCallback(JSContext *cx);
+#endif
 public:
 	CZNCScript(CJavaScriptMod* pMod, const CString& sName, const CString& sFilePath);
 	virtual ~CZNCScript();
@@ -67,7 +71,7 @@ public:
 	CZNC* GetZNC() const { return m_pZNC; }
 	CJavaScriptMod* GetMod() const { return m_pMod; }
 	CUser* GetUser() const { return m_pUser; }
-	jsval* GetJSUser() { return &m_jvUserObj; }
+	JSObject* GetJSUser() { return m_jsUserObj; }
 
 	const CString& GetName() const { return m_sName; }
 	const CString& GetArguments() const { return m_sArguments; }

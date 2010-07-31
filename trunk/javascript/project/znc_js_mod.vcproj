@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="znc_js_mod"
 	ProjectGUID="{7BEF6C4D-8E98-42DB-96B4-3E897920F842}"
 	RootNamespace="znc_js_mod"
@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\main\znc-msvc&quot;;&quot;..\..\main\znc-msvc\win32\src&quot;;..\..\main\dependencies\include;&quot;Y:\Dev\js-1.8.0\js\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_WINDLL;_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN_MSVC;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_C_ARES;XP_WIN"
+				AdditionalIncludeDirectories="&quot;..\..\main\znc-msvc&quot;;&quot;..\..\main\znc-msvc\win32\src&quot;;..\..\main\dependencies\include;&quot;C:\mozilla-build\msys\home\js\build-release\dist\include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_WINDLL;_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN_MSVC;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_C_ARES"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -61,9 +61,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ZNC.lib js32.lib libeay32.lib ssleay32.lib"
+				AdditionalDependencies="ZNC.lib mozjs.lib libeay32.lib ssleay32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\main\build-temp\ZNC_DLL\$(PlatformName)-$(ConfigurationName)&quot;;&quot;Y:\Dev\js-1.8.0\$(ConfigurationName)&quot;;..\..\main\dependencies\lib_x86\release"
+				AdditionalLibraryDirectories="&quot;..\..\main\build-temp\ZNC_DLL\$(PlatformName)-$(ConfigurationName)&quot;;..\..\main\dependencies\lib_x86\debug;..\..\main\dependencies\lib_x86\release;&quot;C:\mozilla-build\msys\home\js\build-$(ConfigurationName)\dist\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -88,7 +88,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.dll&#x0D;&#x0A;copy $(OutDir)\$(TargetName).pdb ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.pdb&#x0D;&#x0A;copy Y:\Dev\js-1.8.0\$(ConfigurationName)\js32.dll ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;"
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.dll&#x0D;&#x0A;copy $(OutDir)\$(TargetName).pdb ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.pdb&#x0D;&#x0A;copy C:\mozilla-build\msys\home\js\build-$(ConfigurationName)\dist\bin\mozjs.dll ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -118,8 +118,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;..\..\main\znc-msvc&quot;;&quot;..\..\main\znc-msvc\win32\src&quot;;..\..\main\dependencies\include;&quot;Y:\Dev\js-1.8.0\js\src&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_WINDLL;_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN_MSVC;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_C_ARES;XP_WIN"
+				AdditionalIncludeDirectories="&quot;..\..\main\znc-msvc&quot;;&quot;..\..\main\znc-msvc\win32\src&quot;;..\..\main\dependencies\include;&quot;C:\mozilla-build\msys\home\js\build-release\dist\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_WINDLL;_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN_MSVC;_MODULES;HAVE_LIBSSL;HAVE_IPV6;HAVE_C_ARES"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -137,9 +137,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ZNC.lib js32.lib libeay32.lib ssleay32.lib"
+				AdditionalDependencies="ZNC.lib mozjs.lib libeay32.lib ssleay32.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\main\build-temp\ZNC_DLL\$(PlatformName)-$(ConfigurationName)&quot;;&quot;Y:\Dev\js-1.8.0\$(ConfigurationName)&quot;;&quot;..\..\main\dependencies\lib_x86\$(ConfigurationName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\main\build-temp\ZNC_DLL\$(PlatformName)-$(ConfigurationName)&quot;;&quot;..\..\main\dependencies\lib_x86\$(ConfigurationName)&quot;;&quot;C:\mozilla-build\msys\home\js\build-$(ConfigurationName)\dist\lib&quot;"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -166,7 +166,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.dll&#x0D;&#x0A;copy $(OutDir)\$(TargetName).pdb ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.pdb&#x0D;&#x0A;copy Y:\Dev\js-1.8.0\$(ConfigurationName)\js32.dll ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)&#x0D;&#x0A;"
+				CommandLine="copy $(OutDir)\$(TargetFileName) ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.dll&#x0D;&#x0A;copy $(OutDir)\$(TargetName).pdb ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules\javascript.pdb&#x0D;&#x0A;copy C:\mozilla-build\msys\home\js\build-$(ConfigurationName)\dist\bin\mozjs.dll ..\..\main\build-out\$(PlatformName)-$(ConfigurationName)\modules&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -192,6 +192,10 @@
 			</File>
 			<File
 				RelativePath="..\src\znc_js_mod_events.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\znc_js_watchdog.cpp"
 				>
 			</File>
 			<File
@@ -242,6 +246,10 @@
 			</File>
 			<File
 				RelativePath="..\src\znc_js_mod_events.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\src\znc_js_watchdog.h"
 				>
 			</File>
 			<File

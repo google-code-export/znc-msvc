@@ -15,6 +15,9 @@
 
 int CJavaScriptMod::ms_uNumberOfInstances = 0;
 JSRuntime* CJavaScriptMod::ms_jsRuntime = NULL;
+#if JS_VERSION > 180
+CJSWatchDog* CJavaScriptMod::ms_pWatchDog = NULL;
+#endif
 
 /************************************************************************/
 /* CONSTRUCTOR / INITIALIZERS                                           */
@@ -51,6 +54,13 @@ bool CJavaScriptMod::OnLoad(const CString& sArgs, CString& sMessage)
 		sMessage = "Initializing the JavaScript runtime FAILED!";
 		return false;
 	}
+
+#if JS_VERSION > 180
+	if(!ms_pWatchDog)
+	{
+		ms_pWatchDog = new CJSWatchDog(ms_jsRuntime);
+	}
+#endif
 
 	/* warning: when a script is loaded from here, error messages to PutModule
 		will most probably get lost during ZNC startup */
@@ -205,6 +215,22 @@ bool CJavaScriptMod::UnLoadModule(const CString& sName, CString& srErrorMessage)
 }
 
 
+void CJavaScriptMod::ArmWatchDog()
+{
+#if JS_VERSION > 180
+	ms_pWatchDog->Arm();
+#endif
+}
+
+
+void CJavaScriptMod::DisArmWatchDog()
+{
+#if JS_VERSION > 180
+	ms_pWatchDog->DisArm();
+#endif
+}
+
+
 /************************************************************************/
 /* CLEANUP / DESTRUCTOR                                                 */
 /************************************************************************/
@@ -226,6 +252,11 @@ CJavaScriptMod::~CJavaScriptMod()
 
 	if(ms_uNumberOfInstances == 0)
 	{
+#if JS_VERSION > 180
+		delete ms_pWatchDog;
+		ms_pWatchDog = NULL;
+#endif
+
 		JS_ShutDown();
 	}
 }

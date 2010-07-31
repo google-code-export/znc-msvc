@@ -123,7 +123,11 @@ static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *
 
 bool CZNCScript::SetUpGlobalClasses(CString& srErrorMessage)
 {
+#if JS_VERSION <= 180
 	m_jsGlobalObj = JS_NewObject(m_jsContext, &s_global_class, NULL, NULL);
+#else
+	m_jsGlobalObj = JS_NewGlobalObject(m_jsContext, &s_global_class);
+#endif
 	if(!m_jsGlobalObj)
 	{
 		srErrorMessage = "Creating the global object failed!";
