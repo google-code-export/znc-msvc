@@ -181,8 +181,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	/* load (+ run, initialize) the script */
 	jsval jvRet;
 
-	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
-	m_pMod->ArmWatchDog();
+	EnterJS();
 
 	if(bUtf16)
 	{
@@ -211,6 +210,8 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	{
 		srErrorMessage = "Loading " + m_sName + ".js failed!";
 
+		LeftJS();
+
 		if(m_jsScript)
 		{
 			JS_DestroyScript(m_jsContext, m_jsScript);
@@ -228,7 +229,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 	{
 		srErrorMessage = "Running the script failed!";
 
-		m_pMod->DisArmWatchDog();
+		LeftJS();
 
 		JS_RemoveObjectRoot(m_jsContext, &m_jsScriptObj);
 
@@ -251,9 +252,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		jsval jvModArgs = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(m_jsContext, "<:TODO:>"));
 		InvokeEventHandler(ModEv_OnLoad, 1, &jvModArgs, false);
 
-		m_pMod->DisArmWatchDog();
-
-		JS_GC(m_jsContext);
+		LeftJS();
 
 		return true;
 	}
@@ -406,8 +405,7 @@ int CZNCScript::InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, boo
 
 	CModule::EModRet eModRet = CModule::CONTINUE;
 
-	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
-	m_pMod->ArmWatchDog();
+	EnterJS();
 
 	for(multimap<EModEvId, jsval*>::iterator it = find.first; it != find.second; it++)
 	{
@@ -433,7 +431,7 @@ int CZNCScript::InvokeEventHandler(EModEvId eEvent, uintN argc, jsval *argv, boo
 		}
 	}
 
-	m_pMod->DisArmWatchDog();
+	LeftJS();
 
 	return eModRet;
 }
@@ -505,12 +503,9 @@ void CZNCScript::RunTimerProc(CTimer *pTimer, jsval *pCallback)
 	JSBool bOK;
 	jsval jvRet;
 
-	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
-	m_pMod->ArmWatchDog();
-
+	EnterJS();
 	bOK = JS_CallFunctionValue(m_jsContext, m_jsGlobalObj, *pCallback, 0, NULL, &jvRet);
-
-	m_pMod->DisArmWatchDog();
+	LeftJS();
 
 	if(!bOK)
 	{
@@ -633,6 +628,22 @@ bool CZNCScript::ClearNV(bool bWriteToDisk)
 JSObject* CZNCScript::MakeAnonObject() const
 {
 	return JS_NewObject(m_jsContext, NULL, NULL, NULL);
+}
+
+
+void CZNCScript::EnterJS()
+{
+	m_uBranchCallbackCount = m_uBranchCallbackTime = 0;
+
+	m_pMod->ArmWatchDog();
+}
+
+
+void CZNCScript::LeftJS()
+{
+	m_pMod->DisArmWatchDog();
+
+	JS_MaybeGC(m_jsContext);
 }
 
 
