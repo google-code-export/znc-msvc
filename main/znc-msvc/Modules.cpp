@@ -456,6 +456,9 @@ CModule::EModRet CModule::OnChanNotice(CNick& Nick, CChan& Channel, CString& sMe
 CModule::EModRet CModule::OnTopic(CNick& Nick, CChan& Channel, CString& sTopic) { return CONTINUE; }
 CModule::EModRet CModule::OnTimerAutoJoin(CChan& Channel) { return CONTINUE; }
 
+bool CModule::OnServerCapAvailable(const CString& sCap) { return false; }
+void CModule::OnServerCapResult(const CString& sCap, bool bSuccess) {}
+
 bool CModule::PutIRC(const CString& sLine) {
 	return (m_pUser) ? m_pUser->PutIRC(sLine) : false;
 }
@@ -597,6 +600,35 @@ bool CModules::OnStatusCommand(CString& sCommand) { MODHALTCHK(OnStatusCommand(s
 bool CModules::OnModCommand(const CString& sCommand) { MODUNLOADCHK(OnModCommand(sCommand)); return false; }
 bool CModules::OnModNotice(const CString& sMessage) { MODUNLOADCHK(OnModNotice(sMessage)); return false; }
 bool CModules::OnModCTCP(const CString& sMessage) { MODUNLOADCHK(OnModCTCP(sMessage)); return false; }
+
+// Why MODHALTCHK works only with functions returning EModRet ? :(
+bool CModules::OnServerCapAvailable(const CString& sCap) {
+	bool bResult = false;
+	for (unsigned int a = 0; a < size(); ++a) {
+		try {
+			CModule* pMod = (*this)[a];
+			CClient* pOldClient = pMod->GetClient();
+			pMod->SetClient(m_pClient);
+			if (m_pUser) {
+				CUser* pOldUser = pMod->GetUser();
+				pMod->SetUser(m_pUser);
+				bResult |= pMod->OnServerCapAvailable(sCap);
+				pMod->SetUser(pOldUser);
+			} else {
+				// WTF? Is that possible?
+				bResult |= pMod->OnServerCapAvailable(sCap);
+			}
+			pMod->SetClient(pOldClient);
+		} catch (CModule::EModException e) {
+			if (CModule::UNLOAD == e) {
+				UnloadModule((*this)[a]->GetModName());
+			}
+		}
+	}
+	return bResult;
+}
+
+bool CModules::OnServerCapResult(const CString& sCap, bool bSuccess) { MODUNLOADCHK(OnServerCapResult(sCap, bSuccess)); return false; }
 
 ////////////////////
 // CGlobalModules //
