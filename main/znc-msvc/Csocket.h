@@ -1877,22 +1877,22 @@ protected:
 		eCheckWrite = 2
 	};
 
-	void FDSetCheck( int iFd, map< int, short > & miiReadyFds, ECheckType eType )
+	void FDSetCheck( cs_sock_t iFd, map< cs_sock_t, short > & miiReadyFds, ECheckType eType )
 	{
-		map< int, short >::iterator it = miiReadyFds.find( iFd );
+		map< cs_sock_t, short >::iterator it = miiReadyFds.find( iFd );
 		if( it != miiReadyFds.end() )
 			it->second |= eType;
 		else
 			miiReadyFds[iFd] = eType;
 	}
-	bool FDHasCheck( int iFd, map< int, short > & miiReadyFds, ECheckType eType )
+	bool FDHasCheck( cs_sock_t iFd, map< cs_sock_t, short > & miiReadyFds, ECheckType eType )
 	{
-		map< int, short >::iterator it = miiReadyFds.find( iFd );
+		map< cs_sock_t, short >::iterator it = miiReadyFds.find( iFd );
 		if( it != miiReadyFds.end() )
-			return( (it->second & eType) );
+			return( (it->second & eType) != 0 );
 		return( false );
 	}
-	virtual int Select( map< int, short > & miiReadyFds, struct timeval *tvtimeout)
+	virtual int Select( map< cs_sock_t, short > & miiReadyFds, struct timeval *tvtimeout)
 	{
 #ifdef CSOCK_USE_POLL
 		if( miiReadyFds.empty() )
@@ -1900,7 +1900,7 @@ protected:
 
 		struct pollfd * pFDs = (struct pollfd *)malloc( sizeof( struct pollfd ) * miiReadyFds.size() );
 		size_t uCurrPoll = 0;
-		for( map< int, short >::iterator it = miiReadyFds.begin(); it != miiReadyFds.end(); ++it, ++uCurrPoll )
+		for( map< cs_sock_t, short >::iterator it = miiReadyFds.begin(); it != miiReadyFds.end(); ++it, ++uCurrPoll )
 		{
 			short iEvents = 0;
 			if( it->second & eCheckRead )
@@ -1935,8 +1935,8 @@ protected:
 		TFD_ZERO( &rfds );
 		TFD_ZERO( &wfds );
 		bool bHasWrite = false;
-		int iHighestFD = 0;
-		for( map< int, short >::iterator it = miiReadyFds.begin(); it != miiReadyFds.end(); ++it )
+		cs_sock_t iHighestFD = 0;
+		for( map< cs_sock_t, short >::iterator it = miiReadyFds.begin(); it != miiReadyFds.end(); ++it )
 		{
 			if (iHighestFD < it->first)
 				iHighestFD = it->first;
@@ -1951,12 +1951,12 @@ protected:
 			}
 		}
 
-		int iRet = select( iHighestFD + 1, &rfds, ( bHasWrite ? &wfds : NULL ), NULL, tvtimeout );
+		int iRet = select( (int)iHighestFD + 1, &rfds, ( bHasWrite ? &wfds : NULL ), NULL, tvtimeout );
 		if( iRet <= 0 )
 			miiReadyFds.clear();
 		else
 		{
-			for( map< int, short >::iterator it = miiReadyFds.begin(); it != miiReadyFds.end(); ++it )
+			for( map< cs_sock_t, short >::iterator it = miiReadyFds.begin(); it != miiReadyFds.end(); ++it )
 			{
 				if( (it->second & eCheckRead) && !TFD_ISSET( it->first, &rfds ) )
 					it->second &= ~eCheckRead;
@@ -1980,7 +1980,7 @@ private:
 		mpeSocks.clear();
 		struct timeval tv;
 
-		map< int, short > miiReadyFds;
+		map< cs_sock_t, short > miiReadyFds;
 		tv.tv_sec = m_iSelectWait / 1000000;
 		tv.tv_usec = m_iSelectWait % 1000000;
 		u_int iQuickReset = 100;
