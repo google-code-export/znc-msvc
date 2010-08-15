@@ -41,8 +41,14 @@ static void znc_nick_finalize(JSContext *cx, JSObject *obj)
 }
 
 
+#if JS_VERSION > 180
+static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
+static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
+#else
 static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
 static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+#endif
+
 
 static JSClass s_nick_class = {
 	"znc_nick_class", JSCLASS_HAS_PRIVATE | JSCLASS_CONSTRUCT_PROTOTYPE,
@@ -115,15 +121,23 @@ _ZNCJSFUNC(Nick_HasPerm) \
 	return JS_TRUE;
 }
 
-
+#if JS_VERSION > 180
+static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp)
+{
+	jsval jvId;
+	if(JS_IdToValue(cx, id, &jvId) && JSVAL_IS_INT(jvId))
+	{
+#else
 static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
 	if(JSVAL_IS_INT(id))
 	{
+		jsval jvId = id;
+#endif
 		_GET_NICK;
 		CString sStr;
 
-		switch(JSVAL_TO_INT(id))
+		switch(JSVAL_TO_INT(jvId))
 		{
 		case PROP_NICK: sStr = pCNick->GetNick(); break;
 		case PROP_IDENT: sStr = pCNick->GetIdent(); break;
@@ -138,10 +152,19 @@ static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *v
 }
 
 
+#if JS_VERSION > 180
+static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp)
+{
+	jsval jvId;
+	if(JS_IdToValue(cx, id, &jvId) && JSVAL_IS_INT(jvId))
+	{
+#else
 static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
 	if(JSVAL_IS_INT(id))
 	{
+		jsval jvId = id;
+#endif
 		_GET_NICK;
 		CString sStr;
 
@@ -152,7 +175,7 @@ static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *v
 
 		sStr = CUtil::WideToUtf8(JSVAL_TO_STRING(*vp));
 
-		switch(JSVAL_TO_INT(id))
+		switch(JSVAL_TO_INT(jvId))
 		{
 		case PROP_NICK: pCNick->SetNick(sStr); break;
 		case PROP_IDENT: pCNick->SetIdent(sStr); break;

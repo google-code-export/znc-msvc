@@ -43,7 +43,11 @@ static JSFunctionSpec s_global_functions[] = {
 /* ZNC CLASS                                                            */
 /************************************************************************/
 
+#if JS_VERSION > 180
+static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
+#else
 static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
+#endif
 
 static JSClass s_znc_class = {
 	"znc_class", 0,
@@ -102,11 +106,20 @@ static JSPropertySpec s_znc_properties[] = {
 };
 
 
+#if JS_VERSION > 180
+static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp)
+{
+	jsval jvId;
+	if(JS_IdToValue(cx, id, &jvId) && JSVAL_IS_INT(jvId))
+	{
+#else
 static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
 	if(JSVAL_IS_INT(id))
 	{
-		switch(JSVAL_TO_INT(id))
+		jsval jvId = id;
+#endif
+		switch(JSVAL_TO_INT(jvId))
 		{
 		case PROP_VERSION_MAJOR: *vp = INT_TO_JSVAL(VERSION_MAJOR); break;
 		case PROP_VERSION_MINOR: *vp = INT_TO_JSVAL(VERSION_MINOR); break;
