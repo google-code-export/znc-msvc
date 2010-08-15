@@ -1,6 +1,12 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2010-08-15 (0.094-rc1) (<font color="red">strongly recommended upgrade</font>) ==
+  * Upstream revision: 2101 (also upstream 0.094-rc1)
+  * Fixed security issue: Remote users with a valid login were able to crash ZNC (CVE-2010-2812)
+  * Added timed_perform and kicklog modules
+  * More [http://en.znc.in/wiki/ChangeLog upstream changes]
+
 == 2010-07-04 (0.93-r 2060) ==
   * Upstream [http://en.znc.in/wiki/ChangeLog/0.092 fixed] a crash in 0.090 and a 100% CPU bug (means all changes from ZNC 0.092 are in here as well).
   * Other [http://github.com/znc/znc/compare/501c76a4d50f1c8e7c6f4795301f9bca5f4793b7...17e7b0f4cf0b3824bae4578ee35ce7a16271d706 changes] from upstream, e.g. improved CAP support.
