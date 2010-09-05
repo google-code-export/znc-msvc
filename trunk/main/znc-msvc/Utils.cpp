@@ -391,6 +391,31 @@ void CUtils::PrintStatus(bool bSuccess, const CString& sMessage) {
 	}
 }
 
+#ifdef _WIN32
+bool CUtils::Win32StringError(int iErrorCode, CString& strError)
+{
+	if(iErrorCode != 0)
+	{
+		LPSTR lpMsgBuf = NULL;
+		DWORD dwSize;
+		dwSize = ::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL, iErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPSTR)&lpMsgBuf, 0, NULL);
+
+		if(lpMsgBuf && dwSize)
+		{
+			strError = lpMsgBuf;
+			::LocalFree(lpMsgBuf);
+			strError.Trim();
+
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif /* _WIN32 */
+
 void CUtils::SeedPRNG() {
 #ifdef _WIN32
 	HCRYPTPROV hProv;
@@ -414,7 +439,7 @@ void CUtils::SeedPRNG() {
 	{
 		srand((unsigned int)time(NULL));
 	}
-#else
+#else /* _WIN32 */
 	struct timeval tv;
 	unsigned int seed;
 
@@ -433,7 +458,7 @@ void CUtils::SeedPRNG() {
 	seed ^= getpid();
 
 	srand(seed);
-#endif
+#endif /* _WIN32 */
 }
 
 bool CTable::AddColumn(const CString& sName) {
