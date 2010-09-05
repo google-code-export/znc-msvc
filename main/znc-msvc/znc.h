@@ -60,9 +60,9 @@ public:
 	static CString GetTag(bool bIncludeVersion = true);
 	CString GetUptime() const;
 	static double GetCoreVersion();
-	void ClearVHosts();
-	bool AddVHost(const CString& sHost);
-	bool RemVHost(const CString& sHost);
+	void ClearBindHosts();
+	bool AddBindHost(const CString& sHost);
+	bool RemBindHost(const CString& sHost);
 	void Broadcast(const CString& sMessage, bool bAdminOnly = false,
 			CUser* pSkipUser = NULL, CClient* pSkipClient = NULL);
 	void AddBytesRead(unsigned long long u) { m_uBytesRead += u; }
@@ -113,7 +113,7 @@ public:
 	bool WritePemFile();
 	const CString& GetISpoofFile() const { return m_sISpoofFile; }
 	const CString& GetISpoofFormat() const { return m_sISpoofFormat; }
-	const VCString& GetVHosts() const { return m_vsVHosts; }
+	const VCString& GetBindHosts() const { return m_vsBindHosts; }
 	const vector<CListener*>& GetListeners() const { return m_vpListeners; }
 	time_t TimeStarted() const { return m_TimeStarted; }
 	size_t GetMaxBufferSize() const { return m_uiMaxBufferSize; }
@@ -178,7 +178,7 @@ protected:
 	CString                m_sISpoofFormat;
 	CString                m_sPidFile;
 	CString                m_sSSLCertFile;
-	VCString               m_vsVHosts;
+	VCString               m_vsBindHosts;
 	VCString               m_vsMotd;
 	CFile                  m_LockFile;
 	CFile*                 m_pISpoofLockFile;

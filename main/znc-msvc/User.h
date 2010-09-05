@@ -60,6 +60,7 @@ public:
 	bool AddServer(const CString& sName, unsigned short uPort, const CString& sPass = "", bool bSSL = false);
 	CServer* GetNextServer();
 	CServer* GetCurrentServer() const;
+	bool SetNextServer(const CServer* pServer);
 	bool CheckPass(const CString& sPass) const;
 	bool AddAllowedHost(const CString& sHostMask);
 	bool IsHostAllowed(const CString& sHostMask) const;
@@ -140,15 +141,15 @@ public:
 	void SetAltNick(const CString& s);
 	void SetIdent(const CString& s);
 	void SetRealName(const CString& s);
-	void SetVHost(const CString& s);
-	void SetDCCVHost(const CString& s);
+	void SetBindHost(const CString& s);
+	void SetDCCBindHost(const CString& s);
 	void SetPass(const CString& s, eHashType eHash, const CString& sSalt = "");
 	void SetBounceDCCs(bool b);
 	void SetMultiClients(bool b);
 	void SetUseClientIP(bool b);
 	void SetDenyLoadMod(bool b);
 	void SetAdmin(bool b);
-	void SetDenySetVHost(bool b);
+	void SetDenySetBindHost(bool b);
 	bool SetStatusPrefix(const CString& s);
 	void SetDefaultChanModes(const CString& s);
 	void SetIRCNick(const CNick& n);
@@ -180,8 +181,8 @@ public:
 	const CString& GetAltNick(bool bAllowDefault = true) const;
 	const CString& GetIdent(bool bAllowDefault = true) const;
 	const CString& GetRealName() const;
-	const CString& GetVHost() const;
-	const CString& GetDCCVHost() const;
+	const CString& GetBindHost() const;
+	const CString& GetDCCBindHost() const;
 	const CString& GetPass() const;
 	eHashType GetPassHashType() const;
 	const CString& GetPassSalt() const;
@@ -200,7 +201,7 @@ public:
 	bool UseClientIP() const;
 	bool DenyLoadMod() const;
 	bool IsAdmin() const;
-	bool DenySetVHost() const;
+	bool DenySetBindHost() const;
 	bool BounceDCCs() const;
 	bool MultiClients() const;
 	const CString& GetStatusPrefix() const;
@@ -232,8 +233,8 @@ protected:
 	CString               m_sAltNick;
 	CString               m_sIdent;
 	CString               m_sRealName;
-	CString               m_sVHost;
-	CString               m_sDCCVHost;
+	CString               m_sBindHost;
+	CString               m_sDCCBindHost;
 	CString               m_sPass;
 	CString               m_sPassSalt;
 	CString               m_sStatusPrefix;
@@ -261,7 +262,7 @@ protected:
 	bool                  m_bUseClientIP;
 	bool                  m_bDenyLoadMod;
 	bool                  m_bAdmin;
-	bool                  m_bDenySetVHost;
+	bool                  m_bDenySetBindHost;
 	bool                  m_bKeepBuffer;
 	bool                  m_bBeingDeleted;
 	bool                  m_bAppendTimestamp;
