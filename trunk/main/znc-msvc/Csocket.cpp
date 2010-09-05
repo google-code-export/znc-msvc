@@ -975,9 +975,15 @@ bool Csock::Listen( u_short iPort, int iMaxConns, const CS_STRING & sBindHost, u
 	if ( m_iReadSock == CS_INVALID_SOCK )
 		return( false );
 
-#if defined(HAVE_IPV6) && !defined(_WIN32)
-// there's no IPPROTO_IPV6 below Win XP. - KiNgMaR
-#if (!defined(_WIN32) && defined(IPV6_V6ONLY)) || (defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0501)
+#if defined(HAVE_IPV6)
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0501
+#define IPPROTO_IPV6 41
+#endif
+#ifdef _WIN32
+	OSVERSIONINFOW lvi = { sizeof(OSVERSIONINFOW), 0 };
+	if(GetVersionExW(&lvi) && lvi.dwMajorVersion >= 6) // IPV6_V6ONLY is supported on Windows Vista or later.
+	{
+#endif
 	if( GetIPv6() )
 	{
 		// per RFC3493#5.3
@@ -985,7 +991,9 @@ bool Csock::Listen( u_short iPort, int iMaxConns, const CS_STRING & sBindHost, u
 		if( setsockopt( m_iReadSock, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&on, sizeof( on ) ) != 0 )
 			PERROR( "IPV6_V6ONLY" );
 	}
-#endif /* IPV6_V6ONLY */
+#ifdef _WIN32
+	}
+#endif
 #endif /* HAVE_IPV6 */
 
 	m_address.SinFamily();
