@@ -106,6 +106,10 @@ public:
 	static void GenerateCert(FILE *pOut, const CString& sHost = "");
 #endif /* HAVE_LIBSSL */
 
+#ifdef _WIN32
+	static bool Win32StringError(int iErrorCode, CString& strError);
+#endif /* _WIN32 */
+
 private:
 protected:
 	static bool stdoutIsTTY;

@@ -1053,8 +1053,15 @@ void CClient::UserPortCommand(CString& sLine) {
 			CListener* pListener = new CListener(uPort, sBindHost, bSSL, eAddr, eAccept);
 
 			if (!pListener->Listen()) {
+				CString sError;
+#ifdef _WIN32
+				if(!CUtils::Win32StringError(::WSAGetLastError(), sError))
+					sError = "unknown error, check the host name";
+#else
+				sError = (errno == 0 ? CString("unknown error, check the host name") : CString(strerror(errno)));
+#endif
+				PutStatus("Unable to bind [" + sError + "]");
 				delete pListener;
-				PutStatus("Unable to bind [" + CString(strerror(errno)) + "]");
 			} else {
 				if (CZNC::Get().AddListener(pListener))
 					PutStatus("Port Added");

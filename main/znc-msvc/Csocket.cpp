@@ -621,6 +621,12 @@ Csock *Csock::GetSockObj( const CS_STRING & sHostname, u_short iPort )
 
 Csock::~Csock()
 {
+#ifdef _WIN32
+	// prevent any successful closesocket() calls and such from
+	// overwriting any possible previous errors.
+	int iOldError = ::WSAGetLastError();
+#endif
+
 #ifdef HAVE_C_ARES
 	if( m_pARESChannel )
 		ares_cancel( m_pARESChannel );
@@ -637,6 +643,10 @@ Csock::~Csock()
 	// delete any left over crons
 	for( vector<CCron *>::size_type i = 0; i < m_vcCrons.size(); i++ )
 		CS_Delete( m_vcCrons[i] );
+
+#ifdef _WIN32
+	::WSASetLastError(iOldError);
+#endif
 }
 
 void Csock::CloseSocksFD()
