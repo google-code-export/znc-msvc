@@ -23,6 +23,7 @@ static const struct {
 } vRouteReplies[] = {
 	{"WHO", {
 		{"352", false},
+		{"354", false}, // e.g. Quaknet uses this for WHO #chan %n
 		{"403", true}, // No such chan
 		{"315", true},
 		{NULL, true}
@@ -196,16 +197,17 @@ public:
 		if (m_pClient == m_pDoing) {
 			// The replies which aren't received yet will be
 			// broadcasted to everyone, but at least nothing breaks
+			RemTimer("RouteTimeout");
 			m_pDoing = NULL;
 			m_pReplies = NULL;
 		}
 
 		it = m_vsPending.find(m_pClient);
 
-		if (it == m_vsPending.end())
-			return;
+		if (it != m_vsPending.end())
+			m_vsPending.erase(it);
 
-		m_vsPending.erase(it);
+		SendRequest();
 	}
 
 	virtual EModRet OnRaw(CString& sLine)

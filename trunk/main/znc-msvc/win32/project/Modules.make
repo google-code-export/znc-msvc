@@ -151,6 +151,7 @@ $(MAKDIR)\webadmin.dll \
 $(MAKDIR)\extra\antiidle.dll \
 $(MAKDIR)\extra\autovoice.dll \
 $(MAKDIR)\extra\block_motd.dll \
+$(MAKDIR)\extra\clearbuffersonmsg.dll \
 $(MAKDIR)\extra\ctcpflood.dll \
 $(MAKDIR)\extra\fakeonline.dll \
 $(MAKDIR)\extra\flooddetach.dll \
@@ -164,7 +165,6 @@ $(MAKDIR)\extra_win32\blockserver.dll \
 $(MAKDIR)\extra_win32\block_lagchk.dll \
 $(MAKDIR)\extra_win32\broadcastquery.dll \
 $(MAKDIR)\extra_win32\certchecker.dll \
-$(MAKDIR)\extra_win32\clearbuffersonmsg.dll \
 $(MAKDIR)\extra_win32\clientpart.dll \
 $(MAKDIR)\extra_win32\colloquy.dll \
 $(MAKDIR)\extra_win32\fish.dll \
@@ -218,6 +218,7 @@ $(MAKDIR)\webadmin.obj \
 $(MAKDIR)\extra\antiidle.obj \
 $(MAKDIR)\extra\autovoice.obj \
 $(MAKDIR)\extra\block_motd.obj \
+$(MAKDIR)\extra\clearbuffersonmsg.obj \
 $(MAKDIR)\extra\ctcpflood.obj \
 $(MAKDIR)\extra\fakeonline.obj \
 $(MAKDIR)\extra\flooddetach.obj \
@@ -231,7 +232,6 @@ $(MAKDIR)\extra_win32\blockserver.obj \
 $(MAKDIR)\extra_win32\block_lagchk.obj \
 $(MAKDIR)\extra_win32\broadcastquery.obj \
 $(MAKDIR)\extra_win32\certchecker.obj \
-$(MAKDIR)\extra_win32\clearbuffersonmsg.obj \
 $(MAKDIR)\extra_win32\clientpart.obj \
 $(MAKDIR)\extra_win32\colloquy.obj \
 $(MAKDIR)\extra_win32\fish.obj \
