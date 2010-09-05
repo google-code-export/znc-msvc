@@ -151,7 +151,7 @@ $(MAKDIR)\webadmin.dll \
 $(MAKDIR)\extra\antiidle.dll \
 $(MAKDIR)\extra\autovoice.dll \
 $(MAKDIR)\extra\block_motd.dll \
-$(MAKDIR)\extra\clearbuffersonmsg.dll \
+$(MAKDIR)\extra\clearbufferonmsg.dll \
 $(MAKDIR)\extra\ctcpflood.dll \
 $(MAKDIR)\extra\fakeonline.dll \
 $(MAKDIR)\extra\flooddetach.dll \
@@ -218,7 +218,7 @@ $(MAKDIR)\webadmin.obj \
 $(MAKDIR)\extra\antiidle.obj \
 $(MAKDIR)\extra\autovoice.obj \
 $(MAKDIR)\extra\block_motd.obj \
-$(MAKDIR)\extra\clearbuffersonmsg.obj \
+$(MAKDIR)\extra\clearbufferonmsg.obj \
 $(MAKDIR)\extra\ctcpflood.obj \
 $(MAKDIR)\extra\fakeonline.obj \
 $(MAKDIR)\extra\flooddetach.obj \
