@@ -60,11 +60,7 @@ protected:
 	void LeftJS();
 
 	static void ScriptErrorCallback(JSContext* cx, const char* message, JSErrorReport* report);
-#if JS_VERSION <= 180
-	static JSBool ScriptBranchCallback(JSContext *cx, JSScript *script);
-#else
 	static JSBool ScriptOperationCallback(JSContext *cx);
-#endif
 
 public:
 	CZNCScript(CJavaScriptMod* pMod, const CString& sName, const CString& sFilePath);

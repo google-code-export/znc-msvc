@@ -21,50 +21,35 @@ using namespace std;
 /* NICK OBJECT CLASS                                                    */
 /************************************************************************/
 
-static JSBool znc_nick_construct(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+static JSClass s_nick_class;
+
+
+static JSBool znc_nick_construct(JSContext *cx, uintN argc, jsval *vp)
 {
-	CNick* pNick = new CNick();
-	if(!pNick)
+	if(JSObject *obj = JS_NewObject(cx, &CZNCScriptFuncs::s_nick_class, NULL, NULL))
 	{
-		JS_ReportOutOfMemory(cx);
-		return JS_FALSE;
+		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
+		return JS_TRUE;
 	}
-	JS_SetPrivate(cx, obj, pNick);
-	return JS_TRUE;
+
+	return JS_FALSE;
 }
 
 
 static void znc_nick_finalize(JSContext *cx, JSObject *obj)
 {
-	CNick* pNick = reinterpret_cast<CNick*>(JS_GetPrivate(cx, obj));
+	CNick* pNick = reinterpret_cast<CNick*>(JS_GetInstancePrivate(cx, obj, &CZNCScriptFuncs::s_nick_class, NULL));
 	delete pNick;
 }
 
 
-#if JS_VERSION > 180
-static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
-static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
-#else
-static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-#endif
-
-
-static JSClass s_nick_class = {
-	"znc_nick_class", JSCLASS_HAS_PRIVATE | JSCLASS_CONSTRUCT_PROTOTYPE,
-	JS_PropertyStub, JS_PropertyStub, znc_nick_get_prop, znc_nick_set_prop,
-	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, znc_nick_finalize,
-	JSCLASS_NO_OPTIONAL_MEMBERS
-};
-
-
 static JSFunctionSpec s_nick_functions[] = {
-	JS_FS("GetNick",		ZNCJSFUNC_NAME(Nick_GetNick),		0, 0, 0),
-	JS_FS("GetIdent",		ZNCJSFUNC_NAME(Nick_GetIdent),		0, 0, 0),
-	JS_FS("GetHost",		ZNCJSFUNC_NAME(Nick_GetHost),		0, 0, 0),
-	JS_FS("GetHostMask",	ZNCJSFUNC_NAME(Nick_GetHostMask),	0, 0, 0),
-	JS_FS("GetPermStr",		ZNCJSFUNC_NAME(Nick_GetPermStr),	0, 0, 0),
-	JS_FS("HasPerm",		ZNCJSFUNC_NAME(Nick_HasPerm),		1, 0, 0),
+	JS_FS("GetNick",		ZNCJSFUNC_NAME(Nick_GetNick),		0, 0),
+	JS_FS("GetIdent",		ZNCJSFUNC_NAME(Nick_GetIdent),		0, 0),
+	JS_FS("GetHost",		ZNCJSFUNC_NAME(Nick_GetHost),		0, 0),
+	JS_FS("GetHostMask",	ZNCJSFUNC_NAME(Nick_GetHostMask),	0, 0),
+	JS_FS("GetPermStr",		ZNCJSFUNC_NAME(Nick_GetPermStr),	0, 0),
+	JS_FS("HasPerm",		ZNCJSFUNC_NAME(Nick_HasPerm),		1, 0),
 	JS_FS_END
 };
 
@@ -84,14 +69,14 @@ static JSPropertySpec s_nick_properties[] = {
 
 #define _GET_NICK GET_SCRIPT(pScript); \
 	CNick* pCNick = reinterpret_cast<CNick*>( \
-	JS_GetInstancePrivate(pScript->GetContext(), obj, &s_nick_class, NULL))
+	JS_GetInstancePrivate(pScript->GetContext(), JSVAL_TO_OBJECT(JS_THIS(cx, vp)), &s_nick_class, NULL))
 
 
 #define _NICK_STR_METHOD(METHOD) \
 	_ZNCJSFUNC(Nick_##METHOD) \
 {	_GET_NICK; \
 	jsval jvStr = STRING_TO_JSVAL(CUtil::MsgCpyToJSStr(pScript->GetContext(), pCNick->METHOD())); \
-	*rval = jvStr; \
+	JS_SET_RVAL(cx, vp, jvStr); \
 	return JS_TRUE; \
 	}
 
@@ -107,7 +92,7 @@ _ZNCJSFUNC(Nick_HasPerm) \
 	_GET_NICK;
 	unsigned char *ch = NULL;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &ch))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &ch))
 		return JS_FALSE;
 
 	if(!ch || !*ch)
@@ -116,24 +101,18 @@ _ZNCJSFUNC(Nick_HasPerm) \
 		return JS_FALSE;
 	}
 
-	*rval = BOOLEAN_TO_JSVAL(pCNick->HasPerm(ch[0]));
+	JS_SET_RVAL(cx, vp,
+		BOOLEAN_TO_JSVAL(pCNick->HasPerm(ch[0]))
+		);
 
 	return JS_TRUE;
 }
 
-#if JS_VERSION > 180
 static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp)
 {
 	jsval jvId;
 	if(JS_IdToValue(cx, id, &jvId) && JSVAL_IS_INT(jvId))
 	{
-#else
-static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-	if(JSVAL_IS_INT(id))
-	{
-		jsval jvId = id;
-#endif
 		_GET_NICK;
 		CString sStr;
 
@@ -152,19 +131,11 @@ static JSBool znc_nick_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *v
 }
 
 
-#if JS_VERSION > 180
 static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp)
 {
 	jsval jvId;
 	if(JS_IdToValue(cx, id, &jvId) && JSVAL_IS_INT(jvId))
 	{
-#else
-static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-	if(JSVAL_IS_INT(id))
-	{
-		jsval jvId = id;
-#endif
 		_GET_NICK;
 		CString sStr;
 
@@ -189,25 +160,27 @@ static JSBool znc_nick_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *v
 }
 
 
+JSClass CZNCScriptFuncs::s_nick_class = {
+	"znc_nick_class", JSCLASS_HAS_PRIVATE | JSCLASS_CONSTRUCT_PROTOTYPE,
+	JS_PropertyStub, JS_PropertyStub, znc_nick_get_prop, znc_nick_set_prop,
+	JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, znc_nick_finalize,
+	JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+
 JSObject* CZNCScript::MakeNickObject(const CNick* pNick) const
 {
 	JSObject* joNew = JS_InitClass(m_jsContext, m_jsGlobalObj, NULL,
-		&s_nick_class, znc_nick_construct, 0, s_nick_properties,
+		&CZNCScriptFuncs::s_nick_class, znc_nick_construct, 0, s_nick_properties,
 		s_nick_functions, NULL, NULL);
 
 	if(pNick)
 	{
-		CNick* pNewNick = reinterpret_cast<CNick*>(
-			JS_GetInstancePrivate(m_jsContext, joNew, &s_nick_class, NULL));
-
-#if (VERSION_MAJOR > 0) || (VERSION_MINOR >= 79)
+		CNick* pNewNick = new CNick();
 		pNewNick->Clone(*pNick);
-#else
-		pNewNick->SetNick(pNick->GetNick());
-		pNewNick->SetIdent(pNick->GetIdent());
-		pNewNick->SetHost(pNick->GetHost());
-		// Unsupported: m_sChanPerms ...
-#endif
+
+		// :TODO: consider moving this to the constructor
+		JS_SetPrivate(m_jsContext, joNew, pNewNick);
 	}
 
 	return joNew;

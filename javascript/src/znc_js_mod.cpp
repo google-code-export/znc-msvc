@@ -15,9 +15,7 @@
 
 int CJavaScriptMod::ms_uNumberOfInstances = 0;
 JSRuntime* CJavaScriptMod::ms_jsRuntime = NULL;
-#if JS_VERSION > 180
 CJSWatchDog* CJavaScriptMod::ms_pWatchDog = NULL;
-#endif
 
 /************************************************************************/
 /* CONSTRUCTOR / INITIALIZERS                                           */
@@ -33,15 +31,7 @@ bool CJavaScriptMod::OnLoad(const CString& sArgs, CString& sMessage)
 {
 	if(!ms_jsRuntime)
 	{
-#if JS_VERSION >= 180
 		JS_SetCStringsAreUTF8();
-#else
-		if(!JS_CStringsAreUTF8())
-		{
-			sMessage = "SpiderMonkey 1.7 needs to be compiled with JS_C_STRINGS_ARE_UTF8.";
-			return false;
-		}
-#endif
 
 		// 8 MB RAM ought to be enough for anybody!
 		ms_jsRuntime = JS_NewRuntime(8L * 1024L * 1024L);
@@ -55,12 +45,10 @@ bool CJavaScriptMod::OnLoad(const CString& sArgs, CString& sMessage)
 		return false;
 	}
 
-#if JS_VERSION > 180
 	if(!ms_pWatchDog)
 	{
 		ms_pWatchDog = new CJSWatchDog(ms_jsRuntime);
 	}
-#endif
 
 	/* warning: when a script is loaded from here, error messages to PutModule
 		will most probably get lost during ZNC startup */
@@ -217,17 +205,13 @@ bool CJavaScriptMod::UnLoadModule(const CString& sName, CString& srErrorMessage)
 
 void CJavaScriptMod::ArmWatchDog()
 {
-#if JS_VERSION > 180
 	ms_pWatchDog->Arm();
-#endif
 }
 
 
 void CJavaScriptMod::DisArmWatchDog()
 {
-#if JS_VERSION > 180
 	ms_pWatchDog->DisArm();
-#endif
 }
 
 
@@ -252,10 +236,8 @@ CJavaScriptMod::~CJavaScriptMod()
 
 	if(ms_uNumberOfInstances == 0)
 	{
-#if JS_VERSION > 180
 		delete ms_pWatchDog;
 		ms_pWatchDog = NULL;
-#endif
 
 		JS_ShutDown();
 	}

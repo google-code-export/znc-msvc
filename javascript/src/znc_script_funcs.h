@@ -11,7 +11,7 @@
 
 #include "znc_smjs.h"
 
-#define _ZNCJSFUNC_H(FUNC_NAME) static JSBool Script_##FUNC_NAME(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+#define _ZNCJSFUNC_H(FUNC_NAME) static JSBool Script_##FUNC_NAME(JSContext *cx, uintN argc, jsval *vp)
 #define ZNCJSFUNC_NAME(FUNC_NAME) CZNCScriptFuncs::Script_##FUNC_NAME
 
 class CZNCScriptFuncs
@@ -58,14 +58,18 @@ public:
 	_ZNCJSFUNC_H(Nick_GetPermStr);
 	_ZNCJSFUNC_H(Nick_HasPerm);
 
+	static JSClass s_nick_class;
+
 	/* Chan */
 	_ZNCJSFUNC_H(Chan_GetName);
+
+	static JSClass s_chan_class;
 
 	/* User */
 	_ZNCJSFUNC_H(User_GetName);
 };
 
-#define _ZNCJSFUNC(FUNC_NAME) JSBool CZNCScriptFuncs::Script_##FUNC_NAME(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+#define _ZNCJSFUNC(FUNC_NAME) JSBool CZNCScriptFuncs::Script_##FUNC_NAME(JSContext *cx, uintN argc, jsval *vp)
 #define GET_SCRIPT(VARNAME) CZNCScript* VARNAME = reinterpret_cast<CZNCScript*>(JS_GetContextPrivate(cx));
 
 #endif /* !_ZNC_JS_SCRIPT_FUNCS_H */

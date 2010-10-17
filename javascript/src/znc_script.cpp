@@ -64,18 +64,9 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		return false;
 	}
 
-#ifdef JSOPTION_RELIMIT // supported in 1.8.0 and later only
-	// https://developer.mozilla.org/en/JS_SetOptions
 	JS_SetOptions(m_jsContext, JSOPTION_VAROBJFIX | JSOPTION_STRICT | JSOPTION_RELIMIT);
-#else
-	JS_SetOptions(m_jsContext, JSOPTION_VAROBJFIX | JSOPTION_STRICT);
-#endif
 
-#if JS_VERSION >= 180
 	JS_SetVersion(m_jsContext, JSVERSION_LATEST);
-#else
-	JS_SetVersion(m_jsContext, JSVERSION_DEFAULT);
-#endif
 
 	// save pointer to this instance for error callback etc:
 	JS_SetContextPrivate(m_jsContext, this);
@@ -97,11 +88,7 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 		return false;
 	}
 
-#if JS_VERSION <= 180
-	JS_SetBranchCallback(m_jsContext, ScriptBranchCallback);
-#else
 	JS_SetOperationCallback(m_jsContext, ScriptOperationCallback);
-#endif
 
 	/* read the script from disk */
 	CFile cFile(m_sFilePath);
@@ -271,66 +258,6 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 }
 
 
-#if JS_VERSION <= 180
-// Source:
-// http://mxr.mozilla.org/firefox2/source/dom/src/base/nsJSEnvironment.cpp#528
-// (GPL v2)
-
-// The number of branch callbacks between calls to JS_MaybeGC
-#define MAYBE_GC_BRANCH_COUNT_MASK 0x00000fff // 4095
-
-// The number of branch callbacks before we even check if our start
-// timestamp is initialized. This is a fairly low number as we want to
-// initialize the timestamp early enough to not waste much time before
-// we get there, but we don't want to bother doing this too early as
-// it's not generally necessary.
-#define INITIALIZE_TIME_BRANCH_COUNT_MASK 0x000000ff // 255
-
-
-/*static*/ JSBool CZNCScript::ScriptBranchCallback(JSContext *cx, JSScript *script)
-{
-	if(!cx)
-		return JS_TRUE;
-
-	CZNCScript* pScript = static_cast<CZNCScript*>(JS_GetContextPrivate(cx));
-
-	if(!pScript)
-		return JS_TRUE;
-
-	uint64_t uCallbackCount = ++pScript->m_uBranchCallbackCount;
-
-	if(uCallbackCount & INITIALIZE_TIME_BRANCH_COUNT_MASK)
-		return JS_TRUE;
-
-	if(uCallbackCount == INITIALIZE_TIME_BRANCH_COUNT_MASK + 1 &&
-		pScript->m_uBranchCallbackTime == 0)
-	{
-		pScript->m_uBranchCallbackTime = time(NULL);
-
-		return JS_TRUE;
-	}
-
-	if(uCallbackCount & MAYBE_GC_BRANCH_COUNT_MASK)
-		return JS_TRUE;
-
-	// Run the GC if we get this far.
-	JS_MaybeGC(cx);
-
-	time_t tDelta = (time(NULL) - pScript->m_uBranchCallbackTime);
-
-	if(tDelta > MAX_SCRIPT_EXECUTION_SECONDS)
-	{
-		pScript->GetMod()->PutModule("WARNING: The script " +
-			pScript->GetName() + ".js exceeded the maximum run time of " + CString(MAX_SCRIPT_EXECUTION_SECONDS) + 
-			" seconds and has been terminated!");
-		
-		return JS_FALSE;
-	}
-
-	return JS_TRUE;
-}
-
-#else
 /*static*/ JSBool CZNCScript::ScriptOperationCallback(JSContext *cx)
 {
 	if(!cx)
@@ -365,7 +292,6 @@ bool CZNCScript::LoadScript(CString& srErrorMessage)
 
 	return JS_TRUE;
 }
-#endif
 
 
 /************************************************************************/
@@ -567,7 +493,7 @@ void CZNCScript::ClearTimers()
 
 bool CZNCScript::LoadRegistry()
 {
-	return (m_mssRegistry.ReadFromDisk(m_pMod->GetSavePath() + "/" + m_sName + ".registry", 0600) == MCString::MCS_SUCCESS);
+	return (m_mssRegistry.ReadFromDisk(m_pMod->GetSavePath() + "/" + m_sName + ".registry") == MCString::MCS_SUCCESS);
 }
 
 

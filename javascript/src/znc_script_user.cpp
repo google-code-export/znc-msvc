@@ -27,8 +27,8 @@ static JSClass s_user_class = {
 };
 
 static JSFunctionSpec s_user_functions[] = {
-	JS_FS("GetName",		ZNCJSFUNC_NAME(User_GetName),		0, 0, 0),
-	JS_FS("GetUserName",	ZNCJSFUNC_NAME(User_GetName),		0, 0, 0),
+	JS_FS("GetName",		ZNCJSFUNC_NAME(User_GetName),		0, 0),
+	JS_FS("GetUserName",	ZNCJSFUNC_NAME(User_GetName),		0, 0),
 	JS_FS_END
 };
 

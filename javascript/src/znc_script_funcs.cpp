@@ -25,12 +25,12 @@ _ZNCJSFUNC(PutModule)
 	char* szMessage = NULL;
 	const char* szModuleName = pScript->GetName().c_str();
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s/s", &szMessage, &szModuleName))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s/s", &szMessage, &szModuleName))
 		return JS_FALSE;
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		pScript->GetUser()->PutModule(szModuleName, szMessage)
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -42,15 +42,15 @@ _ZNCJSFUNC(PutModNotice)
 	char* szMessage = NULL;
 	const char* szModuleName = pScript->GetName().c_str();
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s/s", &szMessage, &szModuleName))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s/s", &szMessage, &szModuleName))
 		return JS_FALSE;
 
 	const CString sModuleName(szModuleName);
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		pScript->GetUser()->PutUser(":" + pScript->GetUser()->GetStatusPrefix() + sModuleName + "!" +
 			sModuleName + "@znc.in NOTICE " + pScript->GetUser()->GetCurNick() + " :" + CString(szMessage))
-		);
+		));
 
 	return JS_TRUE;
 }
@@ -61,12 +61,12 @@ _ZNCJSFUNC(PutUser)
 	GET_SCRIPT(pScript);
 	char* szLine = NULL;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &szLine))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szLine))
 		return JS_FALSE;
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		pScript->GetUser()->PutUser(szLine)
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -77,12 +77,12 @@ _ZNCJSFUNC(PutIRC)
 	GET_SCRIPT(pScript);
 	char* szLine = NULL;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &szLine))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szLine))
 		return JS_FALSE;
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		pScript->GetUser()->PutIRC(szLine)
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -93,24 +93,24 @@ _ZNCJSFUNC(PutStatus)
 	GET_SCRIPT(pScript);
 	char* szLine = NULL;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &szLine))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szLine))
 		return JS_FALSE;
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		pScript->GetUser()->PutStatus(szLine)
-		);
+		));
 
 	return JS_TRUE;
 }
 
 
-static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, uintN argc, jsval *vp)
 {
 	char* szTo = NULL;
 	char* szMsg = NULL;
 	JSBool bAutoSplit = JS_TRUE;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "ss/b", &szTo, &szMsg, &bAutoSplit))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "ss/b", &szTo, &szMsg, &bAutoSplit))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
@@ -172,19 +172,19 @@ static JSBool _SendMsgOrNotice(const CString& sType, JSContext *cx, JSObject *ob
 		free(szMsgCopy);
 	}
 
-	*rval = BOOLEAN_TO_JSVAL(bSent);
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(bSent));
 
 	return JS_TRUE;
 }
 
 _ZNCJSFUNC(SendMessage)
 {
-	return _SendMsgOrNotice("PRIVMSG", cx, obj, argc, argv, rval);
+	return _SendMsgOrNotice("PRIVMSG", cx, argc, vp);
 }
 
 _ZNCJSFUNC(SendNotice)
 {
-	return _SendMsgOrNotice("NOTICE", cx, obj, argc, argv, rval);
+	return _SendMsgOrNotice("NOTICE", cx, argc, vp);
 }
 
 
@@ -192,6 +192,7 @@ _ZNCJSFUNC(AddEventHandler)
 {
 	char* szEvent = NULL;
 	JSObject* joCallbackDummy;
+	jsval *argv = JS_ARGV(cx, vp);
 
 	if(!JS_ConvertArguments(cx, argc, argv, "so", &szEvent, &joCallbackDummy))
 		return JS_FALSE;
@@ -212,7 +213,7 @@ _ZNCJSFUNC(AddEventHandler)
 	{
 		if(JS_AddValueRoot(cx, jvStored))
 		{
-			*rval = BOOLEAN_TO_JSVAL(JS_TRUE);
+			JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(JS_TRUE));
 
 			return JS_TRUE;
 		}
@@ -235,6 +236,7 @@ _ZNCJSFUNC(RemoveEventHandler)
 {
 	char* szEvent = NULL;
 	JSObject* joCallbackDummy;
+	jsval *argv = JS_ARGV(cx, vp);
 
 	if(!JS_ConvertArguments(cx, argc, argv, "so", &szEvent, &joCallbackDummy))
 		return JS_FALSE;
@@ -251,7 +253,7 @@ _ZNCJSFUNC(RemoveEventHandler)
 
 	bool bRemoved = pScript->RemoveEventHandler(szEvent, argv[1]);
 
-	*rval = BOOLEAN_TO_JSVAL(bRemoved);
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(bRemoved));
 
 	return JS_TRUE;
 }
@@ -261,7 +263,10 @@ _ZNCJSFUNC(GetModName)
 {
 	GET_SCRIPT(pScript);
 	const CString sModName = pScript->GetName();
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sModName.c_str()));
+
+	JS_SET_RVAL(cx, vp,
+		STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sModName.c_str()))
+		);
 
 	return JS_TRUE;
 }
@@ -271,7 +276,10 @@ _ZNCJSFUNC(GetModNick)
 {
 	GET_SCRIPT(pScript);
 	const CString sModNick = pScript->GetUser()->GetStatusPrefix() + pScript->GetName();
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sModNick.c_str()));
+
+	JS_SET_RVAL(cx, vp,
+		STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sModNick.c_str()))
+		);
 
 	return JS_TRUE;
 }
@@ -281,7 +289,10 @@ _ZNCJSFUNC(GetStatusPrefix)
 {
 	GET_SCRIPT(pScript);
 	const CString sPrefix = pScript->GetUser()->GetStatusPrefix();
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sPrefix.c_str()));
+
+	JS_SET_RVAL(cx, vp,
+		STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sPrefix.c_str()))
+		);
 
 	return JS_TRUE;
 }
@@ -291,12 +302,15 @@ _ZNCJSFUNC(GetTag)
 {
 	JSBool bIncVer = JS_TRUE;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "/b", &bIncVer))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "/b", &bIncVer))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
 	const CString sTag = pScript->GetZNC()->GetTag(bIncVer != JS_FALSE);
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sTag.c_str()));
+
+	JS_SET_RVAL(cx, vp,
+		STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sTag.c_str()))
+		);
 
 	return JS_TRUE;
 }
@@ -306,7 +320,10 @@ _ZNCJSFUNC(GetVersion)
 {
 	GET_SCRIPT(pScript);
 	const CString sVer = pScript->GetZNC()->GetVersion();
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sVer.c_str()));
+
+	JS_SET_RVAL(cx, vp,
+		STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sVer.c_str()))
+		);
 
 	return JS_TRUE;
 }
@@ -316,7 +333,10 @@ _ZNCJSFUNC(GetUptime)
 {
 	GET_SCRIPT(pScript);
 	const CString sUpTm = pScript->GetZNC()->GetUptime();
-	*rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sUpTm.c_str()));
+
+	JS_SET_RVAL(cx, vp,
+		STRING_TO_JSVAL(JS_NewStringCopyZ(cx, sUpTm.c_str()))
+		);
 
 	return JS_TRUE;
 }
@@ -325,16 +345,21 @@ _ZNCJSFUNC(GetUptime)
 _ZNCJSFUNC(TimeStarted)
 {
 	GET_SCRIPT(pScript);
+	jsval *rvalTmp;
 
-	return JS_NewNumberValue(cx, (unsigned int)pScript->GetZNC()->TimeStarted(), rval);
+	JSBool b = JS_NewNumberValue(cx, (unsigned int)pScript->GetZNC()->TimeStarted(), rvalTmp);
+
+	if(b) JS_SET_RVAL(cx, vp, *rvalTmp);
+
+	return b;
 }
 
 
-static JSBool _SetIntervalOrTimeout(JSContext *cx, JSObject *obj,
-	uintN argc, jsval *argv, jsval *rval, bool bRepeat)
+static JSBool _SetIntervalOrTimeout(JSContext *cx, uintN argc, jsval *vp, bool bRepeat)
 {
 	JSObject* joCallbackDummy;
 	int32 iDelay;
+	jsval *argv = JS_ARGV(cx, vp);
 
 	if(!JS_ConvertArguments(cx, argc, argv, "io", &iDelay, &joCallbackDummy))
 		return JS_FALSE;
@@ -353,9 +378,9 @@ static JSBool _SetIntervalOrTimeout(JSContext *cx, JSObject *obj,
 
 	GET_SCRIPT(pScript);
 
-	*rval = INT_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, INT_TO_JSVAL(
 		pScript->AddTimer(iDelay, bRepeat, argv[1])
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -363,13 +388,13 @@ static JSBool _SetIntervalOrTimeout(JSContext *cx, JSObject *obj,
 
 _ZNCJSFUNC(SetInterval)
 {
-	return _SetIntervalOrTimeout(cx, obj, argc, argv, rval, true);
+	return _SetIntervalOrTimeout(cx, argc, vp, true);
 }
 
 
 _ZNCJSFUNC(SetTimeout)
 {
-	return _SetIntervalOrTimeout(cx, obj, argc, argv, rval, false);
+	return _SetIntervalOrTimeout(cx, argc, vp, false);
 }
 
 
@@ -377,14 +402,14 @@ _ZNCJSFUNC(ClearIntervalOrTimeout)
 {
 	int32 iTimerId;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "i", &iTimerId))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "i", &iTimerId))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		pScript->RemoveTimer(iTimerId)
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -394,16 +419,16 @@ _ZNCJSFUNC(MD5)
 {
 	char* szData;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &szData))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szData))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
 
 	const CString sHash = CString(szData).MD5();
 
-	*rval = STRING_TO_JSVAL(
+	JS_SET_RVAL(cx, vp,  STRING_TO_JSVAL(
 		CUtil::MsgCpyToJSStr(cx, sHash)
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -414,7 +439,7 @@ _ZNCJSFUNC(SHA1)
 {
 	char *szData;
 
-	if(JS_ConvertArguments(cx, argc, argv, "s", &szData))
+	if(JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szData))
 	{
 		char digest_hex[SHA_DIGEST_LENGTH * 2 + 1];
 		unsigned char digest[SHA_DIGEST_LENGTH];
@@ -433,9 +458,9 @@ _ZNCJSFUNC(SHA1)
 			digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
 			digest[16], digest[17], digest[18], digest[19]);
 
-		*rval = STRING_TO_JSVAL(
+		JS_SET_RVAL(cx, vp, STRING_TO_JSVAL(
 			CUtil::MsgCpyToJSStr(cx, digest_hex)
-		);
+		));
 
 		return JS_TRUE;
 	}
@@ -449,16 +474,16 @@ _ZNCJSFUNC(SHA256)
 {
 	char* szData;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &szData))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szData))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
 
 	const CString sHash = CString(szData).SHA256();
 
-	*rval = STRING_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, STRING_TO_JSVAL(
 		CUtil::MsgCpyToJSStr(cx, sHash)
-		);
+	));
 
 	return JS_TRUE;
 }
@@ -469,12 +494,12 @@ _ZNCJSFUNC(WildCmp)
 	char* szMask;
 	char* szString;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "ss", &szMask, &szString))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "ss", &szMask, &szString))
 		return JS_FALSE;
 
-	*rval = BOOLEAN_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
 		CString::WildCmp(szMask, szString)
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -484,7 +509,8 @@ _ZNCJSFUNC(GetUser)
 {
 	GET_SCRIPT(pScript);
 
-	*rval = OBJECT_TO_JSVAL(pScript->GetJSUser());
+	JS_SET_RVAL(cx, vp, 
+		OBJECT_TO_JSVAL(pScript->GetJSUser()));
 
 	return JS_TRUE;
 }
@@ -494,9 +520,9 @@ _ZNCJSFUNC(User_GetName)
 {
 	GET_SCRIPT(pScript);
 
-	*rval = STRING_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, STRING_TO_JSVAL(
 		CUtil::MsgCpyToJSStr(cx, pScript->GetUser()->GetUserName())
-	);
+	));
 
 	return JS_TRUE;
 }
@@ -507,12 +533,13 @@ _ZNCJSFUNC(StoreString)
 	char* szName;
 	char* szValue;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "ss", &szName, &szValue))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "ss", &szName, &szValue))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
 
-	*rval = BOOLEAN_TO_JSVAL(pScript->SetNV(szName, szValue));
+	JS_SET_RVAL(cx, vp,
+		BOOLEAN_TO_JSVAL(pScript->SetNV(szName, szValue)));
 
 	return JS_TRUE;
 }
@@ -522,14 +549,14 @@ _ZNCJSFUNC(RetrieveString)
 {
 	char* szName;
 
-	if(!JS_ConvertArguments(cx, argc, argv, "s", &szName))
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "s", &szName))
 		return JS_FALSE;
 
 	GET_SCRIPT(pScript);
 
-	*rval = STRING_TO_JSVAL(
+	JS_SET_RVAL(cx, vp, STRING_TO_JSVAL(
 		CUtil::MsgCpyToJSStr(cx, pScript->GetNV(szName))
-	);
+	));
 
 	return JS_TRUE;
 }
