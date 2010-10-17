@@ -41,6 +41,10 @@ static void znc_chan_finalize(JSContext *cx, JSObject *obj)
 
 static JSFunctionSpec s_chan_functions[] = {
 	JS_FS("GetName",		ZNCJSFUNC_NAME(Chan_GetName),		0, 0),
+	JS_FS("IsDetached",		ZNCJSFUNC_NAME(Chan_IsDetached),	0, 0),
+	JS_FS("JoinUser",		ZNCJSFUNC_NAME(Chan_JoinUser),		0, 0),
+	JS_FS("GetNickCount",	ZNCJSFUNC_NAME(Chan_GetNickCount),	0, 0),
+	JS_FS("Cycle",			ZNCJSFUNC_NAME(Chan_Cycle),			0, 0),
 	JS_FS_END
 };
 
@@ -52,7 +56,7 @@ static JSPropertySpec s_chan_properties[] = {
 #define _GET_CHAN \
 	GET_SCRIPT(pScript); \
 	const char* szChanName = reinterpret_cast<char*>( \
-		JS_GetInstancePrivate(pScript->GetContext(), JSVAL_TO_OBJECT(JS_THIS(cx, vp)), &s_chan_class, NULL)); \
+		JS_GetInstancePrivate(pScript->GetContext(), JSVAL_TO_OBJECT(JS_THIS(cx, vp)), &CZNCScriptFuncs::s_chan_class, NULL)); \
 	CChan* pChan = pScript->GetUser()->FindChan(szChanName); \
 	if(!pChan) \
 	{ \
@@ -70,6 +74,57 @@ _ZNCJSFUNC(Chan_GetName)
 	JS_SET_RVAL(cx, vp, STRING_TO_JSVAL(
 		CUtil::MsgCpyToJSStr(cx, pChan->GetName())));
 
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(Chan_IsDetached)
+{
+	_GET_CHAN;
+
+	JS_SET_RVAL(cx, vp, BOOLEAN_TO_JSVAL(
+		pChan->IsDetached()));
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(Chan_JoinUser)
+{
+	JSBool bForce = JS_FALSE;
+	char *szKey = NULL;
+
+	_GET_CHAN;
+
+	if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "/bs", &bForce, &szKey))
+		return JS_FALSE;
+
+	pChan->JoinUser(bForce != JS_TRUE, szKey ? szKey : "");
+
+	JS_SET_RVAL(cx, vp, JSVAL_VOID);
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(Chan_GetNickCount)
+{
+	_GET_CHAN;
+
+	JS_SET_RVAL(cx, vp,
+		INT_TO_JSVAL(pChan->GetNickCount())
+		);
+
+	return JS_TRUE;
+}
+
+
+_ZNCJSFUNC(Chan_Cycle)
+{
+	_GET_CHAN;
+
+	pChan->Cycle();
+
+	JS_SET_RVAL(cx, vp, JSVAL_VOID);
 	return JS_TRUE;
 }
 
