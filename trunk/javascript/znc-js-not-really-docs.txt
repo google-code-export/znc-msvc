@@ -35,6 +35,12 @@ string SHA256(string)
 
 bool WildCmp(glob_wildcard_mask, string)
 
+user_object ZNC.GetUser()
+
+User
+	string GetName() (also GetUserName())
+	string GetCurNick()
+
 Constants:
 	ZNC.CONTINUE / ZNC.HALT / ZNC.HALTCORE / ZNC.HALTMODS
 	ZNC.VERSION_MAJOR / ZNC.VERSION_MINOR
@@ -53,6 +59,10 @@ Nick
 
 Chan
 	string GetName()
+	bool IsDetached()
+	void JoinUser([bool bForce = false[, string key = ""]])
+	int GetNickCount()
+	void Cycle();
 
 Events:
 	void OnLoad(string args)
@@ -121,6 +131,8 @@ Events:
 
 ToDo:
 
+	- Use OnModuleLoading instead of hacks
+
 	- Finish chan class
 	- Finish user class
 	- CTable class
@@ -132,4 +144,5 @@ ToDo:
 
 	- include command
 	- HttpRequest
+	- web modules
 

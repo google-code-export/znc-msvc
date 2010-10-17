@@ -62,11 +62,16 @@ public:
 
 	/* Chan */
 	_ZNCJSFUNC_H(Chan_GetName);
+	_ZNCJSFUNC_H(Chan_IsDetached);
+	_ZNCJSFUNC_H(Chan_JoinUser);
+	_ZNCJSFUNC_H(Chan_GetNickCount);
+	_ZNCJSFUNC_H(Chan_Cycle);
 
 	static JSClass s_chan_class;
 
 	/* User */
 	_ZNCJSFUNC_H(User_GetName);
+	_ZNCJSFUNC_H(User_GetCurNick);
 };
 
 #define _ZNCJSFUNC(FUNC_NAME) JSBool CZNCScriptFuncs::Script_##FUNC_NAME(JSContext *cx, uintN argc, jsval *vp)

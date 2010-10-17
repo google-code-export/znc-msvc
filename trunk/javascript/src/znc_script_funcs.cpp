@@ -345,11 +345,11 @@ _ZNCJSFUNC(GetUptime)
 _ZNCJSFUNC(TimeStarted)
 {
 	GET_SCRIPT(pScript);
-	jsval *rvalTmp;
+	jsval rvalTmp;
 
-	JSBool b = JS_NewNumberValue(cx, (unsigned int)pScript->GetZNC()->TimeStarted(), rvalTmp);
+	JSBool b = JS_NewNumberValue(cx, (unsigned int)pScript->GetZNC()->TimeStarted(), &rvalTmp);
 
-	if(b) JS_SET_RVAL(cx, vp, *rvalTmp);
+	if(b) JS_SET_RVAL(cx, vp, rvalTmp);
 
 	return b;
 }
