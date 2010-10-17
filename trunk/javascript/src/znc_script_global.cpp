@@ -29,12 +29,12 @@ static JSClass s_global_class = {
 };
 
 static JSFunctionSpec s_global_functions[] = {
-	JS_FS("MD5",			ZNCJSFUNC_NAME(MD5),					1, 0, 0),
+	JS_FS("MD5",			ZNCJSFUNC_NAME(MD5),					1, 0),
 #ifdef HAVE_LIBSSL
-	JS_FS("SHA1",			ZNCJSFUNC_NAME(SHA1),					1, 0, 0),
+	JS_FS("SHA1",			ZNCJSFUNC_NAME(SHA1),					1, 0),
 #endif
-	JS_FS("SHA256",			ZNCJSFUNC_NAME(SHA256),					1, 0, 0),
-	JS_FS("WildCmp",		ZNCJSFUNC_NAME(WildCmp),				2, 0, 0),
+	JS_FS("SHA256",			ZNCJSFUNC_NAME(SHA256),					1, 0),
+	JS_FS("WildCmp",		ZNCJSFUNC_NAME(WildCmp),				2, 0),
 	JS_FS_END
 };
 
@@ -43,11 +43,7 @@ static JSFunctionSpec s_global_functions[] = {
 /* ZNC CLASS                                                            */
 /************************************************************************/
 
-#if JS_VERSION > 180
 static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
-#else
-static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp);
-#endif
 
 static JSClass s_znc_class = {
 	"znc_class", 0,
@@ -57,33 +53,33 @@ static JSClass s_znc_class = {
 };
 
 static JSFunctionSpec s_znc_functions[] = {
-	JS_FS("PutModule",			ZNCJSFUNC_NAME(PutModule),			2, 0, 0),
-	JS_FS("PutModNotice",		ZNCJSFUNC_NAME(PutModNotice),		2, 0, 0),
-	JS_FS("PutIRC",				ZNCJSFUNC_NAME(PutIRC),				1, 0, 0),
-	JS_FS("PutUser",			ZNCJSFUNC_NAME(PutUser),			1, 0, 0),
-	JS_FS("PutStatus",			ZNCJSFUNC_NAME(PutStatus),			1, 0, 0),
-	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		3, 0, 0),
-	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			3, 0, 0),
+	JS_FS("PutModule",			ZNCJSFUNC_NAME(PutModule),			2, 0),
+	JS_FS("PutModNotice",		ZNCJSFUNC_NAME(PutModNotice),		2, 0),
+	JS_FS("PutIRC",				ZNCJSFUNC_NAME(PutIRC),				1, 0),
+	JS_FS("PutUser",			ZNCJSFUNC_NAME(PutUser),			1, 0),
+	JS_FS("PutStatus",			ZNCJSFUNC_NAME(PutStatus),			1, 0),
+	JS_FS("SendMessage",		ZNCJSFUNC_NAME(SendMessage),		3, 0),
+	JS_FS("SendNotice",			ZNCJSFUNC_NAME(SendNotice),			3, 0),
 
-	JS_FS("GetUser",			ZNCJSFUNC_NAME(GetUser),			0, 0, 0),
-	JS_FS("StoreString",		ZNCJSFUNC_NAME(StoreString),		2, 0, 0),
-	JS_FS("RetrieveString",		ZNCJSFUNC_NAME(RetrieveString),		1, 0, 0),
+	JS_FS("GetUser",			ZNCJSFUNC_NAME(GetUser),			0, 0),
+	JS_FS("StoreString",		ZNCJSFUNC_NAME(StoreString),		2, 0),
+	JS_FS("RetrieveString",		ZNCJSFUNC_NAME(RetrieveString),		1, 0),
 
-	JS_FS("AddEventHandler",	ZNCJSFUNC_NAME(AddEventHandler),	2, 0, 0),
-	JS_FS("RemoveEventHandler",	ZNCJSFUNC_NAME(RemoveEventHandler), 2, 0, 0),
+	JS_FS("AddEventHandler",	ZNCJSFUNC_NAME(AddEventHandler),	2, 0),
+	JS_FS("RemoveEventHandler",	ZNCJSFUNC_NAME(RemoveEventHandler), 2, 0),
 
-	JS_FS("GetModName",			ZNCJSFUNC_NAME(GetModName),			0, 0, 0),
-	JS_FS("GetModNick",			ZNCJSFUNC_NAME(GetModNick),			0, 0, 0),
-	JS_FS("GetStatusPrefix",	ZNCJSFUNC_NAME(GetStatusPrefix),	0, 0, 0),
-	JS_FS("GetTag",				ZNCJSFUNC_NAME(GetTag),				1, 0, 0),
-	JS_FS("GetVersion",			ZNCJSFUNC_NAME(GetVersion),			0, 0, 0),
-	JS_FS("GetUptime",			ZNCJSFUNC_NAME(GetUptime),			0, 0, 0),
-	JS_FS("TimeStarted",		ZNCJSFUNC_NAME(TimeStarted),		0, 0, 0),
+	JS_FS("GetModName",			ZNCJSFUNC_NAME(GetModName),			0, 0),
+	JS_FS("GetModNick",			ZNCJSFUNC_NAME(GetModNick),			0, 0),
+	JS_FS("GetStatusPrefix",	ZNCJSFUNC_NAME(GetStatusPrefix),	0, 0),
+	JS_FS("GetTag",				ZNCJSFUNC_NAME(GetTag),				1, 0),
+	JS_FS("GetVersion",			ZNCJSFUNC_NAME(GetVersion),			0, 0),
+	JS_FS("GetUptime",			ZNCJSFUNC_NAME(GetUptime),			0, 0),
+	JS_FS("TimeStarted",		ZNCJSFUNC_NAME(TimeStarted),		0, 0),
 
-	JS_FS("SetInterval",		ZNCJSFUNC_NAME(SetInterval),		2, 0, 0),
-	JS_FS("SetTimeout",			ZNCJSFUNC_NAME(SetTimeout),			2, 0, 0),
-	JS_FS("ClearInterval",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0, 0),
-	JS_FS("ClearTimeout",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0, 0),
+	JS_FS("SetInterval",		ZNCJSFUNC_NAME(SetInterval),		2, 0),
+	JS_FS("SetTimeout",			ZNCJSFUNC_NAME(SetTimeout),			2, 0),
+	JS_FS("ClearInterval",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0),
+	JS_FS("ClearTimeout",	ZNCJSFUNC_NAME(ClearIntervalOrTimeout),	1, 0),
 
 	JS_FS_END
 };
@@ -106,19 +102,11 @@ static JSPropertySpec s_znc_properties[] = {
 };
 
 
-#if JS_VERSION > 180
 static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsid id, jsval *vp)
 {
 	jsval jvId;
 	if(JS_IdToValue(cx, id, &jvId) && JSVAL_IS_INT(jvId))
 	{
-#else
-static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-	if(JSVAL_IS_INT(id))
-	{
-		jsval jvId = id;
-#endif
 		switch(JSVAL_TO_INT(jvId))
 		{
 		case PROP_VERSION_MAJOR: *vp = INT_TO_JSVAL(VERSION_MAJOR); break;
@@ -136,11 +124,8 @@ static JSBool znc_class_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *
 
 bool CZNCScript::SetUpGlobalClasses(CString& srErrorMessage)
 {
-#if JS_VERSION <= 180
-	m_jsGlobalObj = JS_NewObject(m_jsContext, &s_global_class, NULL, NULL);
-#else
 	m_jsGlobalObj = JS_NewGlobalObject(m_jsContext, &s_global_class);
-#endif
+
 	if(!m_jsGlobalObj)
 	{
 		srErrorMessage = "Creating the global object failed!";
