@@ -95,6 +95,16 @@ public:
 
 	virtual bool OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) {
 		if (sPageName.empty() || sPageName == "index") {
+			CModules& GModules = CZNC::Get().GetModules();
+			if (GModules.size()) {
+				for (unsigned int b = 0; b < GModules.size(); b++) {
+					if(GModules[b]->GetModName().Equals("WEBADMIN")) {
+						Tmpl["WebAdminLoaded"] = "true";
+						break;
+					}
+				}
+			}
+			
 			MTimeMulti mmSorted;
 			const MUsers& mUsers = CZNC::Get().GetUserMap();
 
@@ -135,12 +145,30 @@ public:
 					Row["Info"] += " channel" + CString(n == 1 ? "" : "s");
 				}
 			}
-
+			
 			return true;
 		}
 
 		return false;
 	}
+
+	virtual bool OnEmbeddedWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) {
+		if (sPageName == "webadmin/user" && WebSock.GetSession()->IsAdmin()) {
+			CUser* pUser = CZNC::Get().FindUser(Tmpl["Username"]);
+			if (pUser) {
+				time_t last = GetTime(pUser);
+				if (last) {
+					char buf[1024] = {0};
+					strftime(buf, sizeof(buf), "%c", localtime(&last));
+					Tmpl["LastSeen"] = buf;
+				}
+			}
+			return true;
+		}
+
+		return false;
+	}
+
 };
 
 GLOBALMODULEDEFS(CLastSeenMod, "Collects data about when a user last logged in")
