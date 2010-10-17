@@ -749,7 +749,14 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 	CString s6 = "4";
 #ifdef HAVE_IPV6
 	if (CUtils::GetBoolInput("Would you like ZNC to listen using ipv6?", false)) {
+#ifdef IPV6_V6ONLY
 		s6 = " ";
+#else
+		// When we have IPV6_V6ONLY, "Listener" will listen on both v4 and v6.
+		// If we don't have it, "Listener" and "Listener6" are equivalent. Let's
+		// use "Listener6" in this case since that describes the result better.
+		s6 = "6";
+#endif
 	}
 #endif
 
@@ -1540,6 +1547,16 @@ bool CZNC::DoRehash(CString& sError)
 					if (sName.Equals("Listener6")) {
 						eAddr = ADDR_IPV6ONLY;
 					}
+#if defined(HAVE_IPV6) && !defined(IPV6_V6ONLY)
+					if (sName.Equals("Listener")) {
+						CUtils::PrintMessage("Your system doesn't support IPV6_V6ONLY.", true);
+						CUtils::PrintMessage("Please use \"Listener4\" and \"Listener6\""
+								" to explicitly select between IPV4 and IPV6");
+						// Let's hope that this causes
+						// the least surprise.
+						eAddr = ADDR_IPV4ONLY;
+					}
+#endif
 
 					CListener::EAcceptType eAccept = CListener::ACCEPT_ALL;
 					if (sValue.TrimPrefix("irc_only "))
@@ -1657,6 +1674,43 @@ bool CZNC::DoRehash(CString& sError)
 						CUtils::PrintError(sError);
 						return false;
 					}
+					CString sModRet;
+					CModule *pOldMod;
+
+					pOldMod = GetModules().FindModule(sModName);
+					if (!pOldMod) {
+						CUtils::PrintAction("Loading Global Module [" + sModName + "]");
+
+						bool bModRet = GetModules().LoadModule(sModName, sArgs, NULL, sModRet);
+
+						// If the module was loaded, sModRet contains
+						// "Loaded Module [name] ..." and we strip away this beginning.
+						if (bModRet)
+							sModRet = sModRet.Token(1, true, sModName + "] ");
+
+						CUtils::PrintStatus(bModRet, sModRet);
+						if (!bModRet) {
+							sError = sModRet;
+							return false;
+						}
+					} else if (pOldMod->GetArgs() != sArgs) {
+						CUtils::PrintAction("Reloading Global Module [" + sModName + "]");
+
+						bool bModRet = GetModules().ReloadModule(sModName, sArgs, NULL, sModRet);
+
+						// If the module was loaded, sModRet contains
+						// "Loaded Module [name] ..." and we strip away this beginning.
+						if (bModRet)
+							sModRet = sModRet.Token(1, true, sModName + "] ");
+
+						CUtils::PrintStatus(bModRet, sModRet);
+						if (!bModRet) {
+							sError = sModRet;
+							return false;
+						}
+					} else
+						CUtils::PrintMessage("Module [" + sModName + "] already loaded.");
+
 					msModules[sModName] = sArgs;
 					continue;
 				} else if (sName.Equals("ISpoofFormat")) {
@@ -1721,49 +1775,7 @@ bool CZNC::DoRehash(CString& sError)
 		}
 	}
 
-	// First step: Load and reload new modules or modules with new arguments
-	for (MCString::iterator it = msModules.begin(); it != msModules.end(); ++it) {
-		CString sModName = it->first;
-		CString sArgs = it->second;
-		CString sModRet;
-		CModule *pOldMod;
-
-		pOldMod = GetModules().FindModule(sModName);
-		if (!pOldMod) {
-			CUtils::PrintAction("Loading Global Module [" + sModName + "]");
-
-			bool bModRet = GetModules().LoadModule(sModName, sArgs, NULL, sModRet);
-
-			// If the module was loaded, sModRet contains
-			// "Loaded Module [name] ..." and we strip away this beginning.
-			if (bModRet)
-				sModRet = sModRet.Token(1, true, sModName + "] ");
-
-			CUtils::PrintStatus(bModRet, sModRet);
-			if (!bModRet) {
-				sError = sModRet;
-				return false;
-			}
-		} else if (pOldMod->GetArgs() != sArgs) {
-			CUtils::PrintAction("Reloading Global Module [" + sModName + "]");
-
-			bool bModRet = GetModules().ReloadModule(sModName, sArgs, NULL, sModRet);
-
-			// If the module was loaded, sModRet contains
-			// "Loaded Module [name] ..." and we strip away this beginning.
-			if (bModRet)
-				sModRet = sModRet.Token(1, true, sModName + "] ");
-
-			CUtils::PrintStatus(bModRet, sModRet);
-			if (!bModRet) {
-				sError = sModRet;
-				return false;
-			}
-		} else
-			CUtils::PrintMessage("Module [" + sModName + "] already loaded.");
-	}
-
-	// Second step: Unload modules which are no longer in the config
+	// Unload modules which are no longer in the config
 	set<CString> ssUnload;
 	for (size_t i = 0; i < GetModules().size(); i++) {
 		CModule *pCurMod = GetModules()[i];

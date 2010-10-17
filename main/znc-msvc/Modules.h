@@ -309,6 +309,16 @@ public:
 	 *  @return The List.
 	 */
 	virtual VWebSubPages& GetSubPages() { return m_vSubPages; }
+	/** Using this hook, module can embed web stuff directly to different places.
+	 *  This method is called whenever embededded modules I/O happens.
+	 *  Name of used .tmpl file (if any) is up to caller.
+	 *  @param WebSock Socket for web connection, don't do bad things with it.
+	 *  @param sPageName Describes the place where web stuff is embedded to.
+	 *  @param Tmpl Template. Depending on context, you can do various stuff with it.
+	 *  @return If you don't need to embed web stuff to the specified place, just return false.
+	 *          Exact meaning of return value is up to caller, and depends on context.
+	 */
+	virtual bool OnEmbeddedWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl);
 
 
 	/** Called just before znc.conf is rehashed */
@@ -643,7 +653,7 @@ public:
 	/** Called for every CAP accepted or rejected by server
 	 *  (with CAP ACK or CAP NAK after our CAP REQ).
 	 *  @param sCap capability accepted/rejected by server.
-	 *  @param sSuccess true if capability was accepted, false if rejected.
+	 *  @param bSuccess true if capability was accepted, false if rejected.
 	 */
 	virtual void OnServerCapResult(const CString& sCap, bool bSuccess);
 
@@ -987,6 +997,39 @@ public:
 	 *  @param bState On or off, depending on which case client needs.
 	 */
 	virtual void OnClientCapRequest(const CString& sCap, bool bState);
+
+	/** Called when a module is going to be loaded.
+	 *  @param sModName name of the module.
+	 *  @param sArgs arguments of the module.
+	 *  @param[out] bSuccess the module was loaded successfully
+	 *                       as result of this module hook?
+	 *  @param[out] sRetMsg text about loading of the module.
+	 *  @return See CModule::EModRet.
+	 */
+	virtual EModRet OnModuleLoading(const CString& sModName, const CString& sArgs,
+			bool& bSuccess, CString& sRetMsg);
+	/** Called when a module is going to be unloaded.
+	 *  @param pModule the module.
+	 *  @param[out] bSuccess the module was unloaded successfully
+	 *                       as result of this module hook?
+	 *  @param[out] sRetMsg text about unloading of the module.
+	 *  @return See CModule::EModRet.
+	 */
+	virtual EModRet OnModuleUnloading(CModule* pModule, bool& bSuccess, CString& sRetMsg);
+	/** Called when info about a module is needed.
+	 *  @param[out] ModInfo put result here, if your module knows it.
+	 *  @param sModule name of the module.
+	 *  @param bSuccess this module provided info about the module.
+	 *  @param sRetMsg text describing possible issues.
+	 *  @return See CModule::EModRet.
+	 */
+	virtual EModRet OnGetModInfo(CModInfo& ModInfo, const CString& sModule,
+			bool& bSuccess, CString& sRetMsg);
+	/** Called when list of available mods is requested.
+	 *  @param ssMods put new modules here.
+	 *  @param bGlobal true if global modules are needed.
+	 */
+	virtual void OnGetAvailableMods(set<CModInfo>& ssMods, bool bGlobal);
 private:
 };
 
@@ -1005,6 +1048,12 @@ public:
 	bool OnClientCapLs(SCString& ssCaps);
 	bool IsClientCapSupported(const CString& sCap, bool bState);
 	bool OnClientCapRequest(const CString& sCap, bool bState);
+	bool OnModuleLoading(const CString& sModName, const CString& sArgs,
+			bool& bSuccess, CString& sRetMsg);
+	bool OnModuleUnloading(CModule* pModule, bool& bSuccess, CString& sRetMsg);
+	bool OnGetModInfo(CModInfo& ModInfo, const CString& sModule,
+			bool& bSuccess, CString& sRetMsg);
+	bool OnGetAvailableMods(set<CModInfo>& ssMods, bool bGlobal);
 private:
 };
 
