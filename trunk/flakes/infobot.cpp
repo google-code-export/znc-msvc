@@ -221,7 +221,7 @@ class CGoogleSock : public CTriggerHTTPSock
 protected:
 	CString ParseFirstResult(const CString& sResponse, bool bGetURLOnly = false)
 	{
-		RE linkRE(">Search Results<.+?class=.?r.+?href=[\"'](http://\\S+?)[\"'].*?>(.+?)</a", RE_Options(PCRE_CASELESS));
+		RE linkRE("</h2>.+?class=.?r.+?href=[\"'](http://\\S+?)[\"'].*?>(.+?)</a", RE_Options(PCRE_CASELESS));
 		string sURL_TMP, sTitle_TMP;
 
 		if(linkRE.PartialMatch(sResponse.c_str(), &sURL_TMP, &sTitle_TMP))
@@ -236,7 +236,7 @@ protected:
 
 	CString ParseCalc(const CString& sResponse)
 	{
-		RE calcRE("calc_img\\.gif.+?<h2.*?<b>(.+?)</b>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE calcRE("calc[a-z0-9_-]+\\.gif.+?<b>(.+?)</b>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 		string sTmp;
 
 		if(calcRE.PartialMatch(sResponse.c_str(), &sTmp))
@@ -249,7 +249,7 @@ protected:
 
 	CString ParseDidYouMean(const CString& sResponse)
 	{
-		RE didyoumeanRE("Did you mean.+?spell.?>(.+?)</a", RE_Options(PCRE_CASELESS));
+		RE didyoumeanRE("spell.?>(.+?)</a", RE_Options(PCRE_CASELESS));
 		string sTmp;
 
 		if(didyoumeanRE.PartialMatch(sResponse.c_str(), &sTmp))
@@ -341,7 +341,7 @@ protected:
 
 		/* extract title */
 		string sTitleWithYear, sTitle;
-		RE titleRE("<h1>(.+?)(<span\\s+class=\"pro-link\".+?)?</h1>", RE_Options(PCRE_CASELESS));
+		RE titleRE("<h1.*?>(.+?)(<span\\s+class=\"pro-link\".+?)?</h1>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(titleRE.PartialMatch(sResponse.c_str(), &sTitleWithYear))
 		{
@@ -374,7 +374,7 @@ protected:
 
 		/* extract rating */
 		string sTmpRating;
-		RE ratingRE("star.{1,100}(\\d{1,2}(?:\\.\\d{1,2}))\\s*/\\s*10", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE ratingRE("star.{1,100}(\\d{1,2}(?:\\.\\d{1,2})).*?/\\s*10", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(ratingRE.PartialMatch(sResponse.c_str(), &sTmpRating))
 		{
@@ -382,7 +382,7 @@ protected:
 
 			/* extract no of votes */
 			string sTmpVotes;
-			RE votesRE("<a[^>]*?href=\"ratings\"[^>]*?>([0-9.,]+)\\s*votes", RE_Options(PCRE_CASELESS));
+			RE votesRE("<a[^>]*?\\w+=\"ratings\"[^>]*?>([0-9.,]+)\\s*votes", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 			if(votesRE.PartialMatch(sResponse.c_str(), &sTmpVotes))
 			{
@@ -406,7 +406,7 @@ protected:
 
 		/* extract director */
 		string sTmpDirector;
-		RE directorRE("<h5>Directors?:?(.+?)<br", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE directorRE("<h4.*?>\\s*Directors?:.+?\">(.+?)</a", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(directorRE.PartialMatch(sResponse.c_str(), &sTmpDirector))
 		{
@@ -415,7 +415,7 @@ protected:
 
 		/* extract tagline */
 		string sTmpTagline;
-		RE taglineRE("<h5>Tag\\s*line:?(.+?)(<a|</div)", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE taglineRE("<h4.*?>\\s*Tag\\s*lines?:\\s*</h4>\\s*(.+?)<span", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(taglineRE.PartialMatch(sResponse.c_str(), &sTmpTagline))
 		{
@@ -424,7 +424,7 @@ protected:
 
 		/* extract genres */
 		string sTmpGenreHTML;
-		RE genreOuterRE("<h5>Genre:?(.+?)</div", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE genreOuterRE("<h4.*?>\\s*Genres?:</h4>(.+?)</div", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(genreOuterRE.PartialMatch(sResponse.c_str(), &sTmpGenreHTML))
 		{
@@ -440,7 +440,7 @@ protected:
 
 		/* extract runtime */
 		string sTmpRuntime;
-		RE runtimeRE("<h5>Runtime:?(.+?)</div", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE runtimeRE("<h4.*?>\\s*Runtime:?\\s*</h4>\\s*(.+?)\\s*</div", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(runtimeRE.PartialMatch(sResponse.c_str(), &sTmpRuntime))
 		{
@@ -456,7 +456,7 @@ protected:
 
 		/* extract country */
 		string sTmpCountry;
-		RE countryRE("<h5>Country.+?<a[^>]+?>(.+?)</a>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
+		RE countryRE("<h4.*?>\\s*(?:Country|Countries)\\s*.+?<a[^>]+?>(.+?)</a>", RE_Options(PCRE_CASELESS | PCRE_DOTALL));
 
 		if(countryRE.PartialMatch(sResponse.c_str(), &sTmpCountry))
 		{
