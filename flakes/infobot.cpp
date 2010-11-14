@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009-2010 flakes @ EFNet
- * Updated: 15 January 2010
+ * Updated: 14 November 2010
  *
  * Compiling: LIBS="-lpcrecpp -lpcre" ./znc-buildmod infobot.cpp
  * http://en.znc.in/wiki/Infobot
@@ -67,11 +67,127 @@ public:
 	~CInfoBotModule();
 };
 
+static const char* const g_szHTMLescapes[256] = {
+	"&#0;", 0, 0, 0, 0, 0, 0, 0, 0, 0,               // 0-9
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 10-19
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 20-29
+	0, 0, 0, 0, "&quot;", 0, 0, 0, "&amp;", "&#39;", // 30-39
+	0, 0, 0, 0, 0, "&ndash;", 0, 0, 0, 0,            // 40-49
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 50-59
+	"&lt;", 0, "&gt;", 0, 0, 0, 0, 0, 0, 0,          // 60-69
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 70-79
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 80-89
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 90-99
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 100-109
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 110-119
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 120-129
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 130-139
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                    // 140-149
+	0, 0, 0, "&trade;", 0, 0, 0, 0, 0, 0,            // 150-159
+	"&nbsp;",   // 160
+	"&iexcl;",  // 161
+	"&cent;",   // 162
+	"&pound;",  // 163
+	"&curren;", // 164
+	"&yen;",    // 165
+	"&brvbar;", // 166
+	"&sect;",   // 167
+	"&uml;",    // 168
+	"&copy;",   // 169
+	"&ordf;",   // 170
+	"&laquo;",  // 171
+	"&not;",    // 172
+	"&shy;",    // 173
+	"&reg;",    // 174
+	"&macr;",   // 175
+	"&deg;",    // 176
+	"&plusmn;", // 177
+	"&sup2;",   // 178
+	"&sup3;",   // 179
+	"&acute;",  // 180
+	"&micro;",  // 181
+	"&para;",   // 182
+	"&middot;", // 183
+	"&cedil;",  // 184
+	"&sup1;",   // 185
+	"&ordm;",   // 186
+	"&raquo;",  // 187
+	"&frac14;", // 188
+	"&frac12;", // 189
+	"&frac34;", // 190
+	"&iquest;", // 191
+	"&Agrave;", // 192
+	"&Aacute;", // 193
+	"&Acirc;",  // 194
+	"&Atilde;", // 195
+	"&Auml;",   // 196
+	"&Aring;",  // 197
+	"&AElig;",  // 198
+	"&Ccedil;", // 199
+	"&Egrave;", // 200
+	"&Eacute;", // 201
+	"&Ecirc;",  // 202
+	"&Euml;",   // 203
+	"&Igrave;", // 204
+	"&Iacute;", // 205
+	"&Icirc;",  // 206
+	"&Iuml;",   // 207
+	"&ETH;",    // 208
+	"&Ntilde;", // 209
+	"&Ograve;", // 210
+	"&Oacute;", // 211
+	"&Ocirc;",  // 212
+	"&Otilde;", // 213
+	"&Ouml;",   // 214
+	"&times;",  // 215
+	"&Oslash;", // 216
+	"&Ugrave;", // 217
+	"&Uacute;", // 218
+	"&Ucirc;",  // 219
+	"&Uuml;",   // 220
+	"&Yacute;", // 221
+	"&THORN;",  // 222
+	"&szlig;",  // 223
+	"&agrave;", // 224
+	"&aacute;", // 225
+	"&acirc;",  // 226
+	"&atilde;", // 227
+	"&auml;",   // 228
+	"&aring;",  // 229
+	"&aelig;",  // 230
+	"&ccedil;", // 231
+	"&egrave;", // 232
+	"&eacute;", // 233
+	"&ecirc;",  // 234
+	"&euml;",   // 235
+	"&igrave;", // 236
+	"&iacute;", // 237
+	"&icirc;",  // 238
+	"&iuml;",   // 239
+	"&eth;",    // 240
+	"&ntilde;", // 241
+	"&ograve;", // 242
+	"&oacute;", // 243
+	"&ocirc;",  // 244
+	"&otilde;", // 245
+	"&ouml;",   // 246
+	"&divide;", // 247
+	"&oslash;", // 248
+	"&ugrave;", // 249
+	"&uacute;", // 250
+	"&ucirc;",  // 251
+	"&uuml;",   // 252
+	"&yacute;", // 253
+	"&thorn;",  // 254
+	"&yuml;",   // 255
+};
+
 
 static CString StripHTML(const CString& sFrom)
 {
 	CString sResult = sFrom;
 
+	// remove tags:
 	CString::size_type pos = sResult.find('<');
 
 	while(pos != CString::npos)
@@ -90,12 +206,47 @@ static CString StripHTML(const CString& sFrom)
 		}
 	}
 
+	// remove stupid legay HTML entities:
+	pos = sResult.find('&');
+
+	while(pos != CString::npos)
+	{
+		CString::size_type endPos = sResult.find(';', pos);
+
+		if(endPos != CString::npos)
+		{
+			bool found = false;
+
+			for(unsigned int c = 0; c < 256; c++)
+			{
+				if(g_szHTMLescapes[c] && !strncasecmp(g_szHTMLescapes[c], (char*)(sResult.c_str() + pos), endPos - pos + 1))
+				{
+					sResult.erase(pos, endPos - pos + 1);
+					sResult.insert(pos, 1, (char)c);
+					found = true;
+					break;
+				}
+			}
+
+			if(!found && sResult[pos + 1] != '#')
+				sResult.erase(pos, endPos - pos + 1);
+
+			pos = sResult.find('&', pos + 1);
+		}
+		else
+			break;
+	}
+
+	// remove numerical and XML entities:
 	sResult = sResult.Escape_n(CString::EHTML, CString::EASCII);
 
-	sResult.Replace("\r", " ");
-	sResult.Replace("\n", " ");
-	sResult.Replace("\t", " ");
+	// because entitiy decoding is being done in two steps,
+	// this screws up in certain situations, e.g. &#38;gt;
+	// produces '>' instead of '&gt;' ... but whatever.
 
+
+	// normalize whitespace:
+	RE("\\s+").GlobalReplace(" ", &sResult);
 	sResult.Trim();
 
 	return sResult;
@@ -474,7 +625,7 @@ protected:
 
 		sLine = m_title;
 		if(m_year > 0 || !m_country.empty()) sLine += " (";
-		if(!m_country.empty()) sLine += m_country + " ";
+		if(!m_country.empty()) { sLine += m_country; if(m_year > 0) sLine += " "; }
 		if(m_year > 0) sLine += CString(m_year);
 		if(m_year > 0 || !m_country.empty()) sLine += ")";
 		if(!m_tagline.empty()) sLine += " - " + m_tagline;
