@@ -6,11 +6,17 @@ AC_CONFIG_SRCDIR([src/znc_js_mod.cpp])
 AC_LANG([C++])
 
 CXXFLAGS="$CXXFLAGS "
+LDFLAGS="$LDFLAGS "
 AC_PROG_CXX
 AC_CANONICAL_HOST
 AC_SYS_LARGEFILE
 
 PKG_PROG_PKG_CONFIG()
+
+
+AC_ARG_WITH( [mozjs],
+	AS_HELP_STRING([--with-mozjs=DIR], [spidermonkey library prefix]),
+	[MOZJS=$withval],)
 
 
 AC_MSG_NOTICE([*** Looking for ZNC... ***])
@@ -39,10 +45,16 @@ else
 	LIBS=$ZNC_LIBS
 fi
 
-CXXFLAGS="$CXXFLAGS $ZNC_CFLAGS $ZNC_INC"
-
 
 AC_MSG_NOTICE([*** Looking for SpiderMonkey... ***])
+
+if test -n "$MOZJS"; then
+	LIBS="$LIBS -L${MOZJS}/dist/lib"
+	ZNC_INC="$ZNC_INC -I${MOZJS}/dist/include"
+fi
+
+CXXFLAGS="$CXXFLAGS $ZNC_CFLAGS $ZNC_INC"
+
 
 AC_SEARCH_LIBS([JS_NewContext], [mozjs, js])
 
