@@ -11,7 +11,7 @@
 
 // The following defines are for #if comparison (preprocessor only likes ints)
 #define VERSION_MAJOR  0
-#define VERSION_MINOR  95
+#define VERSION_MINOR  97
 // This one is for display purpose
 #define VERSION        (VERSION_MAJOR + VERSION_MINOR / 1000.0)
 
@@ -42,6 +42,8 @@
 #ifndef _DATADIR_
 #define _DATADIR_ "/usr/share/znc"
 #endif
+
+#define NOTHING (void)0
 
 #define ALLMODULECALL(macFUNC, macEXITER)                                     \
 	do {                                                                  \

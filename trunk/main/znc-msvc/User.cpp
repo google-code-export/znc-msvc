@@ -52,7 +52,6 @@ protected:
 CUser::CUser(const CString& sUserName) {
 	m_pIRCSock = NULL;
 	m_fTimezoneOffset = 0;
-	m_uConnectTime = 0;
 	SetUserName(sUserName);
 	m_sNick = m_sCleanUserName;
 	m_sIdent = m_sCleanUserName;
@@ -158,8 +157,21 @@ void CUser::DelServers()
 	m_vServers.clear();
 }
 
-void CUser::IRCConnected(CIRCSock* pIRCSock) {
+void CUser::SetIRCSocket(CIRCSock* pIRCSock) {
 	m_pIRCSock = pIRCSock;
+}
+
+bool CUser::IsIRCConnected() const
+{
+	const CIRCSock* pSock = GetIRCSock();
+
+	if (!pSock)
+		return false;
+
+	if (!pSock->IsConnected())
+		return false;
+
+	return true;
 }
 
 void CUser::IRCDisconnected() {
@@ -715,7 +727,7 @@ bool CUser::WriteConfig(CFile& File) {
 		}
 	}
 
-	MODULECALL(OnWriteUserConfig(File), this, NULL,);
+	MODULECALL(OnWriteUserConfig(File), this, NULL, NOTHING);
 
 	File.Write("</User>\n");
 
@@ -743,6 +755,7 @@ void CUser::JoinChans() {
 	// still be able to join the rest of your channels.
 	unsigned int start = rand() % m_vChans.size();
 	unsigned int uJoins = m_uMaxJoins;
+	set<CChan*> sChans;
 	for (unsigned int a = 0; a < m_vChans.size(); a++) {
 		unsigned int idx = (start + a) % m_vChans.size();
 		CChan* pChan = m_vChans[idx];
@@ -750,11 +763,50 @@ void CUser::JoinChans() {
 			if (!JoinChan(pChan))
 				continue;
 
+			sChans.insert(pChan);
+
 			// Limit the number of joins
 			if (uJoins != 0 && --uJoins == 0)
-				return;
+				break;
 		}
 	}
+
+	while (!sChans.empty())
+		JoinChans(sChans);
+}
+
+void CUser::JoinChans(set<CChan*>& sChans) {
+	CString sKeys, sJoin;
+	bool bHaveKey = false;
+	size_t uiJoinLength = strlen("JOIN ");
+
+	while (!sChans.empty()) {
+		set<CChan*>::iterator it = sChans.begin();
+		const CString& sName = (*it)->GetName();
+		const CString& sKey = (*it)->GetKey();
+		size_t len = sName.length() + sKey.length();
+		len += 2; // two comma
+
+		if (!sKeys.empty() && uiJoinLength + len >= 512)
+			break;
+
+		if (!sJoin.empty()) {
+			sJoin += ",";
+			sKeys += ",";
+		}
+		uiJoinLength += len;
+		sJoin += sName;
+		if (!sKey.empty()) {
+			sKeys += sKey;
+			bHaveKey = true;
+		}
+		sChans.erase(it);
+	}
+
+	if (bHaveKey)
+		PutIRC("JOIN " + sJoin + " " + sKeys);
+	else
+		PutIRC("JOIN " + sJoin);
 }
 
 bool CUser::JoinChan(CChan* pChan) {
@@ -764,8 +816,6 @@ bool CUser::JoinChan(CChan* pChan) {
 	} else {
 		pChan->IncJoinTries();
 		MODULECALL(OnTimerAutoJoin(*pChan), this, NULL, return false);
-
-		PutIRC("JOIN " + pChan->GetName() + " " + pChan->GetKey());
 		return true;
 	}
 	return false;
@@ -1234,20 +1284,6 @@ const CString& CUser::GetDCCBindHost() const { return m_sDCCBindHost; }
 const CString& CUser::GetPass() const { return m_sPass; }
 CUser::eHashType CUser::GetPassHashType() const { return m_eHashType; }
 const CString& CUser::GetPassSalt() const { return m_sPassSalt; }
-
-bool CUser::ConnectPaused() {
-	if (!m_uConnectTime) {
-		m_uConnectTime = time(NULL);
-		return false;
-	}
-
-	if (time(NULL) - m_uConnectTime >= 5) {
-		m_uConnectTime = time(NULL);
-		return false;
-	}
-
-	return true;
-}
 
 bool CUser::UseClientIP() const { return m_bUseClientIP; }
 bool CUser::DenyLoadMod() const { return m_bDenyLoadMod; }

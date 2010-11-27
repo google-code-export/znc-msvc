@@ -56,9 +56,9 @@ size_t CNick::GetCommonChans(vector<CChan*>& vRetChans, CUser* pUser) const {
 
 	for (size_t a = 0; a < vChans.size(); a++) {
 		CChan* pChan = vChans[a];
-		const map<CString,CNick*>& msNicks = pChan->GetNicks();
+		const map<CString,CNick>& msNicks = pChan->GetNicks();
 
-		for (map<CString,CNick*>::const_iterator it = msNicks.begin(); it != msNicks.end(); ++it) {
+		for (map<CString,CNick>::const_iterator it = msNicks.begin(); it != msNicks.end(); ++it) {
 			if (it->first.Equals(m_sNick)) {
 				vRetChans.push_back(pChan);
 				continue;
@@ -132,11 +132,15 @@ const CString& CNick::GetNick() const { return m_sNick; }
 const CString& CNick::GetIdent() const { return m_sIdent; }
 const CString& CNick::GetHost() const { return m_sHost; }
 CString CNick::GetNickMask() const {
-	if (m_sNick.find('.') != CString::npos) {
-		return m_sNick;
+	CString sRet = m_sNick;
+
+	if (!m_sHost.empty()) {
+		if (!m_sIdent.empty())
+			sRet += "!" + m_sIdent;
+		sRet += "@" + m_sHost;
 	}
 
-	return (m_sNick + "!" + m_sIdent + "@" + m_sHost);
+	return sRet;
 }
 
 CString CNick::GetHostMask() const {
