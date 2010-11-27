@@ -52,7 +52,7 @@ void CClient::UserCommand(CString& sLine) {
 			return;
 		}
 
-		const map<CString,CNick*>& msNicks = pChan->GetNicks();
+		const map<CString,CNick>& msNicks = pChan->GetNicks();
 		CIRCSock* pIRCSock = m_pUser->GetIRCSock();
 		const CString& sPerms = (pIRCSock) ? pIRCSock->GetPerms() : "";
 
@@ -73,20 +73,20 @@ void CClient::UserCommand(CString& sLine) {
 		Table.AddColumn("Ident");
 		Table.AddColumn("Host");
 
-		for (map<CString,CNick*>::const_iterator a = msNicks.begin(); a != msNicks.end(); ++a) {
+		for (map<CString,CNick>::const_iterator a = msNicks.begin(); a != msNicks.end(); ++a) {
 			Table.AddRow();
 
 			for (unsigned int b = 0; b < sPerms.size(); b++) {
-				if (a->second->HasPerm(sPerms[b])) {
+				if (a->second.HasPerm(sPerms[b])) {
 					CString sPerm;
 					sPerm += sPerms[b];
 					Table.SetCell(sPerm, sPerm);
 				}
 			}
 
-			Table.SetCell("Nick", a->second->GetNick());
-			Table.SetCell("Ident", a->second->GetIdent());
-			Table.SetCell("Host", a->second->GetHost());
+			Table.SetCell("Nick", a->second.GetNick());
+			Table.SetCell("Ident", a->second.GetIdent());
+			Table.SetCell("Host", a->second.GetHost());
 		}
 
 		PutStatus(Table);
@@ -107,7 +107,26 @@ void CClient::UserCommand(CString& sLine) {
 		PutStatus("Detaching you from [" + sChan + "]");
 		pChan->DetachUser();
 	} else if (sCommand.Equals("VERSION")) {
+		const char *features = "IPv6: "
+#ifdef HAVE_IPV6
+			"yes"
+#else
+			"no"
+#endif
+			", SSL: "
+#ifdef HAVE_LIBSSL
+			"yes"
+#else
+			"no"
+#endif
+			", c-ares: "
+#ifdef HAVE_C_ARES
+			"yes";
+#else
+			"no";
+#endif
 		PutStatus(CZNC::GetTag());
+		PutStatus(features);
 	} else if (sCommand.Equals("MOTD") || sCommand.Equals("ShowMOTD")) {
 		if (!SendMotd()) {
 			PutStatus("There is no MOTD set.");
@@ -246,13 +265,11 @@ void CClient::UserCommand(CString& sLine) {
 			}
 			m_pUser->SetNextServer(pServer);
 
-			if (!GetIRCSock()) {
-				// If we are already connecting to some server,
-				// we have to abort that attempt
-				Csock *pIRCSock = CZNC::Get().GetManager()
-					.FindSockByName("IRC::" + m_pUser->GetUserName());
-				if (pIRCSock)
-					pIRCSock->Close();
+			// If we are already connecting to some server,
+			// we have to abort that attempt
+			Csock *pIRCSock = GetIRCSock();
+			if (pIRCSock && !pIRCSock->IsConnected()) {
+				pIRCSock->Close();
 			}
 		}
 
@@ -279,13 +296,6 @@ void CClient::UserCommand(CString& sLine) {
 		if (GetIRCSock()) {
 			CString sQuitMsg = sLine.Token(1, true);
 			GetIRCSock()->Quit(sQuitMsg);
-		} else {
-			Csock* pIRCSock;
-			CString sSockName = "IRC::" + m_pUser->GetUserName();
-			// This is *slow*, we try to avoid doing this
-			pIRCSock = CZNC::Get().GetManager().FindSockByName(sSockName);
-			if (pIRCSock)
-				pIRCSock->Close();
 		}
 
 		m_pUser->SetIRCConnectEnabled(false);

@@ -110,9 +110,7 @@ bool CZNC::OnBoot() {
 
 bool CZNC::ConnectUser(CUser *pUser) {
 	CString sSockName = "IRC::" + pUser->GetUserName();
-	// Don't use pUser->GetIRCSock(), as that only returns something if the
-	// CIRCSock is already connected, not when it's still connecting!
-	CIRCSock* pIRCSock = (CIRCSock*) m_Manager.FindSockByName(sSockName);
+	CIRCSock* pIRCSock = pUser->GetIRCSock();
 
 	if (m_pISpoofLockFile != NULL) {
 		return false;
@@ -122,9 +120,6 @@ bool CZNC::ConnectUser(CUser *pUser) {
 		return false;
 
 	if (pIRCSock || !pUser->HasServers())
-		return false;
-
-	if (pUser->ConnectPaused())
 		return false;
 
 	CServer* pServer = pUser->GetNextServer();
@@ -191,9 +186,7 @@ bool CZNC::HandleUserDeletion()
 		}
 		m_msUsers.erase(pUser->GetUserName());
 
-		// Don't use pUser->GetIRCSock(), as that only returns something if the
-		// CIRCSock is already connected, not when it's still connecting!
-		CIRCSock* pIRCSock = (CIRCSock*) m_Manager.FindSockByName("IRC::" + pUser->GetUserName());
+		CIRCSock* pIRCSock = pUser->GetIRCSock();
 
 		if (pIRCSock) {
 			m_Manager.DelSockByAddr(pIRCSock);
@@ -420,10 +413,6 @@ void CZNC::DeleteUsers() {
 
 	m_msUsers.clear();
 	DisableConnectUser();
-}
-
-Csock* CZNC::FindSockByName(const CString& sSockName) {
-	return m_Manager.FindSockByName(sSockName);
 }
 
 bool CZNC::IsHostAllowed(const CString& sHostMask) const {
@@ -749,14 +738,7 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 	CString s6 = "4";
 #ifdef HAVE_IPV6
 	if (CUtils::GetBoolInput("Would you like ZNC to listen using ipv6?", false)) {
-#ifdef IPV6_V6ONLY
 		s6 = " ";
-#else
-		// When we have IPV6_V6ONLY, "Listener" will listen on both v4 and v6.
-		// If we don't have it, "Listener" and "Listener6" are equivalent. Let's
-		// use "Listener6" in this case since that describes the result better.
-		s6 = "6";
-#endif
 	}
 #endif
 
@@ -1036,13 +1018,16 @@ bool CZNC::WriteNewConfig(const CString& sConfigFile) {
 		cout << endl << "----------------------------------------------------------------------------" << endl << endl;
 	}
 
+	const CString sProtocol(sSSL.empty() ? "http" : "https");
 	CUtils::PrintMessage("");
 	CUtils::PrintMessage("To connect to this znc you need to connect to it as your irc server", true);
 	CUtils::PrintMessage("using the port that you supplied.  You have to supply your login info", true);
 	CUtils::PrintMessage("as the irc server password like so... user:pass.", true);
 	CUtils::PrintMessage("");
 	CUtils::PrintMessage("Try something like this in your IRC client...", true);
-	CUtils::PrintMessage("/server <znc_server_ip> " + CString(uListenPort) + " " + sUser + ":<pass>", true);
+	CUtils::PrintMessage("/server <znc_server_ip> " + sSSL + CString(uListenPort) + " " + sUser + ":<pass>", true);
+	CUtils::PrintMessage("And this in your browser...", true);
+	CUtils::PrintMessage(sProtocol + "://<znc_server_ip>:" + CString(uListenPort) + "/", true);
 	CUtils::PrintMessage("");
 
 	m_LockFile.UnLock();
@@ -1080,7 +1065,7 @@ bool CZNC::ParseConfig(const CString& sConfig)
 
 bool CZNC::RehashConfig(CString& sError)
 {
-	ALLMODULECALL(OnPreRehash(), );
+	ALLMODULECALL(OnPreRehash(), NOTHING);
 
 	// This clears m_msDelUsers
 	HandleUserDeletion();
@@ -1090,7 +1075,7 @@ bool CZNC::RehashConfig(CString& sError)
 	m_msUsers.clear();
 
 	if (DoRehash(sError)) {
-		ALLMODULECALL(OnPostRehash(), );
+		ALLMODULECALL(OnPostRehash(), NOTHING);
 
 		return true;
 	}
@@ -1547,16 +1532,6 @@ bool CZNC::DoRehash(CString& sError)
 					if (sName.Equals("Listener6")) {
 						eAddr = ADDR_IPV6ONLY;
 					}
-#if defined(HAVE_IPV6) && !defined(IPV6_V6ONLY)
-					if (sName.Equals("Listener")) {
-						CUtils::PrintMessage("Your system doesn't support IPV6_V6ONLY.", true);
-						CUtils::PrintMessage("Please use \"Listener4\" and \"Listener6\""
-								" to explicitly select between IPV4 and IPV6");
-						// Let's hope that this causes
-						// the least surprise.
-						eAddr = ADDR_IPV4ONLY;
-					}
-#endif
 
 					CListener::EAcceptType eAccept = CListener::ACCEPT_ALL;
 					if (sValue.TrimPrefix("irc_only "))

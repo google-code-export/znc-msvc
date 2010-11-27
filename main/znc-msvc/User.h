@@ -53,7 +53,6 @@ public:
 	bool AddChan(const CString& sName, bool bInConfig);
 	bool DelChan(const CString& sName);
 	void JoinChans();
-	bool JoinChan(CChan* pChan);
 	CServer* FindServer(const CString& sName) const;
 	bool DelServer(const CString& sName, unsigned short uPort, const CString& sPass);
 	bool AddServer(const CString& sName);
@@ -68,7 +67,6 @@ public:
 	static bool IsValidUserName(const CString& sUserName);
 	static CString MakeCleanUserName(const CString& sUserName);
 	bool IsLastServer() const;
-	bool ConnectPaused();
 
 	void DelClients();
 	void DelServers();
@@ -109,8 +107,8 @@ public:
 
 	CString GetLocalIP();
 	CString GetLocalDCCIP();
-	bool IsIRCConnected() const { return GetIRCSock() != NULL; }
-	void IRCConnected(CIRCSock* pIRCSock);
+	bool IsIRCConnected() const;
+	void SetIRCSocket(CIRCSock* pIRCSock);
 	void IRCDisconnected();
 	void CheckIRCConnect();
 
@@ -225,8 +223,10 @@ public:
 	CString GetSkinName() const;
 	// !Getters
 private:
+	bool JoinChan(CChan* pChan);
+	void JoinChans(set<CChan*>& sChans);
+
 protected:
-	time_t                m_uConnectTime;
 	CString               m_sUserName;
 	CString               m_sCleanUserName;
 	CString               m_sNick;

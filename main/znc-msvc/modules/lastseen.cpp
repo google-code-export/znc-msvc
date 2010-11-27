@@ -24,6 +24,17 @@ private:
 		SetNV(pUser->GetUserName(), CString(time(NULL)));
 	}
 
+	const CString FormatLastSeen(const CUser *pUser, const char* sDefault = "") {
+		time_t last = GetTime(pUser);
+		if (last < 1) {
+			return sDefault;
+		} else {
+			char buf[1024];
+			strftime(buf, sizeof(buf) - 1, "%c", localtime(&last));
+			return buf;
+		}
+	}
+
 	typedef multimap<time_t, CUser*> MTimeMulti;
 	typedef map<CString, CUser*> MUsers;
 public:
@@ -43,7 +54,6 @@ public:
 		}
 
 		if (sCommand == "show") {
-			char buf[1024];
 			const MUsers& mUsers = CZNC::Get().GetUserMap();
 			MUsers::const_iterator it;
 			CTable Table;
@@ -52,18 +62,9 @@ public:
 			Table.AddColumn("Last Seen");
 
 			for (it = mUsers.begin(); it != mUsers.end(); ++it) {
-				CUser *pUser = it->second;
-				time_t last = GetTime(pUser);
-
 				Table.AddRow();
 				Table.SetCell("User", it->first);
-
-				if (last == 0)
-					Table.SetCell("Last Seen", "never");
-				else {
-					strftime(buf, sizeof(buf), "%c", localtime(&last));
-					Table.SetCell("Last Seen", buf);
-				}
+				Table.SetCell("Last Seen", FormatLastSeen(it->second));
 			}
 
 			PutModule(Table);
@@ -96,15 +97,8 @@ public:
 	virtual bool OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) {
 		if (sPageName.empty() || sPageName == "index") {
 			CModules& GModules = CZNC::Get().GetModules();
-			if (GModules.size()) {
-				for (unsigned int b = 0; b < GModules.size(); b++) {
-					if(GModules[b]->GetModName().Equals("WEBADMIN")) {
-						Tmpl["WebAdminLoaded"] = "true";
-						break;
-					}
-				}
-			}
-			
+			Tmpl["WebAdminLoaded"] = CString(GModules.FindModule("webadmin") != NULL);
+
 			MTimeMulti mmSorted;
 			const MUsers& mUsers = CZNC::Get().GetUserMap();
 
@@ -112,19 +106,13 @@ public:
 				mmSorted.insert(pair<time_t, CUser*>(GetTime(uit->second), uit->second));
 			}
 
-			char buf[1024] = {0};
-
 			for (MTimeMulti::const_iterator it = mmSorted.begin(); it != mmSorted.end(); ++it) {
 				CUser *pUser = it->second;
 				CTemplate& Row = Tmpl.AddRow("UserLoop");
 
 				Row["Username"] = pUser->GetUserName();
 				Row["IsSelf"] = CString(pUser == WebSock.GetSession()->GetUser());
-
-				if(it->first > 0) {
-					strftime(buf, sizeof(buf), "%c", localtime(&it->first));
-					Row["LastSeen"] = buf;
-				}
+				Row["LastSeen"] = FormatLastSeen(pUser, "never");
 
 				Row["Info"] = CString(pUser->GetClients().size()) +
 					" client" + CString(pUser->GetClients().size() == 1 ? "" : "s");
@@ -145,7 +133,7 @@ public:
 					Row["Info"] += " channel" + CString(n == 1 ? "" : "s");
 				}
 			}
-			
+
 			return true;
 		}
 
@@ -156,12 +144,7 @@ public:
 		if (sPageName == "webadmin/user" && WebSock.GetSession()->IsAdmin()) {
 			CUser* pUser = CZNC::Get().FindUser(Tmpl["Username"]);
 			if (pUser) {
-				time_t last = GetTime(pUser);
-				if (last) {
-					char buf[1024] = {0};
-					strftime(buf, sizeof(buf), "%c", localtime(&last));
-					Tmpl["LastSeen"] = buf;
-				}
+				Tmpl["LastSeen"] = FormatLastSeen(pUser);
 			}
 			return true;
 		}
