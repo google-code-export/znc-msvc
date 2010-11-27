@@ -309,8 +309,8 @@ class CAdminMod : public CModule {
 			PutModule("JoinTries = " + CString(pUser->JoinTries()));
 		}
 		else if (sVar == "timezoneoffset") {
-			double d = sValue.ToDouble();
-			pUser->SetTimezoneOffset(d);
+			float f = static_cast<float>(sValue.ToDouble());
+			pUser->SetTimezoneOffset(f);
 			PutModule("TimezoneOffset = " + CString(pUser->GetTimezoneOffset()));
 		}
 		else if (sVar == "admin") {
