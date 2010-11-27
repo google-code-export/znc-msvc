@@ -1,6 +1,9 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2010-11-27 (0.097-r 2182) ==
+  * Minor fixes from Upstream
+
 == 2010-09-05 (0.095-r 2115) ==
   * Upstream fixed some minor things
   * Upstream renamed "VHosts" to "BindHosts"
