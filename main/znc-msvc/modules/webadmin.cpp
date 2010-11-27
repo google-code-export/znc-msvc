@@ -251,7 +251,7 @@ public:
 		pNewUser->SetUseClientIP(WebSock.GetParam("useclientip").ToBool());
 		pNewUser->SetTimestampAppend(WebSock.GetParam("appendtimestamp").ToBool());
 		pNewUser->SetTimestampPrepend(WebSock.GetParam("prependtimestamp").ToBool());
-		pNewUser->SetTimezoneOffset(WebSock.GetParam("timezoneoffset").ToDouble());
+		pNewUser->SetTimezoneOffset(static_cast<float>(WebSock.GetParam("timezoneoffset").ToDouble()));
 		pNewUser->SetJoinTries(WebSock.GetParam("jointries").ToUInt());
 		pNewUser->SetMaxJoins(WebSock.GetParam("maxjoins").ToUInt());
 		pNewUser->SetIRCConnectEnabled(WebSock.GetParam("doconnect").ToBool());

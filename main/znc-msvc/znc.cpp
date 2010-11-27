@@ -1483,7 +1483,7 @@ bool CZNC::DoRehash(CString& sError)
 						}
 						continue;
 					} else if (sName.Equals("TimezoneOffset")) {
-						pUser->SetTimezoneOffset(sValue.ToDouble()); // there is no ToFloat()
+						pUser->SetTimezoneOffset(static_cast<float>(sValue.ToDouble()));
 						continue;
 					} else if (sName.Equals("JoinTries")) {
 						pUser->SetJoinTries(sValue.ToUInt());
