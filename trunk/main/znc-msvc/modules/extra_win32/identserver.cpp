@@ -76,6 +76,7 @@ protected:
 	CModule *m_pModule;
 	unsigned short m_uPort;
 
+	static bool AreIPStringsEqual(const CString& sIP1, const CString& sIP2);
 public:
 	CIdentServer(CModule *pMod, unsigned short uPort);
 	virtual ~CIdentServer();
@@ -147,7 +148,7 @@ CString CIdentServer::GetResponse(const CString& sLine, const CString& sSocketIP
 
 			if(pSock->GetLocalPort() == uLocalPort &&
 				pSock->GetRemotePort() == uRemotePort &&
-				pSock->GetLocalIP() == sSocketIP)
+				AreIPStringsEqual(pSock->GetLocalIP(), sSocketIP))
 			{
 				sResponseType = "USERID";
 				sAddInfo = "UNIX : " + pUser->GetIdent();
@@ -158,7 +159,7 @@ CString CIdentServer::GetResponse(const CString& sLine, const CString& sSocketIP
 
 			if(pSock->GetRemoteIP() == sRemoteIP &&
 				pSock->GetRemotePort() == uRemotePort &&
-				pSock->GetLocalIP() == sSocketIP)
+				AreIPStringsEqual(pSock->GetLocalIP(), sSocketIP))
 			{
 				sResponseType = "USERID";
 				sAddInfo = "UNIX : " + pUser->GetIdent();
@@ -196,6 +197,11 @@ bool CIdentServer::ConnectionFrom(const CS_STRING & sHostname, u_short uPort)
 	DEBUG("IDENT connection from " << sHostname << ":" << uPort << " (on " << GetLocalIP() << ":" << GetLocalPort() << ")");
 
 	return (!m_activeUsers.empty());
+}
+
+bool CIdentServer::AreIPStringsEqual(const CString& sIP1, const CString& sIP2)
+{
+	return sIP1.TrimPrefix_n("::ffff:").Equals(sIP2.TrimPrefix_n("::ffff:"));
 }
 
 CIdentServer::~CIdentServer()
