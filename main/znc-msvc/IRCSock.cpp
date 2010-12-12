@@ -979,18 +979,23 @@ void CIRCSock::Disconnected() {
 void CIRCSock::SockError(int iErrno) {
 	CString sError;
 
+	if(iErrno != EDOM) {
+#ifndef _WIN32
+		sError = strerror(iErrno);
+#else
+		CUtils::Win32StringError(iErrno, sError);
+#endif
+	}
+
 	if (iErrno == EDOM) {
 		sError = "Your bind host could not be resolved";
 	} else if (iErrno == EADDRNOTAVAIL) {
 		// Csocket uses this if it can't resolve the dest host name
 		// ...but it also does generate this if bind() fails -.-
-		sError = strerror(iErrno);
 		if (GetBindHost().empty())
 			sError += " (Is your IRC server's host name valid?)";
 		else
 			sError += " (Is your IRC server's host name and znc bind host valid?)";
-	} else {
-		sError = strerror(iErrno);
 	}
 
 	DEBUG(GetSockName() << " == SockError(" << iErrno << " "
