@@ -487,6 +487,11 @@ const CNick* CChan::FindNick(const CString& sNick) const {
 	return (it != m_msNicks.end()) ? &it->second : NULL;
 }
 
+CNick* CChan::FindNick(const CString& sNick) {
+	map<CString,CNick>::iterator it = m_msNicks.find(sNick);
+	return (it != m_msNicks.end()) ? &it->second : NULL;
+}
+
 size_t CChan::AddBuffer(const CString& sLine) {
 	// Todo: revisit the buffering
 	if (!m_uBufferCount) {
