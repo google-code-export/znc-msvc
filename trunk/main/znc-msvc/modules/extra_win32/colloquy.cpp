@@ -290,6 +290,9 @@ public:
 	MODCONSTRUCTOR(CColloquyMod) {
 		// init vars
 		m_bAttachedPush = true;
+                m_bSkipMessageContent = false;
+		m_bAwayOnlyPush = false;
+		m_bIgnoreNetworkServices = false;
 
 		LoadRegistry();
 
@@ -322,6 +325,12 @@ public:
 			sArg.Trim();
 			if ( sArg.TrimPrefix("attachedpush") ) {
 				m_bAttachedPush = sArg.ToBool();
+			} else if ( sArg.TrimPrefix("skipmessagecontent") ) {
+                                m_bSkipMessageContent = sArg.ToBool();
+			} else if ( sArg.TrimPrefix("awayonlypush") ) {
+				m_bAwayOnlyPush = sArg.ToBool();
+			} else if ( sArg.TrimPrefix("ignorenetworkservices") ) {
+				m_bIgnoreNetworkServices = sArg.ToBool();
 			}
 		}
 
@@ -517,7 +526,7 @@ public:
 			PutModule("Command: STATUS");
 			PutModule("Shows the active settings.");
 			PutModule("Command: SET idle <minutes>");
-			PutModule("Only send notifications to prowl if you have been idle for at least <minutes> or no client is connected to ZNC.");
+			PutModule("Only send notifications to colloquy if you have been idle for at least <minutes> or no client is connected to ZNC.");
 			PutModule("Command: SET nighthours <start> <end>");
 			PutModule("Don't send notifications after nighthours start and before nighthours end");
 		} else if (sCommand.Equals("LIST")) {
@@ -647,6 +656,27 @@ public:
 			return false;
 		}
 
+		if (iBadge != 0) {
+			CUser* pUser = GetUser();
+			if (pUser && m_bAwayOnlyPush && !pUser->IsIRCAway()) {
+				return false;
+			}
+		}
+
+		if ( m_bIgnoreNetworkServices ) {
+			if ( sNick.Equals("NickServ") || sNick.Equals("ChanServ") || sNick.Equals("MemoServ") ) {
+				return false;
+			}
+		}
+
+		CString sPushMessage = sMessage;
+		if (m_bSkipMessageContent && !sMessage.Equals("")) {
+			sPushMessage = "";
+			if (!bHilite) {
+			    sPushMessage = "Private messsage from " + sNick;
+			}
+		}
+
 		//Check nightHours
 		bool bNightHours=false;
 		if ((m_nightHoursStart>-1) && (m_nightHoursEnd>-1)) {
@@ -717,13 +747,15 @@ public:
 
 				if (!bMatches) {
 					return false;
+				} else if (m_bSkipMessageContent) {
+					sPushMessage = "Highlighted message";
 				}
 			}
 
 			if (m_debug) {
 			PutModule("debug: idleTest Pass... "+CString(m_lastActivity) + " < " + CString(time(NULL)-m_idleAfterMinutes*60)+" | #" +sChannel + " "+sMessage);
 			}
-			if (!pDevice->Push(sNick, sMessage, sChannel, bHilite, iBadge)) {
+			if (!pDevice->Push(sNick, sPushMessage, sChannel, bHilite, iBadge)) {
 				bRet = false;
 			}
 		}
@@ -782,5 +814,8 @@ public:
 private:
 	map<CString, CDevice*>	m_mspDevices;	// map of token to device info for clients who have sent us PUSH info
 	bool	m_bAttachedPush;
+	bool	m_bSkipMessageContent;
+	bool	m_bAwayOnlyPush;
+	bool	m_bIgnoreNetworkServices;
 };
 MODULEDEFS(CColloquyMod, "Push privmsgs and highlights to your iPhone via Colloquy Mobile")
