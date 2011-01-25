@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -28,6 +28,22 @@ public:
 		for (it = vListeners.begin(); it != vListeners.end(); it++)
 			(*it)->GetRealListener()->SetRequireClientCertFlags(SSL_VERIFY_PEER);
 
+		MCString::iterator it1;
+		for (it1 = BeginNV(); it1 != EndNV(); it1++) {
+			VCString vsKeys;
+			VCString::iterator it2;
+
+			if (CZNC::Get().FindUser(it1->first) == NULL) {
+				DEBUG("Unknown user in saved data [" + it1->first + "]");
+				continue;
+			}
+
+			it1->second.Split(" ", vsKeys, false);
+			for (it2 = vsKeys.begin(); it2 != vsKeys.end(); it2++) {
+				m_PubKeys[it1->first].insert(*it2);
+			}
+		}
+
 		return true;
 	}
 
@@ -37,22 +53,6 @@ public:
 
 	virtual bool OnLoad(const CString& sArgs, CString& sMessage) {
 		OnBoot();
-
-		MCString::iterator it;
-		for (it = BeginNV(); it != EndNV(); it++) {
-			VCString vsKeys;
-			VCString::iterator it2;
-
-			if (CZNC::Get().FindUser(it->first) == NULL) {
-				DEBUG("Unknown user in saved data [" + it->first + "]");
-				continue;
-			}
-
-			it->second.Split(" ", vsKeys, false);
-			for (it2 = vsKeys.begin(); it2 != vsKeys.end(); it2++) {
-				m_PubKeys[it->first].insert(*it2);
-			}
-		}
 
 		return true;
 	}
