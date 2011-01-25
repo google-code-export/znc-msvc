@@ -1,6 +1,7 @@
 @echo off
 
-set WEBMODULES=lastseen,stickychan,notes,webadmin
+set WEBMODULES=blockuser,lastseen,notes,perform,stickychan,webadmin
+set WEBMODULES_EXTRA=listsockets
 
 echo ************************ Checking folders... *************************
 
@@ -25,11 +26,13 @@ md build-temp\x86\znc
 md build-temp\x86\znc\webskins
 md build-temp\x86\znc\modules
 FOR %%M IN (%WEBMODULES%) DO md build-temp\x86\znc\modules\%%M
+FOR %%M IN (%WEBMODULES_EXTRA%) DO md build-temp\x86\znc\modules\%%M
 if exist build-temp\x64 echo Deleting temp x64 folder... && rd /S /Q build-temp\x64
 md build-temp\x64\znc
 md build-temp\x64\znc\webskins
 md build-temp\x64\znc\modules
 FOR %%M IN (%WEBMODULES%) DO md build-temp\x64\znc\modules\%%M
+FOR %%M IN (%WEBMODULES_EXTRA%) DO md build-temp\x64\znc\modules\%%M
 
 
 echo ************************ Copying binaries... *************************
@@ -61,6 +64,10 @@ xcopy znc-msvc\webskins build-temp\x64\znc\webskins /Q /S /EXCLUDE:build-temp\xc
 FOR %%M IN (%WEBMODULES%) DO (
 	xcopy znc-msvc\modules\%%M build-temp\x86\znc\modules\%%M /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
 	xcopy znc-msvc\modules\%%M build-temp\x64\znc\modules\%%M /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+)
+FOR %%M IN (%WEBMODULES_EXTRA%) DO (
+	xcopy znc-msvc\modules\extra\%%M build-temp\x86\znc\modules\%%M /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
+	xcopy znc-msvc\modules\extra\%%M build-temp\x64\znc\modules\%%M /Q /S /EXCLUDE:build-temp\xcopyskipsvn.txt
 )
 del build-temp\xcopyskipsvn.txt
 
