@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -233,11 +233,16 @@ public:
 		sArg = WebSock.GetParam("bindhost");
 		// To change BindHosts be admin or don't have DenySetBindHost
 		if (spSession->IsAdmin() || !spSession->GetUser()->DenySetBindHost()) {
+			CString sArg2 = WebSock.GetParam("dccbindhost");
 			if (!sArg.empty()) {
 				pNewUser->SetBindHost(sArg);
 			}
+			if (!sArg2.empty()) {
+				pNewUser->SetDCCBindHost(sArg2);
+			}
 		} else if (pUser){
 			pNewUser->SetBindHost(pUser->GetBindHost());
+			pNewUser->SetDCCBindHost(pUser->GetDCCBindHost());
 		}
 
 		// First apply the old limit in case the new one is too high
@@ -251,7 +256,7 @@ public:
 		pNewUser->SetUseClientIP(WebSock.GetParam("useclientip").ToBool());
 		pNewUser->SetTimestampAppend(WebSock.GetParam("appendtimestamp").ToBool());
 		pNewUser->SetTimestampPrepend(WebSock.GetParam("prependtimestamp").ToBool());
-		pNewUser->SetTimezoneOffset(static_cast<float>(WebSock.GetParam("timezoneoffset").ToDouble()));
+		pNewUser->SetTimezoneOffset(WebSock.GetParam("timezoneoffset").ToDouble());
 		pNewUser->SetJoinTries(WebSock.GetParam("jointries").ToUInt());
 		pNewUser->SetMaxJoins(WebSock.GetParam("maxjoins").ToUInt());
 		pNewUser->SetIRCConnectEnabled(WebSock.GetParam("doconnect").ToBool());
@@ -476,7 +481,7 @@ public:
 			return ListUsersPage(WebSock, Tmpl);
 		} else if (sPageName == "traffic" && spSession->IsAdmin()) {
 			return TrafficPage(WebSock, Tmpl);
-		} else if (sPageName.empty() || sPageName == "index") {
+		} else if (sPageName == "index") {
 			return true;
 		}
 
@@ -501,6 +506,7 @@ public:
 				Tmpl["ChanName"] = pChan->GetName();
 				Tmpl["BufferCount"] = CString(pChan->GetBufferCount());
 				Tmpl["DefModes"] = pChan->GetDefaultModes();
+				Tmpl["Key"] = pChan->GetKey();
 
 				if (pChan->InConfig()) {
 					Tmpl["InConfig"] = "true";
@@ -559,6 +565,7 @@ public:
 		pChan->SetDefaultModes(WebSock.GetParam("defmodes"));
 		pChan->SetInConfig(WebSock.GetParam("save").ToBool());
 		pChan->SetKeepBuffer(WebSock.GetParam("keepbuffer").ToBool());
+		pChan->SetKey(WebSock.GetParam("key"));
 
 		bool bDetached = WebSock.GetParam("detached").ToBool();
 
@@ -681,18 +688,26 @@ public:
 			}
 
 			// To change BindHosts be admin or don't have DenySetBindHost
-			const VCString& vsBindHosts = CZNC::Get().GetBindHosts();
-			bool bFoundBindHost = false;
 			if (spSession->IsAdmin() || !spSession->GetUser()->DenySetBindHost()) {
+				const VCString& vsBindHosts = CZNC::Get().GetBindHosts();
+				bool bFoundBindHost = false;
+				bool bFoundDCCBindHost = false;
 				for (unsigned int b = 0; b < vsBindHosts.size(); b++) {
 					const CString& sBindHost = vsBindHosts[b];
 					CTemplate& l = Tmpl.AddRow("BindHostLoop");
+					CTemplate& k = Tmpl.AddRow("DCCBindHostLoop");
 
 					l["BindHost"] = sBindHost;
+					k["BindHost"] = sBindHost;
 
 					if (pUser && pUser->GetBindHost() == sBindHost) {
 						l["Checked"] = "true";
 						bFoundBindHost = true;
+					}
+
+					if (pUser && pUser->GetDCCBindHost() == sBindHost) {
+						k["Checked"] = "true";
+						bFoundDCCBindHost = true;
 					}
 				}
 
@@ -701,6 +716,12 @@ public:
 					CTemplate& l = Tmpl.AddRow("BindHostLoop");
 
 					l["BindHost"] = pUser->GetBindHost();
+					l["Checked"] = "true";
+				}
+				if (pUser && !bFoundDCCBindHost && !pUser->GetDCCBindHost().empty()) {
+					CTemplate& l = Tmpl.AddRow("DCCBindHostLoop");
+
+					l["BindHost"] = pUser->GetDCCBindHost();
 					l["Checked"] = "true";
 				}
 			}
@@ -950,6 +971,10 @@ public:
 			Tmpl["StatusPrefix"] = CZNC::Get().GetStatusPrefix();
 			Tmpl["ISpoofFile"] = CZNC::Get().GetISpoofFile();
 			Tmpl["ISpoofFormat"] = CZNC::Get().GetISpoofFormat();
+			Tmpl["MaxBufferSize"] = CString(CZNC::Get().GetMaxBufferSize());
+			Tmpl["ConnectDelay"] = CString(CZNC::Get().GetConnectDelay());
+			Tmpl["ServerThrottle"] = CString(CZNC::Get().GetServerThrottle());
+			Tmpl["AnonIPLimit"] = CString(CZNC::Get().GetAnonIPLimit());
 
 			const VCString& vsBindHosts = CZNC::Get().GetBindHosts();
 			for (unsigned int a = 0; a < vsBindHosts.size(); a++) {
@@ -1038,7 +1063,10 @@ public:
 		sArg = WebSock.GetParam("statusprefix"); CZNC::Get().SetStatusPrefix(sArg);
 		sArg = WebSock.GetParam("ispooffile"); CZNC::Get().SetISpoofFile(sArg);
 		sArg = WebSock.GetParam("ispoofformat"); CZNC::Get().SetISpoofFormat(sArg);
-		//sArg = GetParam(""); if (!sArg.empty()) { CZNC::Get().Set(sArg); }
+		sArg = WebSock.GetParam("maxbufsize"); CZNC::Get().SetMaxBufferSize(sArg.ToUInt());
+		sArg = WebSock.GetParam("connectdelay"); CZNC::Get().SetConnectDelay(sArg.ToUInt());
+		sArg = WebSock.GetParam("serverthrottle"); CZNC::Get().SetServerThrottle(sArg.ToUInt());
+		sArg = WebSock.GetParam("anoniplimit"); CZNC::Get().SetAnonIPLimit(sArg.ToUInt());
 
 		VCString vsArgs;
 		WebSock.GetRawParam("motd").Split("\n", vsArgs);

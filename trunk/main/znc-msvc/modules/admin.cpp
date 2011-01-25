@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  * Copyright (C) 2008 by Stefan Rado
  * based on admin.cpp by Sebastian Ramacher
  * based on admin.cpp in crox branch
@@ -87,7 +87,9 @@ class CAdminMod : public CModule {
 			{"Admin",            boolean},
 			{"AppendTimestamp",  boolean},
 			{"PrependTimestamp", boolean},
-			{"DCCBindHost",      boolean}
+			{"TimestampFormat",  string},
+			{"DCCBindHost",      boolean},
+			{"StatusPrefix",     string}
 		};
 		for (unsigned int i = 0; i != ARRAY_SIZE(vars); ++i) {
 			VarTable.AddRow();
@@ -188,12 +190,16 @@ class CAdminMod : public CModule {
 			PutModule("TimezoneOffset = " + CString(pUser->GetTimezoneOffset()));
 		else if (sVar == "appendtimestamp")
 			PutModule("AppendTimestamp = " + CString(pUser->GetTimestampAppend()));
-		else if (sVar == "preprendtimestamp")
-			PutModule("PreprendTimestamp = " + CString(pUser->GetTimestampPrepend()));
+		else if (sVar == "prependtimestamp")
+			PutModule("PrependTimestamp = " + CString(pUser->GetTimestampPrepend()));
+		else if (sVar == "timestampformat")
+			PutModule("TimestampFormat = " + pUser->GetTimestampFormat());
 		else if (sVar == "dccbindhost")
 			PutModule("DCCBindHost = " + CString(pUser->GetDCCBindHost()));
 		else if (sVar == "admin")
 			PutModule("Admin = " + CString(pUser->IsAdmin()));
+		else if (sVar == "statusprefix")
+			PutModule("StatuxPrefix = " + pUser->GetStatusPrefix());
 		else
 			PutModule("Error: Unknown variable");
 	}
@@ -309,8 +315,8 @@ class CAdminMod : public CModule {
 			PutModule("JoinTries = " + CString(pUser->JoinTries()));
 		}
 		else if (sVar == "timezoneoffset") {
-			float f = static_cast<float>(sValue.ToDouble());
-			pUser->SetTimezoneOffset(f);
+			double d = sValue.ToDouble();
+			pUser->SetTimezoneOffset(d);
 			PutModule("TimezoneOffset = " + CString(pUser->GetTimezoneOffset()));
 		}
 		else if (sVar == "admin") {
@@ -332,12 +338,24 @@ class CAdminMod : public CModule {
 			pUser->SetTimestampAppend(b);
 			PutModule("AppendTimestamp = " + CString(b));
 		}
+		else if (sVar == "timestampformat") {
+			pUser->SetTimestampFormat(sValue);
+			PutModule("TimestampFormat = " + sValue);
+		}
 		else if (sVar == "dccbindhost") {
 			if(!pUser->DenySetBindHost() || m_pUser->IsAdmin()) {
 				pUser->SetDCCBindHost(sValue);
 				PutModule("DCCBindHost = " + sValue);
 			} else {
 				PutModule("Access denied!");
+			}
+		}
+		else if (sVar == "statusprefix") {
+			if (sVar.find_first_of(" \t\n") == CString::npos) {
+				pUser->SetStatusPrefix(sValue);
+				PutModule("StatusPrefix = " + sValue);
+			} else {
+				PutModule("That would be a bad idea!");
 			}
 		}
 		else

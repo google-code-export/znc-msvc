@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -52,11 +52,6 @@ public:
 		return CONTINUE;
 	}
 
-	virtual EModRet OnUserJoin(CString& sChannel, CString& sKey) {
-		ClearAllBuffers();
-		return CONTINUE;
-	}
-
 	virtual EModRet OnUserPart(CString& sChannel, CString& sMessage) {
 		ClearAllBuffers();
 		return CONTINUE;
@@ -66,12 +61,6 @@ public:
 		ClearAllBuffers();
 		return CONTINUE;
 	}
-
-	virtual void OnClientLogin() {
-		ClearAllBuffers();
-	}
-
-	// No OnClientDisconnect(), disconnect could be coming from e.g. a timeout
 };
 
 MODULEDEFS(CClearBufferOnMsgMod, "Clear all channel buffers whenever the user does something")

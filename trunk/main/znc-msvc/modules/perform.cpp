@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -15,6 +15,26 @@ public:
 	MODCONSTRUCTOR(CPerform) {}
 
 	virtual ~CPerform() {}
+
+	CString ParsePerform(const CString& sArg) const {
+		CString sPerf = sArg;
+
+		if (sPerf.Left(1) == "/")
+			sPerf.LeftChomp();
+
+		if (sPerf.Token(0).Equals("MSG")) {
+			sPerf = "PRIVMSG " + sPerf.Token(1, true);
+		}
+
+		if ((sPerf.Token(0).Equals("PRIVMSG") ||
+				sPerf.Token(0).Equals("NOTICE")) &&
+				sPerf.Token(2).Left(1) != ":") {
+			sPerf = sPerf.Token(0) + " " + sPerf.Token(1)
+				+ " :" + sPerf.Token(2, true);
+		}
+
+		return sPerf;
+	}
 
 	virtual bool OnLoad(const CString& sArgs, CString& sMessage) {
 		GetNV("Perform").Split("\n", m_vPerform, false);
@@ -32,20 +52,7 @@ public:
 				return;
 			}
 
-			if (sPerf.Left(1) == "/")
-				sPerf.LeftChomp();
-
-			if (sPerf.Token(0).Equals("MSG")) {
-				sPerf = "PRIVMSG " + sPerf.Token(1, true);
-			}
-
-			if ((sPerf.Token(0).Equals("PRIVMSG") ||
-				sPerf.Token(0).Equals("NOTICE")) &&
-				sPerf.Token(2).Left(1) != ":") {
-				sPerf = sPerf.Token(0) + " " + sPerf.Token(1)
-					+ " :" + sPerf.Token(2, true);
-			}
-			m_vPerform.push_back(sPerf);
+			m_vPerform.push_back(ParsePerform(sPerf));
 			PutModule("Added!");
 			Save();
 		} else if (sCmdName == "del") {
@@ -60,7 +67,7 @@ public:
 		} else if (sCmdName == "list") {
 			int i = 1;
 			CString sExpanded;
-			for (VCString::iterator it = m_vPerform.begin(); it != m_vPerform.end(); it++, i++) {
+			for (VCString::const_iterator it = m_vPerform.begin(); it != m_vPerform.end(); it++, i++) {
 				sExpanded = GetUser()->ExpandString(*it);
 				if (sExpanded != *it)
 					PutModule(CString(i) + ": " + *it + " (" + sExpanded + ")");
@@ -88,22 +95,46 @@ public:
 	}
 
 	virtual void OnIRCConnected() {
-		for (VCString::iterator it = m_vPerform.begin();
-			it != m_vPerform.end();  ++it) {
+		for (VCString::const_iterator it = m_vPerform.begin(); it != m_vPerform.end(); ++it) {
 			PutIRC(GetUser()->ExpandString(*it));
 		}
 	}
 
+	virtual CString GetWebMenuTitle() { return "Perform"; }
+
+	virtual bool OnWebRequest(CWebSock& WebSock, const CString& sPageName, CTemplate& Tmpl) {
+		if (sPageName != "index") {
+			// only accept requests to /mods/perform/
+			return false;
+		}
+
+		if (WebSock.IsPost()) {
+			VCString vsPerf;
+			WebSock.GetRawParam("perform", true).Split("\n", vsPerf, false);
+			m_vPerform.clear();
+
+			for (VCString::const_iterator it = vsPerf.begin(); it != vsPerf.end(); ++it)
+				m_vPerform.push_back(ParsePerform(*it));
+
+			Save();
+		}
+
+		for (VCString::const_iterator it = m_vPerform.begin(); it != m_vPerform.end(); ++it) {
+			CTemplate& Row = Tmpl.AddRow("PerformLoop");
+			Row["Perform"] = *it;
+		}
+
+		return true;
+	}
+
 private:
-	bool Save() {
+	void Save() {
 		CString sBuffer = "";
 
-		for (VCString::iterator it = m_vPerform.begin(); it != m_vPerform.end(); ++it) {
+		for (VCString::const_iterator it = m_vPerform.begin(); it != m_vPerform.end(); ++it) {
 			sBuffer += *it + "\n";
 		}
 		SetNV("Perform", sBuffer);
-
-		return true;
 	}
 
 	VCString m_vPerform;

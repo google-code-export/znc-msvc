@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010  See the AUTHORS file for details.
+ * Copyright (C) 2008-2011  See the AUTHORS file for details.
  * Copyright (C) 2006-2007, CNU <bshalm@broadpark.no> (http://cnu.dieplz.net/znc)
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ public:
 	virtual void OnKick(const CNick& OpNick, const CString& sKickedNick, CChan& Channel, const CString& sMessage);
 	virtual void OnQuit(const CNick& Nick, const CString& sMessage, const vector<CChan*>& vChans);
 	virtual void OnJoin(const CNick& Nick, CChan& Channel);
-	virtual void OnPart(const CNick& Nick, CChan& Channel);
+	virtual void OnPart(const CNick& Nick, CChan& Channel, const CString& sMessage);
 	virtual void OnNick(const CNick& OldNick, const CString& sNewNick, const vector<CChan*>& vChans);
 	virtual EModRet OnTopic(CNick& Nick, CChan& Channel, CString& sTopic);
 
@@ -149,9 +149,9 @@ void CLogMod::OnJoin(const CNick& Nick, CChan& Channel)
 	PutLog("*** Joins: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ")", Channel);
 }
 
-void CLogMod::OnPart(const CNick& Nick, CChan& Channel)
+void CLogMod::OnPart(const CNick& Nick, CChan& Channel, const CString& sMessage)
 {
-	PutLog("*** Parts: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ")", Channel);
+	PutLog("*** Parts: " + Nick.GetNick() + " (" + Nick.GetIdent() + "@" + Nick.GetHost() + ") (" + sMessage + ")", Channel);
 }
 
 void CLogMod::OnNick(const CNick& OldNick, const CString& sNewNick, const vector<CChan*>& vChans)
