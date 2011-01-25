@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -9,6 +9,8 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
+#include "zncconfig.h"
+#include "ZNCString.h"
 #include <assert.h>
 #include <cstdio>
 #include <fcntl.h>
@@ -282,12 +284,7 @@ public:
 	 * @param uTTL the time-to-live for this specific item
 	 */
 	void AddItem(const K& Item, unsigned int uTTL) {
-		if (!uTTL) {            // If time-to-live is zero we don't want to waste our time adding it
-			RemItem(Item);  // Remove the item incase it already exists
-			return;
-		}
-
-		m_mItems[Item] = value(CUtils::GetMillTime() + uTTL, V());
+		AddItem(Item, V(), uTTL);
 	}
 
 	/**

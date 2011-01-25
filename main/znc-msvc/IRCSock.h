@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -9,6 +9,7 @@
 #ifndef _IRCSOCK_H
 #define _IRCSOCK_H
 
+#include "zncconfig.h"
 #include "Socket.h"
 #include "Nick.h"
 
@@ -116,6 +117,10 @@ protected:
 	unsigned int                        m_uCapPaused;
 	SCString                            m_ssAcceptedCaps;
 	SCString                            m_ssPendingCaps;
+	time_t                              m_lastCTCP;
+	unsigned int                        m_uNumCTCP;
+	static const time_t                 m_uCTCPFloodTime;
+	static const unsigned int           m_uCTCPFloodCount;
 };
 
 #endif // !_IRCSOCK_H

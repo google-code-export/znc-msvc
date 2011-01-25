@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -9,6 +9,7 @@
 #ifndef _HTTPSOCK_H
 #define _HTTPSOCK_H
 
+#include "zncconfig.h"
 #include "Socket.h"
 
 class CModule;
@@ -49,6 +50,7 @@ public:
 	static void ParseParams(const CString& sParams, map<CString, VCString>& msvsParams);
 	void ParseURI();
 	void GetPage();
+	static CString GetDate(time_t tm = 0);
 
 	// Cookies
 	CString GetRequestCookie(const CString& sKey) const;

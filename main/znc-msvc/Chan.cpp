@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -484,11 +484,6 @@ bool CChan::ChangeNick(const CString& sOldNick, const CString& sNewNick) {
 
 const CNick* CChan::FindNick(const CString& sNick) const {
 	map<CString,CNick>::const_iterator it = m_msNicks.find(sNick);
-	return (it != m_msNicks.end()) ? &it->second : NULL;
-}
-
-CNick* CChan::FindNick(const CString& sNick) {
-	map<CString,CNick>::iterator it = m_msNicks.find(sNick);
 	return (it != m_msNicks.end()) ? &it->second : NULL;
 }
 

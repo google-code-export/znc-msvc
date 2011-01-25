@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -14,6 +14,10 @@
 #include "User.h"
 #include "znc.h"
 
+// These are used in OnGeneralCTCP()
+const time_t CIRCSock::m_uCTCPFloodTime = 5;
+const unsigned int CIRCSock::m_uCTCPFloodCount = 5;
+
 CIRCSock::CIRCSock(CUser* pUser) : CZNCSock() {
 	m_pUser = pUser;
 	m_bISpoofReleased = false;
@@ -26,6 +30,8 @@ CIRCSock::CIRCSock(CUser* pUser) : CZNCSock() {
 
 	m_uMaxNickLen = 9;
 	m_uCapPaused = 0;
+	m_lastCTCP = 0;
+	m_uNumCTCP = 0;
 	m_sPerms = "*!@%+";
 	m_sPermModes = "qaohv";
 	m_mueChanModes['b'] = ListArg;
@@ -461,12 +467,13 @@ void CIRCSock::ReadLine(const CString& sData) {
 			if (sChan.Left(1) == ":") {
 				sChan.LeftChomp();
 			}
+			CString sMsg = sRest.Token(1, true).TrimPrefix_n(":");
 
 			CChan* pChan = m_pUser->FindChan(sChan);
 			bool bDetached = false;
 			if (pChan) {
 				pChan->RemNick(Nick.GetNick());
-				MODULECALL(OnPart(Nick.GetNickMask(), *pChan), m_pUser, NULL, NOTHING);
+				MODULECALL(OnPart(Nick.GetNickMask(), *pChan, sMsg), m_pUser, NULL, NOTHING);
 
 				if (pChan->IsDetached())
 					bDetached = true;
@@ -839,6 +846,18 @@ bool CIRCSock::OnGeneralCTCP(CNick& Nick, CString& sMessage) {
 	}
 
 	if (!sReply.empty()) {
+		time_t now = time(NULL);
+		// If the last CTCP is older than m_uCTCPFloodTime, reset the counter
+		if (m_lastCTCP + m_uCTCPFloodTime < now)
+			m_uNumCTCP = 0;
+		m_lastCTCP = now;
+		// If we are over the limit, don't reply to this CTCP
+		if (m_uNumCTCP >= m_uCTCPFloodCount) {
+			DEBUG("CTCP flood detected - not replying to query");
+			return false;
+		}
+		m_uNumCTCP++;
+
 		PutIRC("NOTICE " + Nick.GetNick() + " :\001" + sQuery + " " + sReply + "\001");
 		return true;
 	}
@@ -995,7 +1014,7 @@ void CIRCSock::SockError(int iErrno) {
 		if (GetBindHost().empty())
 			sError += " (Is your IRC server's host name valid?)";
 		else
-			sError += " (Is your IRC server's host name and znc bind host valid?)";
+			sError += " (Is your IRC server's host name and ZNC bind host valid?)";
 	}
 
 	DEBUG(GetSockName() << " == SockError(" << iErrno << " "

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -9,6 +9,7 @@
 #ifndef _DCCBOUNCE_H
 #define _DCCBOUNCE_H
 
+#include "zncconfig.h"
 #include "Socket.h"
 
 class CUser;

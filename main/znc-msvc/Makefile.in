@@ -15,7 +15,7 @@ includedir  := @includedir@
 sbindir     := @sbindir@
 localstatedir := @localstatedir@
 CXX      := @CXX@
-CXXFLAGS := @CPPFLAGS@ @CXXFLAGS@
+CXXFLAGS := @DEFS@ @CPPFLAGS@ @CXXFLAGS@ -I.
 LDFLAGS  := @LDFLAGS@
 LIBS     := @LIBS@
 LIBZNC   := @LIBZNC@
@@ -38,6 +38,8 @@ BIN_OBJS  := $(patsubst %cpp,%o,$(BIN_SRCS))
 CLEAN     := znc *.o core core.*
 DISTCLEAN := Makefile config.log config.status znc-config znc-buildmod .depend \
 	modules/.depend modules/Makefile man/Makefile znc.pc znc-uninstalled.pc
+
+CXXFLAGS += -D_MODDIR_=\"$(MODDIR)\" -D_DATADIR_=\"$(DATADIR)\"
 
 ifneq "$(V)" ""
 VERBOSE=1
@@ -106,6 +108,8 @@ install: znc $(LIBZNC)
 	mkdir -p $(DESTDIR)$(MODDIR)
 	mkdir -p $(DESTDIR)$(DATADIR)
 	cp -Rp $(srcdir)/webskins $(DESTDIR)$(DATADIR)
+	find $(DESTDIR)$(DATADIR)/webskins -type d -exec chmod 0755 '{}' \;
+	find $(DESTDIR)$(DATADIR)/webskins -type f -exec chmod 0644 '{}' \;
 	$(INSTALL_PROGRAM) znc $(DESTDIR)$(bindir)
 	$(INSTALL_SCRIPT) znc-config $(DESTDIR)$(bindir)
 	$(INSTALL_SCRIPT) znc-buildmod $(DESTDIR)$(bindir)
@@ -124,7 +128,7 @@ uninstall:
 	rm $(DESTDIR)$(bindir)/znc-buildmod
 	rm $(DESTDIR)$(includedir)/znc/*.h
 	rm $(DESTDIR)$(PKGCONFIGDIR)/znc.pc
-	rm -rf $(DESTDIR)$(MODDIR)/webskins
+	rm -rf $(DESTDIR)$(DATADIR)/webskins
 	if test -n "$(LIBZNC)"; then \
 		rm $(DESTDIR)$(LIBZNCDIR)/$(LIBZNC) || exit 1 ; \
 		rmdir $(DESTDIR)$(LIBZNCDIR) || exit 1 ; \
