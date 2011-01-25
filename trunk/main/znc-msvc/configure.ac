@@ -2,6 +2,10 @@ dnl Keep the version number in sync with main.h!
 AC_INIT([znc], [0.097])
 AC_CONFIG_SRCDIR([znc.cpp])
 AC_LANG([C++])
+AC_CONFIG_HEADERS([zncconfig.h])
+AH_TOP([#ifndef ZNCCONFIG_H
+#define ZNCCONFIG_H])
+AH_BOTTOM([#endif /* ZNCCONFIG_H */])
 
 AC_DEFUN([ZNC_AUTO_FAIL], [
 	# This looks better in the summary at the end
@@ -96,11 +100,17 @@ AC_ARG_ENABLE( [perl],
 	AS_HELP_STRING([--enable-perl], [enable perl]),
 	[PERL="$enableval"],
 	[PERL="no"])
+AC_ARG_ENABLE( [python],
+	AS_HELP_STRING([--enable-python[[[=python3-config]]]], [enable python.
+			By default python3-config is used, but you can use
+			another name if your python3-config has another name.]),
+	[PYTHON="$enableval"],
+	[PYTHON="no"])
 AC_ARG_ENABLE( [swig],
-	AS_HELP_STRING([--disable-swig], [Disable automatic generation of source files needed for modperl.
-			This value is ignored if perl is disabled or not found. If you disable swig,
-			but still want to use modperl, please download the necessary files to modules/modperl.
-			Check http://en.znc.in/wiki/Modperl for details.]),
+	AS_HELP_STRING([--disable-swig], [Disable automatic generation of source files needed for modperl/modpython.
+			This value is ignored if perl and python are disabled. If you disable swig,
+			but still want to use these modules, please download the necessary files to modules/modperl and/or to modules/modpython.
+			Check http://en.znc.in/wiki/Modperl and http://en.znc.in/wiki/Modpython for details.]),
 	[SWIG="$enableval"],
 	[SWIG="auto"])
 AC_ARG_ENABLE( [sasl],
@@ -118,7 +128,8 @@ AC_ARG_ENABLE( [c-ares],
 AC_ARG_ENABLE( [run-from-source],
 	AS_HELP_STRING([--enable-run-from-source], [znc will be runnable without installation]),
 	[if test "x$enableval" = "xyes" ; then
-		appendCXX -DRUN_FROM_SOURCE
+		AC_DEFINE([RUN_FROM_SOURCE], [1],
+			  [Define if ZNC should be runnable without installation])
 	fi
 	RUNFROMSOURCE="$enableval"],
 	[RUNFROMSOURCE="no"])
@@ -128,9 +139,11 @@ AC_ARG_ENABLE( [poll],
 	[POLL="yes"])
 
 if test "$DEBUG" != "no"; then
-	appendCXX -ggdb -D_DEBUG
+	AC_DEFINE([_DEBUG], [1], [Define for debugging])
 	# These enable some debug options in g++'s STL, e.g. invalid use of iterators
-	appendCXX -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_CONCEPT_CHECKS
+	AC_DEFINE([_GLIBCXX_DEBUG], [1], [Enable extra debugging checks in libstdc++])
+	AC_DEFINE([_GLIBCXX_DEBUG_PEDANTIC], [1], [Enable extra debugging checks in libstdc++])
+	AC_DEFINE([_GLIBCXX_CONCEPT_CHECKS], [1], [Enable extra debugging checks in libstdc++])
 else
 	if test "x$OPTIMIZE" = "xyes"; then
 		appendCXX -O2
@@ -138,7 +151,7 @@ else
 fi
 
 if test "$IPV6" != "no"; then
-	appendCXX -DHAVE_IPV6
+	AC_DEFINE([HAVE_IPV6], [1], [Define if IPv6 support is enabled])
 fi
 
 if test "x$GXX" = "xyes"; then
@@ -146,29 +159,17 @@ if test "x$GXX" = "xyes"; then
 fi
 
 if test "$POLL" = "yes"; then
-	appendCXX -DCSOCK_USE_POLL
+	AC_DEFINE([CSOCK_USE_POLL], [1], [Use poll() instead of select()])
 fi
 
 AC_CHECK_LIB( gnugetopt, getopt_long,)
-AC_CHECK_FUNC([lstat], [appendCXX -DHAVE_LSTAT])
+AC_CHECK_FUNCS([lstat])
 PKG_PROG_PKG_CONFIG()
 
 # ----- Check for dlopen
 
-FOUND_DL=no
-# Don't use any libs like -lssl -lcrypto when checking for dlopen(),
-# because they might change the test results
-SAVED_LIBS="$LIBS"
-LIBS=""
-
-AC_CHECK_FUNC(dlopen, FOUND_DL=yes,)
-AC_CHECK_LIB( dl, dlopen, FOUND_DL=yes ; appendLib -ldl,)
-
-appendLib "$SAVED_LIBS"
-
-if test $FOUND_DL = "no" ; then
-	AC_MSG_ERROR([Could not find dlopen. ZNC will not work on this box until you upgrade this ancient system or at least install needed system libraries.])
-fi
+AC_SEARCH_LIBS([dlopen], [dl], [],
+		[AC_MSG_ERROR([Could not find dlopen. ZNC will not work on this box until you upgrade this ancient system or at least install the necessary system libraries.])])
 
 # ----- Check for c-ares
 
@@ -190,7 +191,8 @@ Disabling c-ares may result in a slight performance decrease but will not have a
 Disabling c-ares may result in a slight performance decrease but will not have any other side-effects],
 				[c-ares was not found and thus disabled])
 		else
-			appendCXX $c_ares_CFLAGS -DHAVE_C_ARES
+			AC_DEFINE([HAVE_C_ARES], [1], [Define if c-ares is enabled])
+			appendCXX $c_ares_CFLAGS
 			appendLib $c_ares_LIBS
 			ARES=yes
 		fi
@@ -224,7 +226,7 @@ if test "x$SSL" != "xno"; then
 			[OpenSSL was not found and thus disabled])
 		NOSSL=1
 	else
-		appendCXX -DHAVE_LIBSSL
+		AC_DEFINE([HAVE_LIBSSL], [1], [Define if openssl is enabled])
 		SSL=yes
 	fi
 else
@@ -244,7 +246,7 @@ AC_ARG_WITH( [module-data-prefix],
 
 appendMod "$CXXFLAGS"
 
-if test -z "$ISSUN" -a -z "$ISDARWIN"; then
+if test -z "$ISSUN" -a -z "$ISDARWIN" -a -z "$ISCYGWIN"; then
 	# This is an unknown compiler flag on some OS
 	appendLD -Wl,--export-dynamic
 fi
@@ -256,7 +258,7 @@ if test -z "$ISCYGWIN" ; then
 else
 	# But cygwin does want most of znc in a shared lib
 	LIBZNC="libznc.dll"
-	LIBZNCDIR="$libdir/znc"
+	LIBZNCDIR="$bindir"
 fi
 
 if test -z "$ISDARWIN"; then
@@ -270,24 +272,41 @@ else
 	# (dynamic_lookup might only work on 10.4 and later)
 fi
 
+if test "x$PERL" != xno -o "x$PYTHON" != xno; then
+	old_SWIG="$SWIG"
+	if test "x$SWIG" != "xno"; then
+		AC_PATH_PROG([SWIG_BINARY], [swig])
+		test -z "$SWIG_BINARY" && SWIG=no
+	fi
+	if test "x$SWIG" = xno; then
+		SWIG_BINARY=""
+		if test "x$old_SWIG" = xno; then
+			SWIG="no, need manual download for perl/python bindings"
+			AC_MSG_WARN([swig was disabled, so you should put needed sources to modules/
+Please check http://en.znc.in/wiki/Modperl or http://en.znc.in/wiki/Modpython for details.])
+		else
+			AC_MSG_ERROR([swig was not found. Try --disable-perl --disable-python, or download the necessary sources and use --disable-swig.
+Please check http://en.znc.in/wiki/Modperl or http://en.znc.in/wiki/Modpython for details.])
+		fi
+	else
+		SWIG=yes
+	fi
+else
+	if test "x$SWIG" = "xyes"; then
+		AC_MSG_WARN([swig is needed only for perl and python, but both are disabled. Disabling swig.])
+	fi
+	SWIG=no
+fi
+
 if test "x$PERL" != "xno"; then
 	old_PERL="$PERL"
-	old_SWIG="$SWIG"
 	AC_PATH_PROG([PERL_BINARY], [perl], [])
-	if test -n "$PERL_BINARY"; then
+	if test -n "$PERL_BINARY" && eval "$PERL_BINARY -e'use 5.010'"; then
 		my_saved_LDFLAGS="$LDFLAGS"
 		appendLD `$PERL_BINARY -MExtUtils::Embed -e ccopts -e ldopts`
 		AC_CHECK_LIB(perl, perl_alloc,
 			     [: No, we do not want autoconf to do sth automatically],
 			     PERL="no")
-		if test "x$PERL" != "xno"; then
-			if test "x$SWIG" != "xno"; then
-				AC_PATH_PROG([SWIG_BINARY], [swig], [])
-				if test -z "$SWIG_BINARY"; then
-					SWIG="no"
-				fi
-			fi
-		fi
 		LDFLAGS="$my_saved_LDFLAGS"
 	else
 		PERL="no"
@@ -298,20 +317,39 @@ if test "x$PERL" != "xno"; then
 			[perl was not found and thus disabled])
 		PERL_BINARY=""
 	else
-		if test "x$SWIG" = "xno"; then
-			SWIG_BINARY=""
-			if test "x$old_SWIG" = "xno"; then
-				PERL="yes, but with manual download"
-				AC_MSG_WARN([swig was disabled, so you should put needed sources for modperl to modules/modperl.
-Please check http://en.znc.in/wiki/Modperl for details.])
-			else
-				AC_MSG_ERROR([swig was not found. Try --disable-perl, or download the necessary sources and use --disable-swig.
-Please check http://en.znc.in/wiki/Modperl for details.])
+		PERL="yes"
+	fi
+fi
+
+if test "x$PYTHON" != "xno"; then
+	# Default value for just --enable-python
+	if test "x$PYTHON" = "xyes"; then
+		PYTHON="python3-config"
+	fi
+	old_PYTHON="$PYTHON"
+	AC_PATH_PROG([PYTHONCFG_BINARY], ["$PYTHON"])
+	if test -n "$PYTHONCFG_BINARY"; then
+		my_saved_LIBS="$LIBS"
+		appendLib `$PYTHONCFG_BINARY --ldflags`
+		AC_CHECK_FUNC([Py_Initialize], [], [PYTHON="no"])
+		if test "x$PYTHON" != "xno"; then
+			# Yes, modpython depends on perl.
+			AC_PATH_PROG([PERL_BINARY], [perl])
+			if test -z "$PERL_BINARY"; then
+				AC_MSG_ERROR([To compile modpython you need to be able to execute perl scripts. Try --disable-python or install perl.])
 			fi
-		else
-			PERL="yes"
-			SWIG="yes"
 		fi
+		LIBS="$my_saved_LIBS"
+	else
+		PYTHON="no"
+	fi
+	if test "x$PYTHON" = "xno"; then
+		ZNC_AUTO_FAIL([PYTHON],
+			[python not found. Try --disable-python.],
+			[python was not found and thus disabled])
+		PYTHONCFG_BINARY=""
+	else
+		PYTHON="yes"
 	fi
 fi
 
@@ -344,7 +382,14 @@ then
 	for path in $TCL_DIR /usr/lib /usr/lib/tcl8.4 /usr/lib/tcl8.5
 	do
 		file="${path}/tclConfig.sh"
-		AC_CHECK_FILE(${file}, [TCL_CONF="$file" ; break])
+		AC_MSG_CHECKING([for ${file}])
+		if test -r ${file}
+		then
+			TCL_CONF=${file}
+			AC_MSG_RESULT([yes])
+			break
+		fi
+		AC_MSG_RESULT([no])
 	done
 
 	if test x"${TCL_CONF}" = x
@@ -361,6 +406,13 @@ then
 		TCL_FLAGS="$TCL_INCLUDE_SPEC $TCL_LIB_SPEC"
 		AC_MSG_RESULT([$TCL_FLAGS])
 	fi
+	my_saved_LIBS="$LIBS"
+	appendLib "$TCL_FLAGS"
+	AC_CHECK_FUNC([Tcl_CreateInterp], [TCL_TEST=yes], [TCL_TEST=no])
+	if test x"$TCL_TEST" = "xno"; then
+		AC_MSG_ERROR([tcl not found, try --disable-tcl, or install tcl properly. If tcl is installed to a non-standard path, use --enable-tcl --with-tcl=/path])
+	fi
+	LIBS="$my_saved_LIBS"
 fi
 
 if test x"$EXTRA" = "xyes"
@@ -390,9 +442,6 @@ then
 	fi
 fi
 
-appendCXX "-D_MODDIR_=\\\"${MODDIR}\\\""
-appendCXX "-D_DATADIR_=\\\"${DATADIR}\\\""
-
 AC_SUBST([CXXFLAGS])
 AC_SUBST([CPPFLAGS])
 AC_SUBST([MODFLAGS])
@@ -409,6 +458,7 @@ AC_SUBST([CHARSET])
 AC_SUBST([LIBICONV])
 AC_SUBST([MODDIR])
 AC_SUBST([DATADIR])
+AC_SUBST([PERL])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([znc-config])
 AC_CONFIG_FILES([znc-buildmod])
@@ -427,6 +477,8 @@ echo "ipv6:         $IPV6"
 echo "openssl:      $SSL"
 echo "c-ares:       $ARES"
 echo "perl:         $PERL"
+echo "python:       $PYTHON"
+echo "swig:         $SWIG"
 if test x"$SASL" = "x" ; then
 	echo "sasl:         no"
 else

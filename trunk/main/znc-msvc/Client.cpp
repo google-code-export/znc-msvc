@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -129,7 +129,7 @@ void CClient::ReadLine(const CString& sData) {
 		HandleCap(sLine);
 
 		// Don't let the client talk to the server directly about CAP,
-		// we don't want anything enabled that znc does not support.
+		// we don't want anything enabled that ZNC does not support.
 		return;
 	}
 

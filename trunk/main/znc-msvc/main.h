@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -8,6 +8,8 @@
 
 #ifndef _MAIN_H
 #define _MAIN_H
+
+#include "zncconfig.h"
 
 // The following defines are for #if comparison (preprocessor only likes ints)
 #define VERSION_MAJOR  0
@@ -33,14 +35,6 @@
 # else
 #  define VERSION_EXTRA ""
 # endif
-#endif
-
-#ifndef _MODDIR_
-#define _MODDIR_ "/usr/lib/znc"
-#endif
-
-#ifndef _DATADIR_
-#define _DATADIR_ "/usr/share/znc"
 #endif
 
 #define NOTHING (void)0

@@ -9,6 +9,7 @@
 #ifndef _WEBMODULES_H
 #define _WEBMODULES_H
 
+#include "zncconfig.h"
 #include "Client.h"
 #include "Template.h"
 #include "HTTPSock.h"
@@ -34,10 +35,11 @@ private:
 
 class ZNC_API CWebSession {
 public:
-	CWebSession(const CString& sId);
-	virtual ~CWebSession() {}
+	CWebSession(const CString& sId, const CString& sIP);
+	~CWebSession();
 
 	const CString& GetId() const { return m_sId; }
+	const CString& GetIP() const { return m_sIP; }
 	CUser* GetUser() const { return m_pUser; }
 	bool IsLoggedIn() const { return m_pUser != NULL; }
 	bool IsAdmin() const;
@@ -50,6 +52,7 @@ public:
 	size_t AddSuccess(const CString& sMessage);
 private:
 	CString         m_sId;
+	CString         m_sIP;
 	CUser*          m_pUser;
 	VCString        m_vsErrorMsgs;
 	VCString        m_vsSuccessMsgs;
@@ -125,46 +128,35 @@ public:
 	virtual void OnPageRequest(const CString& sURI);
 
 	void ParsePath();   // This parses the path portion of the url into some member vars
-	CModule* ResolveModule();
 
-	//virtual bool PrintFile(const CString& sFileName, CString sContentType = "");
 	EPageReqResult PrintTemplate(const CString& sPageName, CString& sPageRet, CModule* pModule = NULL);
 	EPageReqResult PrintStaticFile(const CString& sPath, CString& sPageRet, CModule* pModule = NULL);
 
-	bool AddModLoop(const CString& sLoopName, CModule& Module);
-	VCString GetDirs(CModule* pModule, bool bIsTemplate);
 	CString FindTmpl(CModule* pModule, const CString& sName);
-	void SetPaths(CModule* pModule, bool bIsTemplate = false);
-	void SetVars();
-
-	void FillErrorPage(CString& sPageRet, const CString& sError) {
-		m_Template["Action"] = "error";
-		m_Template["Title"] = "Error";
-		m_Template["Error"] = sError;
-
-		PrintTemplate("error", sPageRet);
-	}
 
 	void PrintErrorPage(const CString& sMessage);
 
 	CSmartPtr<CWebSession> GetSession();
-	CString GetCSRFCheck();
 
 	virtual Csock* GetSockObj(const CString& sHost, unsigned short uPort);
-	CString GetSkinPath(const CString& sSkinName) const;
+	static CString GetSkinPath(const CString& sSkinName);
 	CModule* GetModule() const { return (CModule*) m_pModule; }
-	size_t GetAvailSkins(vector<CFile>& vRet);
+	size_t GetAvailSkins(vector<CFile>& vRet) const;
 	CString GetSkinName();
 
 	CString GetRequestCookie(const CString& sKey);
 	bool SendCookie(const CString& sKey, const CString& sValue);
 
-	static void FinishUserSessions(const CUser& User) {
-		m_mspSessions.FinishUserSessions(User);
-	}
+	static void FinishUserSessions(const CUser& User);
 
 protected:
 	using CHTTPSock::PrintErrorPage;
+
+	bool AddModLoop(const CString& sLoopName, CModule& Module);
+	VCString GetDirs(CModule* pModule, bool bIsTemplate);
+	void SetPaths(CModule* pModule, bool bIsTemplate = false);
+	void SetVars();
+	CString GetCSRFCheck();
 
 private:
 	EPageReqResult OnPageRequestInternal(const CString& sURI, CString& sPageRet);
@@ -172,13 +164,12 @@ private:
 	bool                    m_bPathsSet;
 	CTemplate               m_Template;
 	CSmartPtr<CAuthBase>    m_spAuth;
-	CString                 m_sForceUser;   // Gets filled by ResolveModule()
-	CString                 m_sModName;     // Gets filled by ResolveModule()
-	CString                 m_sPath;        // Gets filled by ResolveModule()
-	CString                 m_sPage;        // Gets filled by ResolveModule()
+	CString                 m_sModName;     // Gets filled by ParsePath()
+	CString                 m_sPath;        // Gets filled by ParsePath()
+	CString                 m_sPage;        // Gets filled by ParsePath()
 	CSmartPtr<CWebSession>  m_spSession;
 
-	static CWebSessionMap   m_mspSessions;
+	static const unsigned int m_uiMaxSessions;
 };
 
 #endif // !_WEBMODULES_H

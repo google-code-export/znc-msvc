@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -10,6 +10,7 @@
 #define _ZNC_H
 
 #include "main.h"
+#include "zncconfig.h"
 #include "Client.h"
 #include "FileUtils.h"
 #include "Modules.h"
@@ -91,6 +92,9 @@ public:
 	void SetISpoofFile(const CString& s) { m_sISpoofFile = s; }
 	void SetISpoofFormat(const CString& s) { m_sISpoofFormat = (s.empty()) ? "global { reply \"%\" }" : s; }
 	void SetMaxBufferSize(size_t i) { m_uiMaxBufferSize = i; }
+	void SetAnonIPLimit(unsigned int i) { m_uiAnonIPLimit = i; }
+	void SetServerThrottle(unsigned int i) { m_sConnectThrottle.SetTTL(i*1000); }
+	void SetConnectDelay(unsigned int i);
 	// !Setters
 
 	// Getters
@@ -116,6 +120,9 @@ public:
 	const vector<CListener*>& GetListeners() const { return m_vpListeners; }
 	time_t TimeStarted() const { return m_TimeStarted; }
 	size_t GetMaxBufferSize() const { return m_uiMaxBufferSize; }
+	unsigned int GetAnonIPLimit() const { return m_uiAnonIPLimit; }
+	unsigned int GetServerThrottle() const { return m_sConnectThrottle.GetTTL() / 1000; }
+	unsigned int GetConnectDelay() const { return m_uiConnectDelay; }
 	// !Getters
 
 	// Static allocator
@@ -155,6 +162,7 @@ private:
 	bool DoRehash(CString& sError);
 	// Returns true if something was done
 	bool HandleUserDeletion();
+	CString MakeConfigHeader();
 
 protected:
 	time_t                 m_TimeStarted;

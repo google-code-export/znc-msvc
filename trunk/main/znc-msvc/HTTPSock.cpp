@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  See the AUTHORS file for details.
+ * Copyright (C) 2004-2011  See the AUTHORS file for details.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
@@ -10,6 +10,9 @@
 #include "Modules.h"
 #include "HTTPSock.h"
 #include "znc.h"
+
+#include <sstream>
+#include <iomanip>
 
 #define MAX_POST_SIZE	1024 * 1024
 
@@ -128,6 +131,28 @@ void CHTTPSock::ReadLine(const CString& sData) {
 	}
 }
 
+CString CHTTPSock::GetDate(time_t stamp) {
+	struct tm tm;
+	std::stringstream stream;
+	const char *wkday[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+	const char *month[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+	if (stamp == 0)
+		time(&stamp);
+	gmtime_r(&stamp, &tm);
+
+	stream << wkday[tm.tm_wday] << ", ";
+	stream << std::setfill('0') << std::setw(2) << tm.tm_mday << " ";
+	stream << month[tm.tm_mon] << " ";
+	stream << std::setfill('0') << std::setw(4) << tm.tm_year + 1900 << " ";
+	stream << std::setfill('0') << std::setw(2) << tm.tm_hour << ":";
+	stream << std::setfill('0') << std::setw(2) << tm.tm_min << ":";
+	stream << std::setfill('0') << std::setw(2) << tm.tm_sec << " GMT";
+
+	return stream.str();
+}
+
 void CHTTPSock::GetPage() {
 	DEBUG("Page Request [" << m_sURI << "] ");
 
@@ -197,6 +222,7 @@ bool CHTTPSock::PrintFile(const CString& sFileName, CString sContentType) {
 	if (iMTime > 0 && !m_bHTTP10Client) {
 		sETag = "-" + CString(iMTime); // lighttpd style ETag
 
+		AddHeader("Last-Modified", GetDate(iMTime));
 		AddHeader("ETag", "\"" + sETag + "\"");
 		AddHeader("Cache-Control", "public");
 
@@ -461,7 +487,7 @@ bool CHTTPSock::PrintHeader(off_t uContentLength, const CString& sContentType, u
 	DEBUG("- " << uStatusId << " (" << sStatusMsg << ") [" << m_sContentType << "]");
 
 	Write("HTTP/" + CString(m_bHTTP10Client ? "1.0 " : "1.1 ") + CString(uStatusId) + " " + sStatusMsg + "\r\n");
-	//Write("Date: Tue, 28 Jun 2005 20:45:36 GMT\r\n");
+	Write("Date: " + GetDate() + "\r\n");
 	Write("Server: " + CZNC::GetTag(false) + "\r\n");
 	if (uContentLength > 0) {
 		Write("Content-Length: " + CString(uContentLength) + "\r\n");
