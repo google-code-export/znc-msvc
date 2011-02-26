@@ -49,10 +49,15 @@ protected:
 	CUser* m_pUser;
 };
 
-CUser::CUser(const CString& sUserName) {
+CUser::CUser(const CString& sUserName)
+		: m_sUserName(sUserName), m_sCleanUserName(MakeCleanUserName(sUserName))
+{
+	// set paths that depend on the user name:
+	m_sUserPath = CZNC::Get().GetUserPath() + "/" + m_sUserName;
+	m_sDLPath = m_sUserPath + "/downloads";
+
 	m_pIRCSock = NULL;
 	m_fTimezoneOffset = 0;
-	SetUserName(sUserName);
 	m_sNick = m_sCleanUserName;
 	m_sIdent = m_sCleanUserName;
 	m_sRealName = sUserName;
@@ -344,13 +349,11 @@ bool CUser::Clone(const CUser& User, CString& sErrorRet, bool bCloneChans) {
 		return false;
 	}
 
+	// user names can only specified for the constructor, changing it later
+	// on breaks too much stuff (e.g. lots of paths depend on the user name)
 	if (GetUserName() != User.GetUserName()) {
-		if (CZNC::Get().FindUser(User.GetUserName())) {
-			sErrorRet = "New username already exists";
-			return false;
-		}
-
-		SetUserName(User.GetUserName());
+		DEBUG("Ignoring username in CUser::Clone(), old username [" << GetUserName()
+				<< "]; New username [" << User.GetUserName() << "]");
 	}
 
 	if (!User.GetPass().empty()) {
@@ -1105,6 +1108,20 @@ bool CUser::PutModule(const CString& sModule, const CString& sLine, CClient* pCl
 	return (pClient == NULL);
 }
 
+bool CUser::PutModNotice(const CString& sModule, const CString& sLine, CClient* pClient, CClient* pSkipClient) {
+	for (unsigned int a = 0; a < m_vClients.size(); a++) {
+		if ((!pClient || pClient == m_vClients[a]) && pSkipClient != m_vClients[a]) {
+			m_vClients[a]->PutModNotice(sModule, sLine);
+
+			if (pClient) {
+				return true;
+			}
+		}
+	}
+
+	return (pClient == NULL);
+}
+
 bool CUser::ResumeFile(unsigned short uPort, unsigned long uFileSize) {
 	CSockManager& Manager = CZNC::Get().GetManager();
 
@@ -1192,15 +1209,6 @@ CString CUser::MakeCleanUserName(const CString& sUserName) {
 }
 
 // Setters
-void CUser::SetUserName(const CString& s) {
-	m_sCleanUserName = CUser::MakeCleanUserName(s);
-	m_sUserName = s;
-
-	// set paths that depend on the user name:
-	m_sUserPath = CZNC::Get().GetUserPath() + "/" + m_sUserName;
-	m_sDLPath = GetUserPath() + "/downloads";
-}
-
 bool CUser::IsChan(const CString& sChan) const {
 	if (sChan.empty())
 		return false; // There is no way this is a chan
@@ -1254,12 +1262,20 @@ void CUser::SetIRCNick(const CNick& n) {
 }
 
 bool CUser::AddCTCPReply(const CString& sCTCP, const CString& sReply) {
+	// Reject CTCP requests containing spaces
+	if (sCTCP.find_first_of(' ') != CString::npos) {
+		return false;
+	}
+	// Reject empty CTCP requests
 	if (sCTCP.empty()) {
 		return false;
 	}
-
 	m_mssCTCPReplies[sCTCP.AsUpper()] = sReply;
 	return true;
+}
+
+bool CUser::DelCTCPReply(const CString& sCTCP) {
+	return m_mssCTCPReplies.erase(sCTCP) > 0;
 }
 
 bool CUser::SetStatusPrefix(const CString& s) {

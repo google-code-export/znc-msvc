@@ -196,6 +196,58 @@ protected:
 	CString  m_sDescription;
 };
 
+/** A helper class for handling commands in modules. */
+class CModCommand {
+public:
+	/// Type for the callback function that handles the actual command.
+	typedef void (CModule::*ModCmdFunc)(const CString& sLine);
+
+	/// Default constructor, needed so that this can be saved in a std::map.
+	CModCommand();
+
+	/** Construct a new CModCommand.
+	 * @param sCmd The name of the command.
+	 * @param func The command's callback function.
+	 * @param sArgs Help text describing the arguments to this command.
+	 * @param sDesc Help text describing what this command does.
+	 */
+	CModCommand(const CString& sCmd, ModCmdFunc func, const CString& sArgs, const CString& sDesc);
+
+	/** Copy constructor, needed so that this can be saved in a std::map.
+	 * @param other Object to copy from.
+	 */
+	CModCommand(const CModCommand& other);
+
+	/** Assignment operator, needed so that this can be saved in a std::map.
+	 * @param other Object to copy from.
+	 */
+	CModCommand& operator=(const CModCommand& other);
+
+	/** Initialize a CTable so that it can be used with AddHelp().
+	 * @param Table The instance of CTable to initialize.
+	 */
+	static void InitHelp(CTable& Table);
+
+	/** Add this command to the CTable instance.
+	 * @param Table Instance of CTable to which this should be added.
+	 * @warning The Table should be initialized via InitHelp().
+	 */
+	void AddHelp(CTable& Table) const;
+
+	const CString& GetCommand() const { return m_sCmd; }
+	ModCmdFunc GetFunction() const { return m_pFunc; }
+	const CString& GetArgs() const { return m_sArgs; }
+	const CString& GetDescription() const { return m_sDesc; }
+
+	void Call(CModule *pMod, const CString& sLine) const { (pMod->*m_pFunc)(sLine); }
+
+private:
+	CString m_sCmd;
+	ModCmdFunc m_pFunc;
+	CString m_sArgs;
+	CString m_sDesc;
+};
+
 /** The base class for your own ZNC modules.
  *
  *  If you want to write a module for znc, you will have to implement a class
@@ -438,6 +490,13 @@ public:
 	 *  @param sCommand The command that was sent.
 	 */
 	virtual void OnModCommand(const CString& sCommand);
+	/** This is similar to OnModCommand(), but it is only called if
+	 * HandleCommand didn't find any that wants to handle this. This is only
+	 * called if HandleCommand() is called, which practically means that
+	 * this is only called if you don't overload OnModCommand().
+	 *  @param sCommand The command that was sent.
+	 */
+	virtual void OnUnknownModCommand(const CString& sCommand);
 	/** Called when a your module nick was sent a notice.
 	 *  @param sMessage The message which was sent.
 	 */
@@ -694,28 +753,22 @@ public:
 	 *  module hook for a specific client, only that client gets this
 	 *  message, else all connected clients will receive it.
 	 *  @param sLine The message which should be sent.
-	 *  @param sIdent The ident for the module nick. Defaults to the module name.
-	 *  @param sHost The hostname for the module nick. Defaults to znc.in
 	 *  @return true if the line was sent to at least one client.
 	 */
-	virtual bool PutModule(const CString& sLine, const CString& sIdent = "", const CString& sHost = "znc.in");
+	virtual bool PutModule(const CString& sLine);
 	/** This function calls CModule::PutModule(const CString&, const
 	 *  CString&, const CString&) for each line in the table.
 	 *  @param table The table which should be send.
-	 *  @param sIdent The ident which should be used.
-	 *  @param sHost The hostname used for the query.
 	 *  @return The number of lines sent.
 	 */
-	virtual unsigned int PutModule(const CTable& table, const CString& sIdent = "", const CString& sHost = "znc.in");
+	virtual unsigned int PutModule(const CTable& table);
 	/** Send a notice from your module nick. If we are in a module hook for
 	 *  a specific client, only that client gets this notice, else all
 	 *  clients will receive it.
 	 *  @param sLine The line which should be sent.
-	 *  @param sIdent The ident used for the notice.
-	 *  @param sHost The host name used for the notice.
 	 *  @return true if the line was sent to at least one client.
 	 */
-	virtual bool PutModNotice(const CString& sLine, const CString& sIdent = "", const CString& sHost = "znc.in");
+	virtual bool PutModNotice(const CString& sLine);
 
 	/** @returns The name of the module. */
 	const CString& GetModName() const { return m_sModName; }
@@ -753,6 +806,31 @@ public:
 	set<CSocket*>::const_iterator EndSockets() const { return m_sSockets.end(); }
 	virtual void ListSockets();
 	// !Socket stuff
+
+	// Command stuff
+	/// Register the "Help" command.
+	void AddHelpCommand();
+	/// @return True if the command was successfully added.
+	bool AddCommand(const CModCommand& Command);
+	/// @return True if the command was successfully added.
+	bool AddCommand(const CString& sCmd, CModCommand::ModCmdFunc func, const CString& sArgs = "", const CString& sDesc = "");
+	/// @return True if the command was successfully removed.
+	bool RemCommand(const CString& sCmd);
+	/// @return The CModCommand instance or NULL if none was found.
+	const CModCommand* FindCommand(const CString& sCmd) const;
+	/** This function tries to dispatch the given command via the correct
+	 * instance of CModCommand. Before this can be called, commands have to
+	 * be added via AddCommand(). If no matching commands are found then
+	 * OnUnknownModCommand will be called.
+	 * @param sLine The command line to handle.
+	 * @return True if something was done, else false.
+	 */
+	bool HandleCommand(const CString& sLine);
+	/** Send a description of all registered commands via PutModule().
+	 * @param sLine The help command that is being asked for.
+	 */
+	void HandleHelpCommand(const CString& sLine = "");
+	// !Command stuff
 
 	bool LoadRegistry();
 	bool SaveRegistry() const;
@@ -810,6 +888,7 @@ protected:
 private:
 	MCString           m_mssRegistry; //!< way to save name/value pairs. Note there is no encryption involved in this
 	VWebSubPages       m_vSubPages;
+	map<CString, CModCommand> m_mCommands;
 };
 
 class ZNC_API CModules : public vector<CModule*> {
