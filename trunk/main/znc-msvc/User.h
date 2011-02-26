@@ -101,6 +101,7 @@ public:
 	bool PutStatus(const CString& sLine, CClient* pClient = NULL, CClient* pSkipClient = NULL);
 	bool PutStatusNotice(const CString& sLine, CClient* pClient = NULL, CClient* pSkipClient = NULL);
 	bool PutModule(const CString& sModule, const CString& sLine, CClient* pClient = NULL, CClient* pSkipClient = NULL);
+	bool PutModNotice(const CString& sModule, const CString& sLine, CClient* pClient = NULL, CClient* pSkipClient = NULL);
 
 	bool IsUserAttached() const { return !m_vClients.empty(); }
 	void UserConnected(CClient* pClient);
@@ -135,7 +136,6 @@ public:
 	void AddBytesWritten(unsigned long long u) { m_uBytesWritten += u; }
 
 	// Setters
-	void SetUserName(const CString& s);
 	void SetNick(const CString& s);
 	void SetAltNick(const CString& s);
 	void SetIdent(const CString& s);
@@ -155,6 +155,7 @@ public:
 	void SetIRCServer(const CString& s);
 	void SetQuitMsg(const CString& s);
 	bool AddCTCPReply(const CString& sCTCP, const CString& sReply);
+	bool DelCTCPReply(const CString& sCTCP);
 	bool SetBufferCount(size_t u, bool bForce = false);
 	void SetKeepBuffer(bool b);
 	void SetChanPrefixes(const CString& s) { m_sChanPrefixes = s; }
@@ -228,8 +229,8 @@ private:
 	void JoinChans(set<CChan*>& sChans);
 
 protected:
-	CString               m_sUserName;
-	CString               m_sCleanUserName;
+	const CString         m_sUserName;
+	const CString         m_sCleanUserName;
 	CString               m_sNick;
 	CString               m_sAltNick;
 	CString               m_sIdent;

@@ -13,6 +13,7 @@
 #include "User.h"
 #include "Modules.h"
 #include "Chan.h"
+#include "IRCSock.h"
 
 template<std::size_t N>
 struct array_size_helper {
@@ -30,31 +31,7 @@ class CAdminMod : public CModule {
 	using CModule::PutModule;
 
 	void PrintHelp(const CString&) {
-		CTable CmdTable;
-		CmdTable.AddColumn("Command");
-		CmdTable.AddColumn("Arguments");
-		CmdTable.AddColumn("Description");
-		static const char* help[][3] = {
-			{"Get",          "variable [username]",           "Prints the variable's value for the given or current user"},
-			{"Set",          "variable username value",       "Sets the variable's value for the given user (use $me for the current user)"},
-			{"GetChan",      "variable [username] chan",      "Prints the variable's value for the given channel"},
-			{"SetChan",      "variable username chan value",  "Sets the variable's value for the given channel"},
-			{"ListUsers",    "",                              "Lists users"},
-			{"AddUser",      "username password [ircserver]", "Adds a new user"},
-			{"DelUser",      "username",                      "Deletes a user"},
-			{"CloneUser",    "oldusername newusername",       "Clones a user"},
-			{"AddServer",    "[username] server",             "Adds a new IRC server for the given or current user"},
-			{"LoadModule",   "username modulename",           "Loads a Module for a user"},
-			{"UnLoadModule", "username modulename",           "Removes a Module of a user"},
-			{"ListMods",     "username",                      "Get the list of modules for a user"}
-		};
-		for (unsigned int i = 0; i != ARRAY_SIZE(help); ++i) {
-			CmdTable.AddRow();
-			CmdTable.SetCell("Command",     help[i][0]);
-			CmdTable.SetCell("Arguments",   help[i][1]);
-			CmdTable.SetCell("Description", help[i][2]);
-		}
-		PutModule(CmdTable);
+		HandleHelpCommand();
 
 		PutModule("The following variables are available when using the Set/Get commands:");
 
@@ -586,14 +563,13 @@ class CAdminMod : public CModule {
 			return;
 		}
 
-		CUser* pNewUser = new CUser(sOldUsername);
+		CUser* pNewUser = new CUser(sNewUsername);
 		CString sError;
 		if (!pNewUser->Clone(*pOldUser, sError)) {
 			delete pNewUser;
 			PutModule("Error: Cloning failed! [" + sError + "]");
 			return;
 		}
-		pNewUser->SetUserName(sNewUsername);
 		pNewUser->SetIRCConnectEnabled(false);
 
 		if (!CZNC::Get().AddUser(pNewUser, sError)) {
@@ -608,8 +584,12 @@ class CAdminMod : public CModule {
 
 	void AddServer(const CString& sLine) {
 		CString sUsername = sLine.Token(1);
-		const CString sServer = sLine.Token(2, true);
+		CString sServer = sLine.Token(2, true);
 
+		if (sServer.empty()) {
+			sServer = sUsername;
+			sUsername = m_pUser->GetUserName();
+		}
 		if (sServer.empty()) {
 			PutModule("Usage: addserver <username> <server>");
 			return;
@@ -623,6 +603,136 @@ class CAdminMod : public CModule {
 			PutModule("Added IRC Server: " + sServer);
 		else
 			PutModule("Could not add IRC server");
+	}
+
+	void ReconnectUser(const CString& sLine) {
+		CString sUserName = sLine.Token(1, true);
+
+		if (sUserName.empty()) {
+			sUserName = m_pUser->GetUserName();
+		}
+		CUser* pUser = GetUser(sUserName);
+		if (!pUser) {
+			PutModule("User not found.");
+			return;
+		}
+
+		CIRCSock *pIRCSock = pUser->GetIRCSock();
+		// cancel connection attempt:
+		if (pIRCSock && !pIRCSock->IsConnected()) {
+			pIRCSock->Close();
+		}
+		// or close existing connection:
+		else if(pIRCSock) {
+			pIRCSock->Quit();
+		}
+
+		// then reconnect
+		pUser->SetIRCConnectEnabled(true);
+		pUser->CheckIRCConnect();
+
+		PutModule("Queued user for a reconnect.");
+	}
+
+	void DisconnectUser(const CString& sLine) {
+		CString sUserName = sLine.Token(1, true);
+
+		if (sUserName.empty()) {
+			sUserName = m_pUser->GetUserName();
+		}
+		CUser* pUser = GetUser(sUserName);
+		if (!pUser) {
+			PutModule("User not found.");
+			return;
+		}
+
+		CIRCSock *pIRCSock = pUser->GetIRCSock();
+		if (pIRCSock && !pIRCSock->IsConnected())
+			pIRCSock->Close();
+		else if(pIRCSock)
+			pIRCSock->Quit();
+
+		pUser->SetIRCConnectEnabled(false);
+
+		PutModule("Closed user's IRC connection.");
+	}
+
+	void ListCTCP(const CString& sLine) {
+		CString sUserName = sLine.Token(1, true);
+
+		if (sUserName.empty()) {
+			sUserName = m_pUser->GetUserName();
+		}
+		CUser* pUser = GetUser(sUserName);
+		if (!pUser)
+			return;
+
+		const MCString& msCTCPReplies = pUser->GetCTCPReplies();
+		CTable Table;
+		Table.AddColumn("Request");
+		Table.AddColumn("Reply");
+		for (MCString::const_iterator it = msCTCPReplies.begin(); it != msCTCPReplies.end(); it++) {
+			Table.AddRow();
+			Table.SetCell("Request", it->first);
+			Table.SetCell("Reply", it->second);
+		}
+
+		if (Table.empty()) {
+			PutModule("No CTCP replies for user [" + pUser->GetUserName() + "] configured!");
+		} else {
+			PutModule("CTCP replies for user [" + pUser->GetUserName() + "]:");
+			PutModule(Table);
+		}
+	}
+
+	void AddCTCP(const CString& sLine) {
+		CString sUserName    = sLine.Token(1);
+		CString sCTCPRequest = sLine.Token(2);
+		CString sCTCPReply   = sLine.Token(3, true);
+
+		if (sCTCPRequest.empty()) {
+			sCTCPRequest = sUserName;
+			sCTCPReply = sLine.Token(2, true);
+			sUserName = m_pUser->GetUserName();
+		}
+		if (sCTCPRequest.empty()) {
+			PutModule("Usage: AddCTCP [user] [request] [reply]");
+			PutModule("This will cause ZNC to reply to the CTCP instead of forwarding it to clients.");
+			PutModule("An empty reply will cause the CTCP request to be blocked.");
+			return;
+		}
+
+		CUser* pUser = GetUser(sUserName);
+		if (!pUser)
+			return;
+
+		if (pUser->AddCTCPReply(sCTCPRequest, sCTCPReply))
+			PutModule("Added!");
+		else
+			PutModule("Error!");
+	}
+
+	void DelCTCP(const CString& sLine) {
+		CString sUserName    = sLine.Token(1);
+		CString sCTCPRequest = sLine.Token(2, true);
+
+		if (sCTCPRequest.empty()) {
+			sCTCPRequest = sUserName;
+			sUserName = m_pUser->GetUserName();
+		}
+		CUser* pUser = GetUser(sUserName);
+		if (!pUser)
+			return;
+
+		if (sCTCPRequest.empty()) {
+			PutModule("Usage: DelCTCP [user] [request]");
+			return;
+		}
+
+		if (pUser->DelCTCPReply(sCTCPRequest))
+			PutModule("Successfully removed [" + sCTCPRequest + "]");
+		else
+			PutModule("Error: [" + sCTCPRequest + "] not found!");
 	}
 
 	void LoadModuleForUser(const CString& sLine) {
@@ -720,40 +830,47 @@ class CAdminMod : public CModule {
 
 	}
 
-	typedef void (CAdminMod::* fn)(const CString&);
-	typedef std::map<CString, fn> function_map;
-	function_map fnmap_;
-
 public:
 	MODCONSTRUCTOR(CAdminMod) {
-		fnmap_["help"]         = &CAdminMod::PrintHelp;
-		fnmap_["get"]          = &CAdminMod::Get;
-		fnmap_["set"]          = &CAdminMod::Set;
-		fnmap_["getchan"]      = &CAdminMod::GetChan;
-		fnmap_["setchan"]      = &CAdminMod::SetChan;
-		fnmap_["listusers"]    = &CAdminMod::ListUsers;
-		fnmap_["adduser"]      = &CAdminMod::AddUser;
-		fnmap_["deluser"]      = &CAdminMod::DelUser;
-		fnmap_["cloneuser"]    = &CAdminMod::CloneUser;
-		fnmap_["addserver"]    = &CAdminMod::AddServer;
-		fnmap_["loadmodule"]   = &CAdminMod::LoadModuleForUser;
-		fnmap_["unloadmodule"] = &CAdminMod::UnLoadModuleForUser;
-		fnmap_["listmods"]     = &CAdminMod::ListModuleForUser;
+		AddCommand("Help",         static_cast<CModCommand::ModCmdFunc>(&CAdminMod::PrintHelp),
+			"",                              "Generates this output");
+		AddCommand("Get",          static_cast<CModCommand::ModCmdFunc>(&CAdminMod::Get),
+			"variable [username]",           "Prints the variable's value for the given or current user");
+		AddCommand("Set",          static_cast<CModCommand::ModCmdFunc>(&CAdminMod::Set),
+			"variable username value",       "Sets the variable's value for the given user (use $me for the current user)");
+		AddCommand("GetChan",      static_cast<CModCommand::ModCmdFunc>(&CAdminMod::GetChan),
+			"variable [username] chan",      "Prints the variable's value for the given channel");
+		AddCommand("SetChan",      static_cast<CModCommand::ModCmdFunc>(&CAdminMod::SetChan),
+			"variable username chan value",  "Sets the variable's value for the given channel");
+		AddCommand("ListUsers",    static_cast<CModCommand::ModCmdFunc>(&CAdminMod::ListUsers),
+			"",                              "Lists users");
+		AddCommand("AddUser",      static_cast<CModCommand::ModCmdFunc>(&CAdminMod::AddUser),
+			"username password [ircserver]", "Adds a new user");
+		AddCommand("DelUser",      static_cast<CModCommand::ModCmdFunc>(&CAdminMod::DelUser),
+			"username",                      "Deletes a user");
+		AddCommand("CloneUser",    static_cast<CModCommand::ModCmdFunc>(&CAdminMod::CloneUser),
+			"oldusername newusername",       "Clones a user");
+		AddCommand("AddServer",    static_cast<CModCommand::ModCmdFunc>(&CAdminMod::AddServer),
+			"[username] server",             "Adds a new IRC server for the given or current user");
+		AddCommand("Reconnect",    static_cast<CModCommand::ModCmdFunc>(&CAdminMod::ReconnectUser),
+			"username",                      "Cycles the user's IRC server connection");
+		AddCommand("Disconnect",   static_cast<CModCommand::ModCmdFunc>(&CAdminMod::DisconnectUser),
+			"username",                      "Disconnects the user from their IRC server");
+		AddCommand("LoadModule",   static_cast<CModCommand::ModCmdFunc>(&CAdminMod::LoadModuleForUser),
+			"username modulename",           "Loads a Module for a user");
+		AddCommand("UnLoadModule", static_cast<CModCommand::ModCmdFunc>(&CAdminMod::UnLoadModuleForUser),
+			"username modulename",           "Removes a Module of a user");
+		AddCommand("ListMods",     static_cast<CModCommand::ModCmdFunc>(&CAdminMod::ListModuleForUser),
+			"username",                      "Get the list of modules for a user");
+		AddCommand("ListCTCPs",    static_cast<CModCommand::ModCmdFunc>(&CAdminMod::ListCTCP),
+			"username",                      "List the configured CTCP replies");
+		AddCommand("AddCTCP",      static_cast<CModCommand::ModCmdFunc>(&CAdminMod::AddCTCP),
+			"username ctcp [reply]",         "Configure a new CTCP reply");
+		AddCommand("DelCTCP",      static_cast<CModCommand::ModCmdFunc>(&CAdminMod::DelCTCP),
+			"username ctcp",                 "Remove a CTCP reply");
 	}
 
 	virtual ~CAdminMod() {}
-
-	virtual void OnModCommand(const CString& sLine) {
-		if (!m_pUser)
-			return;
-
-		const CString cmd = sLine.Token(0).AsLower();
-		function_map::iterator it = fnmap_.find(cmd);
-		if (it != fnmap_.end())
-			(this->*it->second)(sLine);
-		else
-			PutModule("Unknown command");
-	}
 };
 
-MODULEDEFS(CAdminMod, "Dynamic configuration of users/settings through irc")
+MODULEDEFS(CAdminMod, "Dynamic configuration of users/settings through IRC")

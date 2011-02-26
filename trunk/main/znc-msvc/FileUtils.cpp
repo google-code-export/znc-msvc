@@ -57,15 +57,17 @@ CFile::~CFile() {
 }
 
 void CFile::SetFileName(const CString& sLongName) {
+	if (sLongName.Left(2) == "~/") {
+		m_sLongName = CZNC::Get().GetHomePath() + sLongName.substr(1);
+	} else
+		m_sLongName = sLongName;
 #ifdef _WIN32
-	// :TODO: Convert filenames to Unicode. See Issue 1.
-	m_sLongName = sLongName.Replace_n("/", "\\");
-	m_sLongName.TrimRight("\\");
-
-	m_sShortName = PathFindFileName(m_sLongName.c_str());
+ 	// :TODO: Convert CFile to use Unicode internally. See Issue 1.
+ 	m_sLongName = m_sLongName.Replace_n("/", "\\");
+ 	m_sLongName.TrimRight("\\");
+ 
+ 	m_sShortName = ::PathFindFileName(m_sLongName.c_str());
 #else
-	m_sLongName = sLongName;
-
 	m_sShortName = sLongName;
 	m_sShortName.TrimRight("/");
 
