@@ -1446,7 +1446,7 @@ void CInfoBotModule::LoadSettings()
 			pcrecpp::StringPiece input(it->second);
 
 			string left, right;
-			pcrecpp::RE re("(\\w+) ?= ?(.+?)\r?\n");
+			pcrecpp::RE re("(\\w+) ?= ?(.+?)\\r?\\n");
 			while(re.Consume(&input, &left, &right))
 			{
 				if(left == "enable")
