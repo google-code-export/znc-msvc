@@ -13,7 +13,7 @@
 
 // The following defines are for #if comparison (preprocessor only likes ints)
 #define VERSION_MAJOR  0
-#define VERSION_MINOR  97
+#define VERSION_MINOR  98
 // This one is for display purpose
 #define VERSION        (VERSION_MAJOR + VERSION_MINOR / 1000.0)
 
@@ -28,9 +28,9 @@
 #ifndef VERSION_EXTRA
 # ifdef _WIN32 // yes, _win32 is also defined during 64 bit compiles.
 #  ifdef _WIN64
-#    define VERSION_EXTRA "-r" REVISION_STR "-Win-x64"
+#    define VERSION_EXTRA "-Win-x64"
 #  else
-#    define VERSION_EXTRA "-r" REVISION_STR "-Win-x86"
+#    define VERSION_EXTRA "-Win-x86"
 #  endif
 # else
 #  define VERSION_EXTRA ""

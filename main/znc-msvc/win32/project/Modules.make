@@ -46,15 +46,14 @@ CFG = Win32-Release
 INCLUDES=/I "..\..\\" /I "..\src" /I "..\..\..\dependencies\include"
 LIBS=libeay32.lib ssleay32.lib ZNC.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ws2_32.lib
 LIBPATHS=/LIBPATH:"..\..\..\build-temp\ZNC_DLL\$(CFG)"
-DEFINES=/D "WIN32" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" \
- /D "WIN_MSVC" /D "_MODULES" /D "HAVE_LIBSSL" /D "HAVE_IPV6" /D "HAVE_C_ARES"
+DEFINES=/D "WIN32" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_CRT_SECURE_NO_WARNINGS" /D "NOMINMAX" /D "WIN_MSVC"
 CXXFLAGS=/c /W3 /EHsc /TP /nologo
 LINKFLAGS=/DLL /SUBSYSTEM:WINDOWS /NOLOGO /DYNAMICBASE /NXCOMPAT
 
 RSP=_ZNCModules.rsp
 
 # Intermediate directory for .obj and .dll files
-INTDIR="..\..\..\build-temp\Modules\$(CFG)\\"
+INTDIR=..\..\..\build-temp\Modules\$(CFG)\ 
 # WARNING! This path must NOT end with '\' else NMAKE will complain!
 SRCDIR=..\..\modules
 # same as INTDIR, but without the trailing '\'
@@ -284,7 +283,7 @@ $(OBJS):
   echo /Yc"stdafx.hpp" >>$(RSP)
   echo /Fp$(INTDIR)ZNC_mods.pch >>$(RSP)
   echo /Fo$(INTDIR) >>$(RSP)
-  echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
+  echo /Fd$(INTDIR)vc100.pdb >>$(RSP)
   echo $< >>$(RSP)
   cl @$(RSP)
   del $(RSP)
@@ -298,7 +297,7 @@ $(OBJS):
   echo /Yc"stdafx.hpp" >>$(RSP)
   echo /Fp$(INTDIR)ZNC_mods.pch >>$(RSP)
   echo /Fo$(INTDIR)extra\ >>$(RSP)
-  echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
+  echo /Fd$(INTDIR)vc100.pdb >>$(RSP)
   echo $< >>$(RSP)
   cl @$(RSP)
   del $(RSP)
@@ -312,7 +311,7 @@ $(OBJS):
   echo /Yc"stdafx.hpp" >>$(RSP)
   echo /Fp$(INTDIR)ZNC_mods.pch >>$(RSP)
   echo /Fo$(INTDIR)extra_win32\ >>$(RSP)
-  echo /Fd$(INTDIR)vc90.pdb >>$(RSP)
+  echo /Fd$(INTDIR)vc100.pdb >>$(RSP)
   echo $< >>$(RSP)
   cl @$(RSP)
   del $(RSP)

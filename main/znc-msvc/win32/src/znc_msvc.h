@@ -7,10 +7,6 @@
 #pragma warning(disable:4275) // disable "non dll-interface class ... used as base for dll-interface class ..."
 	// I don't really feel good about the latter two, but it didn't crash so far. Fingers crossed!
 
-#include <xutility>
-using std::_cpp_min;
-using std::_cpp_max;
-
 #include <winsock2.h>
 #include <windows.h>
 #include <time.h>
@@ -26,6 +22,7 @@ using std::_cpp_max;
 #include <stdint.h>
 #include <string>
 #include <queue>
+#include <algorithm>
 #include <wincrypt.h>
 
 #include "exports.h"
