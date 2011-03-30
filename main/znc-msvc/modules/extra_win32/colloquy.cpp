@@ -135,7 +135,7 @@ public:
 		sRet.Replace("\t", "\\t");
 		sRet.Replace("\a", "\\a");
 		sRet.Replace("\b", "\\b");
-#ifndef _WIN32
+#ifndef WIN_MSVC
 		sRet.Replace("\e", "\\e");
 #endif
 		sRet.Replace("\f", "\\f");
@@ -197,7 +197,7 @@ public:
 			+ m_sMessageSound.FirstLine() + "\n"
 			+ m_sHiliteSound.FirstLine() + "\n");
 
-		for (SCString::const_iterator it = m_ssKeywords.begin(); it != m_ssKeywords.end(); it++) {
+		for (SCString::iterator it = m_ssKeywords.begin(); it != m_ssKeywords.end(); it++) {
 			if (it != m_ssKeywords.begin()) {
 				sRet += "\t";
 			}
@@ -239,7 +239,7 @@ public:
 	// Flags
 	void SetFlag(unsigned int u) { m_uFlags |= u; }
 	void UnsetFlag(unsigned int u) { m_uFlags &= ~u; }
-	bool HasFlag(unsigned int u) const { return (m_uFlags & u) != 0; }
+	bool HasFlag(unsigned int u) const { return m_uFlags & u; }
 
 	enum EFlags {
 		Disabled     = 1 << 0,
@@ -281,11 +281,15 @@ private:
 
 class CColloquyMod : public CModule {
 protected:
-	int m_idleAfterMinutes;
+	time_t m_idleAfterMinutes;
 	time_t m_lastActivity;
 	int m_debug;
-	int m_nightHoursStart;
-	int m_nightHoursEnd;
+	time_t m_nightHoursStart;
+	time_t m_nightHoursEnd;
+	bool m_bAttachedPush;
+	bool m_bSkipMessageContent;
+	bool m_bAwayOnlyPush;
+	bool m_bIgnoreNetworkServices;
 public:
 	MODCONSTRUCTOR(CColloquyMod) {
 		// init vars
@@ -293,6 +297,10 @@ public:
                 m_bSkipMessageContent = false;
 		m_bAwayOnlyPush = false;
 		m_bIgnoreNetworkServices = false;
+		m_idleAfterMinutes=0;
+		m_nightHoursStart=-1;
+		m_nightHoursEnd=-1;
+		m_debug=0;
 
 		LoadRegistry();
 
@@ -318,8 +326,29 @@ public:
 	virtual bool OnLoad(const CString& sArgs, CString& sErrorMsg) {
 		SCString sArgSet;
 
-		sArgs.Split("-",sArgSet);
+		//Loading stored stuff
+		for(MCString::iterator it = BeginNV(); it != EndNV(); it++)
+		{
+			if(it->first == "u:idle") {
+				m_idleAfterMinutes = it->second.ToInt();
+			} else if (it->first == "u:attachedpush") {
+				m_bAttachedPush = it->second.ToBool();
+			} else if (it->first == "u:skipmessagecontent") {
+				m_bSkipMessageContent = it->second.ToBool();
+			} else if (it->first == "u:awayonlypush") {
+				m_bAwayOnlyPush = it->second.ToBool();
+			} else if (it->first == "u:ignorenetworkservices") {
+				m_bIgnoreNetworkServices = it->second.ToBool();
+			} else if (it->first == "u:nighthoursstart") {
+				m_nightHoursStart = it->second.ToInt();
+			} else if (it->first == "u:nighthoursend") {
+				m_nightHoursEnd = it->second.ToInt();
+			} else if (it->first == "u:debug") {
+				m_debug = it->second.ToInt();
+			}
+		}
 
+		sArgs.Split("-",sArgSet);
 		for ( SCString::iterator it = sArgSet.begin(); it != sArgSet.end(); it++ ) {
 			CString sArg(*it);
 			sArg.Trim();
@@ -331,25 +360,6 @@ public:
 				m_bAwayOnlyPush = sArg.ToBool();
 			} else if ( sArg.TrimPrefix("ignorenetworkservices") ) {
 				m_bIgnoreNetworkServices = sArg.ToBool();
-			}
-		}
-
-		//Loading stored stuff
-		m_idleAfterMinutes=0;
-		m_debug=0;
-		m_nightHoursStart=-1;
-		m_nightHoursEnd=-1;
-		for(MCString::iterator it = BeginNV(); it != EndNV(); it++)
-		{
-			if(it->first == "u:idle")
-			{
-				m_idleAfterMinutes = it->second.ToInt();
-			} else if (it->first == "u:nighthoursstart") {
-				m_nightHoursStart = it->second.ToInt();
-			} else if (it->first == "u:nighthoursend") {
-				m_nightHoursEnd = it->second.ToInt();
-			} else if (it->first == "u:debug") {
-				m_debug = it->second.ToInt();
 			}
 		}
 
@@ -482,25 +492,25 @@ public:
 		return CONTINUE;
 	}
 
-	virtual CString intToHours(int ihour) {
+	virtual CString intToHours(time_t ihour) {
 		if (ihour<0) {
 			return "---";
 		}
-		int minutes = (ihour%60);
+		time_t minutes = (ihour%60);
 		CString cMinutes;
 		if (minutes<10) {
 			cMinutes="0"+CString(minutes);
 		} else {
 			cMinutes=CString(minutes);
 		}
-		int hours= (ihour-minutes)/60;
+		time_t hours= (ihour-minutes)/60;
 		CString cHour=CString(hours);
 		return cHour+":"+cMinutes;
 	}
 
-	virtual int hoursToInt(CString chour) {
-		int len=chour.length();
-		int colon=chour.find(":");
+	virtual time_t hoursToInt(CString chour) {
+		size_t len=chour.length();
+		size_t colon=chour.find(":");
 		if (((colon==1) && (len==4)) || ((colon==2) && (len==5))) {//only valid hours
 			int hour;
 			int minutes;
@@ -520,15 +530,21 @@ public:
 
 	virtual void OnModCommand(const CString& sCommand) {
 		if (sCommand.Equals("HELP")) {
-			PutModule("Commands: HELP, LIST");
+			PutModule("Commands: HELP, LIST, SET <option>");
 			PutModule("Command: LIST");
-			PutModule("List devices that receive notifications.");
+			PutModule("  List devices that receive notifications.");
 			PutModule("Command: STATUS");
-			PutModule("Shows the active settings.");
+			PutModule("  Shows the active settings.");
+			PutModule("Command: SET awayonlypush 0|1");
+			PutModule("  If enabled, send notifications only if away.");
+			PutModule("Command: SET attachedpush 0|1");
+			PutModule("  If enabled, push notifications will be sent even if a client is connected.");
 			PutModule("Command: SET idle <minutes>");
-			PutModule("Only send notifications to colloquy if you have been idle for at least <minutes> or no client is connected to ZNC.");
+			PutModule("  If attachedpush is enabled, wait for 'idle' minutes before pushing messages.");
 			PutModule("Command: SET nighthours <start> <end>");
-			PutModule("Don't send notifications after nighthours start and before nighthours end");
+			PutModule("  Don't send notifications after nighthours start and before nighthours end.");
+			PutModule("Command: SET ignorenetworkservices 0|1");
+			PutModule("  Enable this to stop receiving notifications from IRC services.");
 		} else if (sCommand.Equals("LIST")) {
 			if (m_mspDevices.empty()) {
 				PutModule("You have no saved devices...");
@@ -559,7 +575,7 @@ public:
 						CString sWords;
 						sWords = "[";
 
-						for (SCString::const_iterator it2 = ssWords.begin(); it2 != ssWords.end(); it2++) {
+						for (SCString::iterator it2 = ssWords.begin(); it2 != ssWords.end(); it2++) {
 							if (it2 != ssWords.begin()) {
 								sWords += "]  [";
 							}
@@ -579,14 +595,23 @@ public:
 			const CString sKey = sCommand.Token(1).AsLower();
 			if (sKey == "idle") {
 				m_idleAfterMinutes=sCommand.Token(2).ToInt();
-				PutModule("Idle time set to '"+CString(m_idleAfterMinutes)+"'");
+				PutModule("Idle time: '"+CString(m_idleAfterMinutes)+"'");
+			} else if ( sKey == "awayonlypush" ) {
+				m_bAwayOnlyPush=sCommand.Token(2).ToBool();
+				PutModule("Push only if away: '"+CString(m_bAwayOnlyPush)+"'");
+			} else if ( sKey == "attachedpush" ) {
+				m_bAttachedPush=sCommand.Token(2).ToBool();
+				PutModule("Push even if clients are attached: '"+CString(m_bAttachedPush)+"'");
+			} else if ( sKey == "ignorenetworkservices" ) {
+				m_bIgnoreNetworkServices=sCommand.Token(2).ToBool();
+				PutModule("Ignore network services: '"+CString(m_bIgnoreNetworkServices)+"'");
 			} else if (sKey == "debug") {
 				m_debug=sCommand.Token(2).ToInt();
-				PutModule("Debug set to '"+CString(m_debug)+"'");
+				PutModule("Debug: '"+CString(m_debug)+"'");
 			} else if (sKey == "nighthours") {
 				m_nightHoursStart=hoursToInt(sCommand.Token(2));
 				m_nightHoursEnd=hoursToInt(sCommand.Token(3));
-				PutModule("Night Hours set to "+intToHours(m_nightHoursStart)+" - "+intToHours(m_nightHoursEnd));
+				PutModule("Night Hours: "+intToHours(m_nightHoursStart)+" - "+intToHours(m_nightHoursEnd));
 			} else {
 				PutModule("Unknown setting. Try HELP.");
 			}
@@ -594,13 +619,46 @@ public:
 			//Save stored stuff
 			//ClearNV(); //Dangerous, NV holds devices
 			SetNV("u:idle", CString(m_idleAfterMinutes), false);
+			SetNV("u:awayonlypush", CString(m_bAwayOnlyPush), false);
+			SetNV("u:attachedpush", CString(m_bAttachedPush), false);
+			SetNV("u:ignorenetworkservices", CString(m_bIgnoreNetworkServices), false);
 			SetNV("u:debug", CString(m_debug), false);
 			SetNV("u:nighthoursstart", CString(m_nightHoursStart), false);
 			SetNV("u:nighthoursend", CString(m_nightHoursEnd), false);
 		} else if (sCommand.Token(0).Equals("STATUS")) {
-			PutModule("Current Status:");
-			PutModule("Idle after minutes: "+CString(m_idleAfterMinutes));
-			PutModule("Night Hours: "+intToHours(m_nightHoursStart)+" - "+intToHours(m_nightHoursEnd));
+			CTable Table;
+			Table.AddColumn("Option");
+			Table.AddColumn("Value");
+
+			Table.AddRow();
+			Table.SetCell("Option","Push only if away");
+			Table.SetCell("Value",CString(m_bAwayOnlyPush));
+
+			Table.AddRow();
+			Table.SetCell("Option","Push even if clients are attached");
+			Table.SetCell("Value",CString(m_bAttachedPush));
+
+			Table.AddRow();
+			Table.SetCell("Option","- only if idle for");
+			if ( m_idleAfterMinutes > 0 )
+				Table.SetCell("Value",CString(m_idleAfterMinutes) + " minutes");
+			else
+				Table.SetCell("Value","Always");
+
+			Table.AddRow();
+			Table.SetCell("Option","");
+			Table.SetCell("Value","");
+
+			Table.AddRow();
+			Table.SetCell("Option","Night Hours (no push)");
+			Table.SetCell("Value",intToHours(m_nightHoursStart)+" - "+intToHours(m_nightHoursEnd));
+
+			Table.AddRow();
+			Table.SetCell("Option","Ignore network services");
+			Table.SetCell("Value",CString(m_bIgnoreNetworkServices));
+
+			PutModule("  Current Status");
+			PutModule(Table);
 		/*
 		} else if (sCommand.Token(0).Equals("REMKEYWORD")) {
 			CString sKeyword(sCommand.Token(1, true));
@@ -737,7 +795,7 @@ public:
 				if (!bMatches) {
 					const SCString& ssWords = pDevice->GetKeywords();
 
-					for (SCString::const_iterator it2 = ssWords.begin(); it2 != ssWords.end(); it2++) {
+					for (SCString::iterator it2 = ssWords.begin(); it2 != ssWords.end(); it2++) {
 						if (Test(*it2, sMessage)) {
 							bMatches = true;
 							break;
@@ -813,9 +871,5 @@ public:
 	}
 private:
 	map<CString, CDevice*>	m_mspDevices;	// map of token to device info for clients who have sent us PUSH info
-	bool	m_bAttachedPush;
-	bool	m_bSkipMessageContent;
-	bool	m_bAwayOnlyPush;
-	bool	m_bIgnoreNetworkServices;
 };
 MODULEDEFS(CColloquyMod, "Push privmsgs and highlights to your iPhone via Colloquy Mobile")
