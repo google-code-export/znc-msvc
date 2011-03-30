@@ -175,6 +175,7 @@ $(MAKDIR)\extra_win32\kicklog.dll \
 $(MAKDIR)\extra_win32\noctcp.dll \
 $(MAKDIR)\extra_win32\noreconnectonkill.dll \
 $(MAKDIR)\extra_win32\notify.dll \
+$(MAKDIR)\extra_win32\partdetach2.dll \
 $(MAKDIR)\extra_win32\prowl.dll \
 $(MAKDIR)\extra_win32\rawlog.dll \
 $(MAKDIR)\extra_win32\timed_perform.dll \
@@ -242,6 +243,7 @@ $(MAKDIR)\extra_win32\kicklog.obj \
 $(MAKDIR)\extra_win32\noctcp.obj \
 $(MAKDIR)\extra_win32\noreconnectonkill.obj \
 $(MAKDIR)\extra_win32\notify.obj \
+$(MAKDIR)\extra_win32\partdetach2.obj \
 $(MAKDIR)\extra_win32\prowl.obj \
 $(MAKDIR)\extra_win32\rawlog.obj \
 $(MAKDIR)\extra_win32\timed_perform.obj \
