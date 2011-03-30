@@ -46,6 +46,7 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="orange">noctcp</font>
   * <font color="orange">notify</font>
   * <font color="blue">notify_connect</font>
+  * <font color="orange">partdetach2</font>
   * <font color="green">partyline</font>
   * <font color="green">perform</font>
   * <font color="orange">prowl</font>
@@ -63,7 +64,7 @@ Colors: <font color="green">Green</font> means 'shipped with the official znc pa
   * <font color="orange">watch_only_detached</font>
   * <font color="green">webadmin</font>
 
-Available separately: [ModSkypeSetup modskype] (for Windows only).
+Available separately: [ModSkypeSetup modskype] (for Windows only) and infobot.
 
 *Modules available, but not (yet?) for Windows:*
   * <font color="green">email</font>
