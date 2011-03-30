@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1F28EB13-7603-4103-97E7-E8DC786F63B7}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nmake -f Modules.make CFG=Win32-Debug build</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nmake -f Modules.make CFG=Win32-Debug rebuild</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nmake -f Modules.make CFG=Win32-Debug clean</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">call "$(VCInstallDir)\vcvarsall.bat" amd64
+nmake -f Modules.make CFG=$(Platform)-$(Configuration) build</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">call "$(VCInstallDir)\vcvarsall.bat" amd64
+nmake -f Modules.make CFG=$(Platform)-$(Configuration) rebuild</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">call "$(VCInstallDir)\vcvarsall.bat" amd64
+nmake -f Modules.make CFG=$(Platform)-$(Configuration) clean</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nmake -f Modules.make CFG=Win32-Release build</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nmake -f Modules.make CFG=Win32-Release rebuild
+</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nmake -f Modules.make CFG=Win32-Release clean</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\..\build-temp\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|x64'">call "$(VCInstallDir)\vcvarsall.bat" amd64
+nmake -f Modules.make CFG=$(Platform)-$(Configuration) build</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|x64'">call "$(VCInstallDir)\vcvarsall.bat" amd64
+nmake -f Modules.make CFG=$(Platform)-$(Configuration) rebuild</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|x64'">call "$(VCInstallDir)\vcvarsall.bat" amd64
+nmake -f Modules.make CFG=$(Platform)-$(Configuration) clean</NMakeCleanCommandLine>
+    <NMakeOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <NMakePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeIncludeSearchPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeAssemblySearchPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(NMakeAssemblySearchPath)</NMakeAssemblySearchPath>
+    <NMakeForcedUsingAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(NMakeForcedUsingAssemblies)</NMakeForcedUsingAssemblies>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\modules\admin.cpp" />
+    <ClCompile Include="..\..\modules\adminlog.cpp" />
+    <ClCompile Include="..\..\modules\extra\antiidle.cpp" />
+    <ClCompile Include="..\..\modules\autoattach.cpp" />
+    <ClCompile Include="..\..\modules\autocycle.cpp" />
+    <ClCompile Include="..\..\modules\autoop.cpp" />
+    <ClCompile Include="..\..\modules\autoreply.cpp" />
+    <ClCompile Include="..\..\modules\extra\autovoice.cpp" />
+    <ClCompile Include="..\..\modules\away.cpp" />
+    <ClCompile Include="..\..\modules\awaynick.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\block_lagchk.cpp" />
+    <ClCompile Include="..\..\modules\extra\block_motd.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\blockserver.cpp" />
+    <ClCompile Include="..\..\modules\blockuser.cpp" />
+    <ClCompile Include="..\..\modules\buffextras.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\certauth.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\certchecker.cpp" />
+    <ClCompile Include="..\..\modules\chansaver.cpp" />
+    <ClCompile Include="..\..\modules\clientnotify.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\clientpart.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\colloquy.cpp" />
+    <ClCompile Include="..\..\modules\crypt.cpp" />
+    <ClCompile Include="..\..\modules\extra\ctcpflood.cpp" />
+    <ClCompile Include="..\..\modules\disconkick.cpp" />
+    <ClCompile Include="..\..\modules\fail2ban.cpp" />
+    <ClCompile Include="..\..\modules\extra\fakeonline.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\fish.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\fix_lagchk.cpp" />
+    <ClCompile Include="..\..\modules\fixfreenode.cpp" />
+    <ClCompile Include="..\..\modules\extra\flooddetach.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\highlightattach.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\identserver.cpp" />
+    <ClCompile Include="..\..\modules\extra\imapauth.cpp" />
+    <ClCompile Include="..\..\modules\keepnick.cpp" />
+    <ClCompile Include="..\..\modules\kickrejoin.cpp" />
+    <ClCompile Include="..\..\modules\lastseen.cpp" />
+    <ClCompile Include="..\..\modules\extra\listsockets.cpp" />
+    <ClCompile Include="..\..\modules\extra\log.cpp" />
+    <ClCompile Include="..\..\modules\extra\motdfile.cpp" />
+    <ClCompile Include="..\..\modules\nickserv.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\noctcp.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\noreconnectonkill.cpp" />
+    <ClCompile Include="..\..\modules\notes.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\notify.cpp" />
+    <ClCompile Include="..\..\modules\extra\notify_connect.cpp" />
+    <ClCompile Include="..\..\modules\partyline.cpp" />
+    <ClCompile Include="..\..\modules\perform.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\prowl.cpp" />
+    <ClCompile Include="..\..\modules\q.cpp" />
+    <ClCompile Include="..\..\modules\raw.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\rawlog.cpp" />
+    <ClCompile Include="..\..\modules\route_replies.cpp" />
+    <ClCompile Include="..\..\modules\savebuff.cpp" />
+    <ClCompile Include="..\..\modules\schat.cpp" />
+    <ClCompile Include="..\..\modules\extra\send_raw.cpp" />
+    <ClCompile Include="..\..\modules\simple_away.cpp" />
+    <ClCompile Include="..\..\modules\stickychan.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\twitter.cpp" />
+    <ClCompile Include="..\..\modules\watch.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\watch_only_detached.cpp" />
+    <ClCompile Include="..\..\modules\webadmin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Modules.make" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="ZNC.vcxproj">
+      <Project>{91ec5e7f-9220-4c8b-8519-85df01da7764}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="ZNC_DLL.vcxproj">
+      <Project>{9775cb8f-d77c-40d2-b484-39892a723cd1}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

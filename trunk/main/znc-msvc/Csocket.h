@@ -54,12 +54,24 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <sys/timeb.h>
+#ifndef ECONNREFUSED
 #define ECONNREFUSED WSAECONNREFUSED
+#endif
+#ifndef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
+#endif
+#ifndef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
+#endif
+#ifndef EADDRNOTAVAIL
 #define EADDRNOTAVAIL WSAEADDRNOTAVAIL
+#endif
+#ifndef ECONNABORTED
 #define ECONNABORTED WSAECONNABORTED
+#endif
+#ifndef ENETUNREACH
 #define ENETUNREACH WSAENETUNREACH
+#endif
 
 #endif /* _WIN32 */
 
