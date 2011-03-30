@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2009 flakes @ EFNet
+ * Copyright (C) 2009-2011 flakes @ EFNet
+ * Updated 09 March 2011
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  */
 
-#include "stdafx.hpp"
+#define REQUIRESSL
 
 #include "main.h"
 #include "znc.h"
@@ -276,7 +277,7 @@ protected:
 
 	void MakeRequestHeaders(bool bPost, const CString& sHost, const CString& sPath, unsigned short uPort, bool bSSL)
 	{
-		m_request = CString(bPost ? "POST " : "GET ") + sPath + " HTTP/1.0\r\n";
+		m_request = CString(bPost ? "POST " : "GET ") + sPath + " HTTP/1.1\r\n";
 		m_request += "Host: " + sHost + ((uPort == 80 && !bSSL) || (uPort == 443 && bSSL) ? CString("") : ":" + CString(uPort)) + "\r\n";
 		m_request += "User-Agent: Mozilla/5.0 (" + CZNC::GetTag() + ")\r\n";
 
@@ -293,6 +294,7 @@ protected:
 		MakeRequestHeaders(false, sHost, sPath, uPort, bSSL);
 		m_request += "\r\n";
 
+		DEBUG("[Twitter] Connecting to [" << sHost << "]:" << uPort << " (SSL = " << bSSL << ")");
 		Connect(sHost, uPort, bSSL);
 	}
 
@@ -313,12 +315,14 @@ protected:
 		m_request += "\r\n";
 		m_request += sPostData;
 
+		DEBUG("[Twitter] Connecting to [" << sHost << "]:" << uPort << " (SSL = " << bSSL << ")");
 		Connect(sHost, uPort, bSSL);
 	}
 
 	void Connected()
 	{
 		m_buffer.clear();
+		DEBUG("[Twitter] Sending request: " << m_request);
 		Write(m_request);
 		m_request.clear();
 	}
@@ -337,6 +341,8 @@ protected:
 		{
 			CString::size_type uPos = m_buffer.find("\r\n\r\n");
 			if(uPos == CString::npos) uPos = m_buffer.find("\n\n");
+
+			DEBUG("[Twitter] Response: " << m_buffer);
 
 			if(uPos != CString::npos)
 			{
@@ -1039,7 +1045,7 @@ protected:
 	{
 		m_timedOut = false;
 		m_needsAuth = true;
-		m_host = "twitter.com";
+		m_host = "api.twitter.com";
 	}
 
 	void Timeout()
@@ -1072,6 +1078,8 @@ protected:
 
 		sSigBaseStr = sHTTPMethod + "&" + URLEscape(sNormURL) + "&" + sSigBaseStr;
 
+		DEBUG("[Twitter] OAuthSigBaseStr: -" << sSigBaseStr << "-");
+
 		return SignString(sSigBaseStr);
 	}
 
@@ -1081,23 +1089,24 @@ protected:
 		return sTmp.MD5();
 	}
 
-	void PrepareParameters(const CString& sHTTPMethod, const CString& sNormURL, MCString& mParams)
+	void PrepareParameters(const CString& sHTTPMethod, const CString& sNormURL, MCString& mParams, bool bAuthHeader)
 	{
 		MCString::iterator sigCheck = mParams.find("oauth_signature");
 		if(sigCheck != mParams.end()) mParams.erase(sigCheck);
 
 		if(m_needsAuth)
 		{
+			const CString sToken = reinterpret_cast<CTwitterModule*>(m_pMod)->GetToken();
+
+			if(!sToken.empty()) mParams["oauth_token"] = sToken;
 			mParams["oauth_consumer_key"] = TWITTER_CONSUMER_KEY;
-			mParams["oauth_token"] = reinterpret_cast<CTwitterModule*>(m_pMod)->GetToken();
 			mParams["oauth_nonce"] = GenerateNonce();
 			mParams["oauth_timestamp"] = CString(time(NULL));
 			mParams["oauth_signature_method"] = "HMAC-SHA1";
 			mParams["oauth_version"] = "1.0";
-
 			mParams["oauth_signature"] = GenerateSignature(sHTTPMethod, sNormURL, mParams);
 
-			if(sHTTPMethod == "GET")
+			if(bAuthHeader)
 			{
 				CString sHeader = "OAuth ";
 
@@ -1117,13 +1126,14 @@ protected:
 
 	void DoRequest(const CString& sHTTPMethod, const MCString& mParams)
 	{
-		MCString mParamsCopy(mParams);
+		CString sUrl = "https://" + m_host + "/" + m_method;
 
-		PrepareParameters(sHTTPMethod, "http://twitter.com/" + m_method, mParamsCopy);
+		MCString mParamsCopy(mParams);
+		PrepareParameters(sHTTPMethod, sUrl, mParamsCopy, (sHTTPMethod != "POST"));
 
 		if(sHTTPMethod == "POST")
 		{
-			Post(mParamsCopy, m_host, "/" + m_method);
+			Post(mParamsCopy, m_host, "/" + m_method, 443, true);
 		}
 		else
 		{
@@ -1134,7 +1144,7 @@ protected:
 			}
 			sQuery.erase(sQuery.size() - 1);
 
-			Get(m_host, "/" + m_method + sQuery);
+			Get(m_host, "/" + m_method + sQuery, 443, true);
 		}
 	}
 
