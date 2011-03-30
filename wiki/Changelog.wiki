@@ -1,6 +1,14 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2011-03-30 (0.098) ==
+  * Based on upstream ZNC 0.098 as released a few days earlier ([http://github.com/znc/znc/tree/znc-0.098 source], [http://en.znc.in/wiki/ChangeLog/0.098 Changelog])
+  * Switched to new Visual C++ version, please read [http://znc-msvc.googlecode.com/files/IMPORTANT_NOTE_VC100.txt this] for instructions
+  * Updated twitter and colloquy modules
+  * Added partdetach2 module
+  * Updated OpenSSL to 1.0.0d
+  * Updated c-ares to 1.7.4
+
 == 2010-11-27 (0.097-r 2182) ==
   * Minor fixes from Upstream
 
