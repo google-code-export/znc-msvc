@@ -9,6 +9,7 @@
 #include "stdafx.hpp"
 #include "Template.h"
 #include "FileUtils.h"
+#include "ZNCDebug.h"
 #include <sstream>
 #include <algorithm>
 

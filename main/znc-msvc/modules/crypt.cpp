@@ -150,4 +150,8 @@ public:
 	}
 };
 
+template<> void TModInfo<CCryptMod>(CModInfo& Info) {
+	Info.SetWikiPage("crypt");
+}
+
 MODULEDEFS(CCryptMod, "Encryption for channel/private messages")

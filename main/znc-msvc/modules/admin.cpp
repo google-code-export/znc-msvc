@@ -38,35 +38,33 @@ class CAdminMod : public CModule {
 		CTable VarTable;
 		VarTable.AddColumn("Variable");
 		VarTable.AddColumn("Type");
-		static const char* string = "String";
+		static const char* str = "String";
 		static const char* boolean = "Boolean (true/false)";
 		static const char* integer = "Integer";
 		static const char* doublenum = "Double";
 		static const char* vars[][2] = {
-			{"Nick",             string},
-			{"Altnick",          string},
-			{"Ident",            string},
-			{"RealName",         string},
-			{"BindHost",         string},
+			{"Nick",             str},
+			{"Altnick",          str},
+			{"Ident",            str},
+			{"RealName",         str},
+			{"BindHost",         str},
 			{"MultiClients",     boolean},
-			{"BounceDCCs",       boolean},
-			{"UseClientIP",      boolean},
 			{"DenyLoadMod",      boolean},
 			{"DenySetBindHost",  boolean},
-			{"DefaultChanModes", string},
-			{"QuitMsg",          string},
+			{"DefaultChanModes", str},
+			{"QuitMsg",          str},
 			{"BufferCount",      integer},
 			{"KeepBuffer",       boolean},
-			{"Password",         string},
+			{"Password",         str},
 			{"JoinTries",        integer},
 			{"MaxJoins",         integer},
 			{"TimezoneOffset",   doublenum},
 			{"Admin",            boolean},
 			{"AppendTimestamp",  boolean},
 			{"PrependTimestamp", boolean},
-			{"TimestampFormat",  string},
+			{"TimestampFormat",  str},
 			{"DCCBindHost",      boolean},
-			{"StatusPrefix",     string}
+			{"StatusPrefix",     str}
 		};
 		for (unsigned int i = 0; i != ARRAY_SIZE(vars); ++i) {
 			VarTable.AddRow();
@@ -80,8 +78,8 @@ class CAdminMod : public CModule {
 		CVarTable.AddColumn("Variable");
 		CVarTable.AddColumn("Type");
 		static const char* cvars[][2] = {
-			{"DefModes",         string},
-			{"Key",              string},
+			{"DefModes",         str},
+			{"Key",              str},
 			{"Buffer",           integer},
 			{"InConfig",         boolean},
 			{"KeepBuffer",       boolean},
@@ -143,10 +141,6 @@ class CAdminMod : public CModule {
 			PutModule("BindHost = " + pUser->GetBindHost());
 		else if (sVar == "multiclients")
 			PutModule("MultiClients = " + CString(pUser->MultiClients()));
-		else if (sVar == "bouncedccs")
-			PutModule("BounceDCCs = " + CString(pUser->BounceDCCs()));
-		else if (sVar == "useclientip")
-			PutModule("UseClientIP = " + CString(pUser->UseClientIP()));
 		else if (sVar == "denyloadmod")
 			PutModule("DenyLoadMod = " + CString(pUser->DenyLoadMod()));
 		else if (sVar == "denysetbindhost")
@@ -223,16 +217,6 @@ class CAdminMod : public CModule {
 			bool b = sValue.ToBool();
 			pUser->SetMultiClients(b);
 			PutModule("MultiClients = " + CString(b));
-		}
-		else if (sVar == "bouncedccs") {
-			bool b = sValue.ToBool();
-			pUser->SetBounceDCCs(b);
-			PutModule("BounceDCCs = " + CString(b));
-		}
-		else if (sVar == "useclientip") {
-			bool b = sValue.ToBool();
-			pUser->SetUseClientIP(b);
-			PutModule("UseClientIP = " + CString(b));
 		}
 		else if (sVar == "denyloadmod") {
 			if(m_pUser->IsAdmin()) {
@@ -371,11 +355,11 @@ class CAdminMod : public CModule {
 		else if (sVar == "buffer")
 			PutModule("Buffer = " + CString(pChan->GetBufferCount()));
 		else if (sVar == "inconfig")
-			PutModule("InConfig = " + pChan->InConfig());
+			PutModule("InConfig = " + CString(pChan->InConfig()));
 		else if (sVar == "keepbuffer")
-			PutModule("KeepBuffer = " + pChan->KeepBuffer());
+			PutModule("KeepBuffer = " + CString(pChan->KeepBuffer()));
 		else if (sVar == "detached")
-			PutModule("Detached = " + pChan->IsDetached());
+			PutModule("Detached = " + CString(pChan->IsDetached()));
 		else if (sVar == "key")
 			PutModule("Key = " + pChan->GetKey());
 		else
@@ -872,5 +856,9 @@ public:
 
 	virtual ~CAdminMod() {}
 };
+
+template<> void TModInfo<CAdminMod>(CModInfo& Info) {
+	Info.SetWikiPage("admin");
+}
 
 MODULEDEFS(CAdminMod, "Dynamic configuration of users/settings through IRC")

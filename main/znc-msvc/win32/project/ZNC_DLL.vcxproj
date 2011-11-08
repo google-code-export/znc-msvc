@@ -246,9 +246,9 @@ xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x64\release\%%f $(SolutionDir).
     <ClCompile Include="..\..\Chan.cpp" />
     <ClCompile Include="..\..\Client.cpp" />
     <ClCompile Include="..\..\ClientCommand.cpp" />
+    <ClCompile Include="..\..\Config.cpp" />
     <ClCompile Include="..\..\Csocket.cpp" />
-    <ClCompile Include="..\..\DCCBounce.cpp" />
-    <ClCompile Include="..\..\DCCSock.cpp" />
+    <ClCompile Include="..\..\ZNCDebug.cpp" />
     <ClCompile Include="..\src\dirent.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>

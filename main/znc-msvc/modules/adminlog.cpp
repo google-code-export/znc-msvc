@@ -192,6 +192,10 @@ private:
 	CString m_sLogFile;
 };
 
+template<> void TModInfo<CAdminLogMod>(CModInfo& Info) {
+	Info.SetWikiPage("adminlog");
+}
+
 #ifndef _WIN32
 GLOBALMODULEDEFS(CAdminLogMod, "Log ZNC events to file and/or syslog.")
 #else

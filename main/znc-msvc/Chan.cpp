@@ -8,11 +8,13 @@
 
 #include "stdafx.hpp"
 #include "Chan.h"
+#include "FileUtils.h"
 #include "IRCSock.h"
 #include "User.h"
 #include "znc.h"
+#include "Config.h"
 
-CChan::CChan(const CString& sName, CUser* pUser, bool bInConfig) {
+CChan::CChan(const CString& sName, CUser* pUser, bool bInConfig, CConfig *pConfig) {
 	m_sName = sName.Token(0);
 	m_sKey = sName.Token(1);
 	m_pUser = pUser;
@@ -28,6 +30,23 @@ CChan::CChan(const CString& sName, CUser* pUser, bool bInConfig) {
 	m_bKeepBuffer = m_pUser->KeepBuffer();
 	m_bDisabled = false;
 	Reset();
+
+	if (pConfig) {
+		CString sValue;
+		if (pConfig->FindStringEntry("buffer", sValue))
+			SetBufferCount(sValue.ToUInt(), true);
+		if (pConfig->FindStringEntry("keepbuffer", sValue))
+			SetKeepBuffer(sValue.ToBool());
+		if (pConfig->FindStringEntry("detached", sValue))
+			SetDetached(sValue.ToBool());
+		if (pConfig->FindStringEntry("autocycle", sValue))
+			if (sValue.Equals("true"))
+				CUtils::PrintError("WARNING: AutoCycle has been removed, instead try -> LoadModule = autocycle " + sName);
+		if (pConfig->FindStringEntry("key", sValue))
+			SetKey(sValue);
+		if (pConfig->FindStringEntry("modes", sValue))
+			SetDefaultModes(sValue);
+	}
 }
 
 CChan::~CChan() {
@@ -64,8 +83,6 @@ bool CChan::WriteConfig(CFile& File) {
 	if (!GetDefaultModes().empty())
 		m_pUser->PrintLine(File, "\tModes", GetDefaultModes());
 
-	MODULECALL(OnWriteChanConfig(File, *this), m_pUser, NULL, NOTHING);
-
 	File.Write("\t</Chan>\n");
 	return true;
 }
@@ -96,6 +113,7 @@ bool CChan::SetBufferCount(size_t u, bool bForce) {
 	if (!bForce && u > CZNC::Get().GetMaxBufferSize())
 		return false;
 	m_uBufferCount = u;
+	TrimBuffer(m_uBufferCount);
 	return true;
 }
 
@@ -199,7 +217,7 @@ CString CChan::GetModeForNames() const {
 	for (map<unsigned char, CString>::const_iterator it = m_musModes.begin(); it != m_musModes.end(); ++it) {
 		if (it->first == 's') {
 			sMode = "@";
-		} else if ((it->first == 'p') && sMode.empty()){
+		} else if ((it->first == 'p') && sMode.empty()) {
 			sMode = "*";
 		}
 	}
@@ -293,21 +311,21 @@ void CChan::ModeChange(const CString& sModes, const CNick* pOpNick) {
 			CString sArg;
 
 			switch (m_pUser->GetIRCSock()->GetModeType(uMode)) {
-				case CIRCSock::ListArg:
-					bList = true;
+			case CIRCSock::ListArg:
+				bList = true;
+				sArg = GetModeArg(sArgs);
+				break;
+			case CIRCSock::HasArg:
+				sArg = GetModeArg(sArgs);
+				break;
+			case CIRCSock::NoArg:
+				break;
+			case CIRCSock::ArgWhenSet:
+				if (bAdd) {
 					sArg = GetModeArg(sArgs);
-					break;
-				case CIRCSock::HasArg:
-					sArg = GetModeArg(sArgs);
-					break;
-				case CIRCSock::NoArg:
-					break;
-				case CIRCSock::ArgWhenSet:
-					if (bAdd) {
-						sArg = GetModeArg(sArgs);
-					}
+				}
 
-					break;
+				break;
 			}
 
 			bool bNoChange;
@@ -418,9 +436,10 @@ bool CChan::AddNick(const CString& sNick) {
 	// Get the nick
 	sTmp   = sTmp.Token(0, false, "!");
 
+	CNick tmpNick(sTmp);
 	CNick* pNick = FindNick(sTmp);
 	if (!pNick) {
-		pNick = new CNick(sTmp);
+		pNick = &tmpNick;
 		pNick->SetUser(m_pUser);
 	}
 
@@ -518,34 +537,71 @@ void CChan::ClearBuffer() {
 	m_vsBuffer.clear();
 }
 
+void CChan::TrimBuffer(const unsigned int uMax) {
+	if (m_vsBuffer.size() > uMax) {
+		m_vsBuffer.erase(m_vsBuffer.begin(), m_vsBuffer.begin() + (m_vsBuffer.size() - uMax));
+	}
+}
+
 void CChan::SendBuffer(CClient* pClient) {
 	if (m_pUser && m_pUser->IsUserAttached()) {
 		const vector<CString>& vsBuffer = GetBuffer();
 
+		// in the event that pClient is NULL, need to send this to all clients for the user
+		// I'm presuming here that pClient is listed inside vClients thus vClients at this
+		// point can't be empty.
+		//
+		// This loop has to be cycled twice to maintain the existing behavior which is
+		// 1. OnChanBufferStarting
+		// 2. OnChanBufferPlayLine
+		// 3. ClearBuffer() if not keeping the buffer
+		// 4. OnChanBufferEnding
+		//
+		// With the exception of ClearBuffer(), this needs to happen per client, and
+		// if pClient is not NULL, the loops break after the first iteration.
+		//
+		// Rework this if you like ...
 		if (vsBuffer.size()) {
-			bool bSkipStatusMsg = false;
-			MODULECALL(OnChanBufferStarting(*this, *pClient), m_pUser, NULL, bSkipStatusMsg = true);
+			const vector<CClient*> & vClients = m_pUser->GetClients();
+			for( size_t uClient = 0; uClient < vClients.size(); ++uClient ) {
 
-			if (!bSkipStatusMsg) {
-				m_pUser->PutUser(":***!znc@znc.in PRIVMSG " + GetName() + " :Buffer Playback...", pClient);
-			}
+				CClient * pUseClient = ( pClient ? pClient : vClients[uClient] );
+				bool bSkipStatusMsg = false;
+				MODULECALL(OnChanBufferStarting(*this, *pUseClient), m_pUser, NULL, bSkipStatusMsg = true);
 
-			for (unsigned int a = 0; a < vsBuffer.size(); a++) {
-				CString sLine(vsBuffer[a]);
-				MODULECALL(OnChanBufferPlayLine(*this, *pClient, sLine), m_pUser, NULL, continue);
-				m_pUser->PutUser(sLine, pClient);
+				if (!bSkipStatusMsg) {
+					m_pUser->PutUser(":***!znc@znc.in PRIVMSG " + GetName() + " :Buffer Playback...", pUseClient);
+				}
+
+				for (unsigned int a = 0; a < vsBuffer.size(); a++) {
+					CString sLine(vsBuffer[a]);
+					MODULECALL(OnChanBufferPlayLine(*this, *pUseClient, sLine), m_pUser, NULL, continue);
+					m_pUser->PutUser(sLine, pUseClient);
+				}
+
+				if( pClient )
+					break;
+
 			}
 
 			if (!KeepBuffer()) {
 				ClearBuffer();
 			}
 
-			bSkipStatusMsg = false;
-			MODULECALL(OnChanBufferEnding(*this, *pClient), m_pUser, NULL, bSkipStatusMsg = true);
+			for( size_t uClient = 0; uClient < vClients.size(); ++uClient ) {
 
-			if (!bSkipStatusMsg) {
-				m_pUser->PutUser(":***!znc@znc.in PRIVMSG " + GetName() + " :Playback Complete.", pClient);
+				CClient * pUseClient = ( pClient ? pClient : vClients[uClient] );
+				bool bSkipStatusMsg = false;
+				MODULECALL(OnChanBufferEnding(*this, *pUseClient), m_pUser, NULL, bSkipStatusMsg = true);
+
+				if (!bSkipStatusMsg) {
+					m_pUser->PutUser(":***!znc@znc.in PRIVMSG " + GetName() + " :Playback Complete.", pUseClient);
+				}
+
+				if( pClient )
+					break;
 			}
+
 		}
 	}
 }

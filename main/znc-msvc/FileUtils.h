@@ -10,11 +10,13 @@
 #define _FILEUTILS_H
 
 #include "zncconfig.h"
-#include "Socket.h"
 #include "ZNCString.h"
 #include <dirent.h>
 #include <map>
-#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/fcntl.h>
+#include <unistd.h>
 #include <vector>
 
 using std::vector;
@@ -110,7 +112,7 @@ public:
 	void Close();
 	void ClearBuffer();
 
-	bool TryExLock(const CString& sLockFile, int iFlags = O_RDONLY | O_CREAT);
+	bool TryExLock(const CString& sLockFile, int iFlags = O_RDWR | O_CREAT);
 	bool TryExLock();
 	bool ExLock();
 	bool UnLock();
@@ -120,12 +122,21 @@ public:
 	CString GetShortName() const;
 	CString GetDir() const;
 
+	bool HadError() const { return m_bHadError; }
+	void ResetError() { m_bHadError = false; }
+
+	static void InitHomePath(const CString& sFallback);
+	static const CString& GetHomePath() { return m_sHomePath; }
+
 private:
 	// fcntl() locking wrapper
 	bool Lock(int iType, bool bBlocking);
 
 	CString m_sBuffer;
 	int     m_iFD;
+	bool    m_bHadError;
+
+	static CString m_sHomePath;
 
 protected:
 	CString m_sLongName;  //!< Absolute filename (m_sPath + "/" + m_sShortName)
@@ -250,42 +261,5 @@ protected:
 	CFile::EFileAttr m_eSortAttr;
 	bool             m_bDesc;
 };
-
-#ifndef _WIN32
-
-//! @author imaginos@imaginos.net
-class CExecSock : public CZNCSock {
-public:
-	CExecSock() : CZNCSock() {
-		m_iPid = -1;
-	}
-
-	int Execute(const CString & sExec) {
-		int iReadFD, iWriteFD;
-		m_iPid = popen2(iReadFD, iWriteFD, sExec);
-		if (m_iPid != -1) {
-			ConnectFD(iReadFD, iWriteFD, "0.0.0.0:0");
-		}
-		return(m_iPid);
-	}
-	void Kill(int iSignal)
-	{
-		kill(m_iPid, iSignal);
-		Close();
-	}
-	virtual ~CExecSock() {
-		close2(m_iPid, GetRSock(), GetWSock());
-		SetRSock(-1);
-		SetWSock(-1);
-	}
-
-	int popen2(int & iReadFD, int & iWriteFD, const CString & sCommand);
-	void close2(int iPid, int iReadFD, int iWriteFD);
-
-private:
-	int  m_iPid;
-};
-
-#endif // !_WIN32
 
 #endif // !_FILEUTILS_H

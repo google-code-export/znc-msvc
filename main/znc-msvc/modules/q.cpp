@@ -484,4 +484,8 @@ private:
 	}
 };
 
+template<> void TModInfo<CQModule>(CModInfo& Info) {
+	Info.SetWikiPage("Q");
+}
+
 MODULEDEFS(CQModule, "Auths you with QuakeNet's Q bot.")

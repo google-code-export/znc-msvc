@@ -9,6 +9,7 @@
 #include "stdafx.hpp"
 #include "Utils.h"
 #include "main.h"
+#include "ZNCDebug.h"
 #include <errno.h>
 #ifdef HAVE_LIBSSL
 #include <openssl/ssl.h>
@@ -24,13 +25,6 @@
 
 using std::stringstream;
 
-bool CUtils::stdoutIsTTY = true;
-bool CUtils::debug =
-#ifdef _DEBUG
-		true;
-#else
-		false;
-#endif
 outputHook CUtils::outputHook = NULL;
 void* CUtils::outputHookUserData = NULL;
 
@@ -85,7 +79,7 @@ void CUtils::GenerateCert(FILE *pOut, const CString& sHost) {
 		}
 
 		if (!pHostName) {
-			pHostName = "unknown.com";
+			pHostName = "host.unknown";
 		}
 
 		CString sEmailAddr = pLogName;
@@ -186,7 +180,11 @@ CString CUtils::SaltedSHA256Hash(const CString& sPass, const CString& sSalt) {
 
 CString CUtils::GetPass(const CString& sPrompt) {
 	PrintPrompt(sPrompt);
+#ifdef HAVE_GETPASSPHRASE
+	return getpassphrase("");
+#else
 	return getpass("");
+#endif
 }
 
 bool CUtils::GetBoolInput(const CString& sPrompt, bool bDefault) {
@@ -275,7 +273,7 @@ bool CUtils::GetInput(const CString& sPrompt, CString& sRet, const CString& sDef
 void CUtils::PrintError(const CString& sMessage) {
 	if(!OutputHooked())
 	{
-		if (stdoutIsTTY)
+		if (CDebug::StdoutIsTTY())
 			fprintf(stdout, "\033[1m\033[34m[\033[31m ** \033[34m]\033[39m\033[22m %s\n", sMessage.c_str());
 		else
 			fprintf(stdout, "%s\n", sMessage.c_str());
@@ -302,7 +300,7 @@ void CUtils::PrintDebug(const CString& sMessage) {
 void CUtils::PrintPrompt(const CString& sMessage) {
 	if(!OutputHooked())
 	{
-		if (stdoutIsTTY)
+		if (CDebug::StdoutIsTTY())
 			fprintf(stdout, "\033[1m\033[34m[\033[33m ?? \033[34m]\033[39m\033[22m %s: ", sMessage.c_str());
 		else
 			fprintf(stdout, "[ ?? ] %s: ", sMessage.c_str());
@@ -318,7 +316,7 @@ void CUtils::PrintPrompt(const CString& sMessage) {
 void CUtils::PrintMessage(const CString& sMessage, bool bStrong) {
 	if(!OutputHooked())
 	{
-		if (stdoutIsTTY) {
+		if (CDebug::StdoutIsTTY()) {
 			if (bStrong)
 				fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m \033[1m%s\033[22m\n",
 						sMessage.c_str());
@@ -339,7 +337,7 @@ void CUtils::PrintMessage(const CString& sMessage, bool bStrong) {
 void CUtils::PrintAction(const CString& sMessage) {
 	if(!OutputHooked())
 	{
-		if (stdoutIsTTY)
+		if (CDebug::StdoutIsTTY())
 			fprintf(stdout, "\033[1m\033[34m[\033[32m    \033[34m]\033[39m\033[22m %s... ", sMessage.c_str());
 		else
 			fprintf(stdout, "%s... ", sMessage.c_str());
@@ -354,7 +352,7 @@ void CUtils::PrintAction(const CString& sMessage) {
 void CUtils::PrintStatus(bool bSuccess, const CString& sMessage) {
 	if(!OutputHooked())
 	{
-		if (stdoutIsTTY) {
+		if (CDebug::StdoutIsTTY()) {
 			if (!sMessage.empty()) {
 				if (bSuccess) {
 					fprintf(stdout, "%s", sMessage.c_str());

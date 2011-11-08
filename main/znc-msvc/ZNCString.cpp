@@ -219,10 +219,10 @@ CString CString::Escape_n(EEscape eFrom, EEscape eTo) const {
 					}
 
 					if (ch == 0) {
-						if (!strncasecmp((const char*) &pTmp, "lt", 2)) ch = '<';
-						else if (!strncasecmp((const char*) &pTmp, "gt", 2)) ch = '>';
-						else if (!strncasecmp((const char*) &pTmp, "quot", 4)) ch = '"';
-						else if (!strncasecmp((const char*) &pTmp, "amp", 3)) ch = '&';
+						if (!strncasecmp((const char*) &pTmp, "&lt;", 2)) ch = '<';
+						else if (!strncasecmp((const char*) &pTmp, "&gt;", 2)) ch = '>';
+						else if (!strncasecmp((const char*) &pTmp, "&quot;", 4)) ch = '"';
+						else if (!strncasecmp((const char*) &pTmp, "&amp;", 3)) ch = '&';
 					}
 
 					if (ch > 0) {
@@ -1139,12 +1139,15 @@ static const char hexdigits[] = "0123456789abcdef";
 CString& MCString::Encode(CString& sValue) const {
 	CString sTmp;
 	for (CString::iterator it = sValue.begin(); it != sValue.end(); ++it) {
-		if (isalnum(*it)) {
-			sTmp += *it;
+		// isalnum() needs unsigned char as argument and this code
+		// assumes unsigned, too.
+		unsigned char c = *it;
+		if (isalnum(c)) {
+			sTmp += c;
 		} else {
 			sTmp += "%";
-			sTmp += hexdigits[*it >> 4];
-			sTmp += hexdigits[*it & 0xf];
+			sTmp += hexdigits[c >> 4];
+			sTmp += hexdigits[c & 0xf];
 			sTmp += ";";
 		}
 	}

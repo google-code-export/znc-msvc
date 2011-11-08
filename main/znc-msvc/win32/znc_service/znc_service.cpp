@@ -38,7 +38,7 @@ DWORD CZNCWindowsService::Init()
 
 	CUtils::HookOutput(&OutputHookProc, NULL);
 
-	if(CZNC::GetCoreVersion() != MODVERSION)
+	if(CZNC::GetCoreVersion() != VERSION)
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, INIT_CATEGORY, MSG_DLL_VERSION_MISMATCH, NULL, 0, 0, NULL, NULL);
 		return ERROR_EXITCODE;

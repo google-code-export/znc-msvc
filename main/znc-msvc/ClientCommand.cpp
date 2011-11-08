@@ -9,13 +9,12 @@
 #include "stdafx.hpp"
 #include "Client.h"
 #include "Chan.h"
-#include "DCCBounce.h"
-#include "DCCSock.h"
+#include "FileUtils.h"
 #include "IRCSock.h"
+#include "Listener.h"
 #include "Server.h"
 #include "User.h"
 #include "znc.h"
-#include "Listener.h"
 
 void CClient::UserCommand(CString& sLine) {
 	if (!m_pUser) {
@@ -470,135 +469,6 @@ void CClient::UserCommand(CString& sLine) {
 		}
 
 		PutStatus(Table);
-	} else if (sCommand.Equals("SEND")) {
-		CString sToNick = sLine.Token(1);
-		CString sFile = sLine.Token(2);
-		CString sAllowedPath = m_pUser->GetDLPath();
-		CString sAbsolutePath;
-
-		if ((sToNick.empty()) || (sFile.empty())) {
-			PutStatus("Usage: Send <nick> <file>");
-			return;
-		}
-
-		sAbsolutePath = CDir::CheckPathPrefix(sAllowedPath, sFile);
-
-		if (sAbsolutePath.empty()) {
-			PutStatus("Illegal path.");
-			return;
-		}
-
-		m_pUser->SendFile(sToNick, sFile);
-	} else if (sCommand.Equals("GET")) {
-		CString sFile = sLine.Token(1);
-		CString sAllowedPath = m_pUser->GetDLPath();
-		CString sAbsolutePath;
-
-		if (sFile.empty()) {
-			PutStatus("Usage: Get <file>");
-			return;
-		}
-
-		sAbsolutePath = CDir::CheckPathPrefix(sAllowedPath, sFile);
-
-		if (sAbsolutePath.empty()) {
-			PutStatus("Illegal path.");
-			return;
-		}
-
-		m_pUser->SendFile(GetNick(), sFile);
-	} else if (sCommand.Equals("LISTDCCS")) {
-		CSockManager& Manager = CZNC::Get().GetManager();
-
-		CTable Table;
-		Table.AddColumn("Type");
-		Table.AddColumn("State");
-		Table.AddColumn("Speed");
-		Table.AddColumn("Nick");
-		Table.AddColumn("IP");
-		Table.AddColumn("File");
-
-		for (unsigned int a = 0; a < Manager.size(); a++) {
-			CString sSockName = Manager[a]->GetSockName();
-
-			if (sSockName.TrimPrefix("DCC::")) {
-				if (sSockName.Equals("XFER::REMOTE::", false, 14)) {
-					continue;
-				}
-
-				if (sSockName.Equals("CHAT::REMOTE::", false, 14)) {
-					continue;
-				}
-
-				if (sSockName.Equals("SEND", false, 4)) {
-					CDCCSock* pSock = (CDCCSock*) Manager[a];
-
-					Table.AddRow();
-					Table.SetCell("Type", "Sending");
-					Table.SetCell("State", CString::ToPercent(pSock->GetProgress()));
-					Table.SetCell("Speed", CString((int)(pSock->GetAvgWrite() / 1024.0)) + " KiB/s");
-					Table.SetCell("Nick", pSock->GetRemoteNick());
-					Table.SetCell("IP", pSock->GetRemoteIP());
-					Table.SetCell("File", pSock->GetFileName());
-				} else if (sSockName.Equals("GET", false, 3)) {
-					CDCCSock* pSock = (CDCCSock*) Manager[a];
-
-					Table.AddRow();
-					Table.SetCell("Type", "Getting");
-					Table.SetCell("State", CString::ToPercent(pSock->GetProgress()));
-					Table.SetCell("Speed", CString((int)(pSock->GetAvgRead() / 1024.0)) + " KiB/s");
-					Table.SetCell("Nick", pSock->GetRemoteNick());
-					Table.SetCell("IP", pSock->GetRemoteIP());
-					Table.SetCell("File", pSock->GetFileName());
-				} else if (sSockName.Equals("LISTEN", false, 6)) {
-					CDCCSock* pSock = (CDCCSock*) Manager[a];
-
-					Table.AddRow();
-					Table.SetCell("Type", "Sending");
-					Table.SetCell("State", "Waiting");
-					Table.SetCell("Nick", pSock->GetRemoteNick());
-					Table.SetCell("IP", pSock->GetRemoteIP());
-					Table.SetCell("File", pSock->GetFileName());
-				} else if (sSockName.Equals("XFER::LOCAL", false, 11)) {
-					CDCCBounce* pSock = (CDCCBounce*) Manager[a];
-
-					CString sState = "Waiting";
-					if ((pSock->IsConnected()) || (pSock->IsPeerConnected())) {
-						sState = "Halfway";
-						if ((pSock->IsPeerConnected()) && (pSock->IsPeerConnected())) {
-							sState = "Connected";
-						}
-					}
-
-					Table.AddRow();
-					Table.SetCell("Type", "Xfer");
-					Table.SetCell("State", sState);
-					Table.SetCell("Nick", pSock->GetRemoteNick());
-					Table.SetCell("IP", pSock->GetRemoteIP());
-					Table.SetCell("File", pSock->GetFileName());
-				} else if (sSockName.Equals("CHAT::LOCAL", false, 11)) {
-					CDCCBounce* pSock = (CDCCBounce*) Manager[a];
-
-					CString sState = "Waiting";
-					if ((pSock->IsConnected()) || (pSock->IsPeerConnected())) {
-						sState = "Halfway";
-						if ((pSock->IsPeerConnected()) && (pSock->IsPeerConnected())) {
-							sState = "Connected";
-						}
-					}
-
-					Table.AddRow();
-					Table.SetCell("Type", "Chat");
-					Table.SetCell("State", sState);
-					Table.SetCell("Nick", pSock->GetRemoteNick());
-					Table.SetCell("IP", pSock->GetRemoteIP());
-				}
-			}
-		}
-
-		if (PutStatus(Table) == 0) {
-			PutStatus("You have no active DCCs.");
-		}
 	} else if (sCommand.Equals("LISTMODS") || sCommand.Equals("LISTMODULES")) {
 		if (m_pUser->IsAdmin()) {
 			CModules& GModules = CZNC::Get().GetModules();
@@ -732,10 +602,8 @@ void CClient::UserCommand(CString& sLine) {
 			b = m_pUser->GetModules().LoadModule(sMod, sArgs, m_pUser, sModRet);
 		}
 
-		if (!b) {
-			PutStatus(sModRet);
-			return;
-		}
+		if (b)
+			sModRet = "Loaded module [" + sMod + "] " + sModRet;
 
 		PutStatus(sModRet);
 		return;
@@ -1159,10 +1027,6 @@ void CClient::HelpUser() {
 	Table.SetCell("Description", "Print which version of ZNC this is");
 
 	Table.AddRow();
-	Table.SetCell("Command", "ListDCCs");
-	Table.SetCell("Description", "List all active DCCs");
-
-	Table.AddRow();
 	Table.SetCell("Command", "ListMods");
 	Table.SetCell("Description", "List all loaded modules");
 
@@ -1273,16 +1137,6 @@ void CClient::HelpUser() {
 	Table.AddRow();
 	Table.SetCell("Command", "Connect");
 	Table.SetCell("Description", "Reconnect to IRC");
-
-	Table.AddRow();
-	Table.SetCell("Command", "Send");
-	Table.SetCell("Arguments", "<nick> <file>");
-	Table.SetCell("Description", "Send a shell file to a nick on IRC");
-
-	Table.AddRow();
-	Table.SetCell("Command", "Get");
-	Table.SetCell("Arguments", "<file>");
-	Table.SetCell("Description", "Send a shell file to yourself");
 
 	Table.AddRow();
 	Table.SetCell("Command", "Uptime");

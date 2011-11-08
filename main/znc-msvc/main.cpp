@@ -17,9 +17,7 @@ static const struct option g_LongOpts[] = {
 	{ "debug",       no_argument,       0, 'D' },
 	{ "makeconf",    no_argument,       0, 'c' },
 	{ "makepass",    no_argument,       0, 's' },
-#ifdef HAVE_LIBSSL
 	{ "makepem",     no_argument,       0, 'p' },
-#endif /* HAVE_LIBSSL */
 	{ "datadir",     required_argument, 0, 'd' },
 	{ 0, 0, 0, 0 }
 };
@@ -62,7 +60,7 @@ int main(int argc, char** argv) {
 
 	CUtils::SeedPRNG();
 	// Win32 doesn't support shell escape codes, so we do this.
-	CUtils::SetStdoutIsTTY(false);
+	CDebug::SetStdoutIsTTY(false);
 
 	CString sConsoleTitle = "ZNC " + CZNC::GetVersion();
 	SetConsoleTitle(sConsoleTitle.c_str());
@@ -86,7 +84,7 @@ int main(int argc, char** argv) {
 #endif
 
 	// make sure the stuff in ZNC.dll matches this exe's version... bad crashes otherwise.
-	if(CZNC::GetCoreVersion() != MODVERSION)
+	if(CZNC::GetCoreVersion() != VERSION)
 	{
 		CUtils::PrintError("The version number in ZNC.dll doesn't match. Aborting.");
 		return 1;
@@ -98,14 +96,9 @@ int main(int argc, char** argv) {
 	bool bMakeConf = false;
 	bool bMakePass = false;
 	bool bAllowRoot = false;
-
-#ifdef HAVE_LIBSSL
 	bool bMakePem = false;
 
 	while ((iArg = getopt_long(argc, argv, "hvcspd:D", g_LongOpts, &iOptIndex)) != -1) {
-#else
-	while ((iArg = getopt_long(argc, argv, "hvcsd:D", g_LongOpts, &iOptIndex)) != -1) {
-#endif /* HAVE_LIBSSL */
 		switch (iArg) {
 		case 'h':
 			GenerateHelp(argv[0]);
@@ -119,16 +112,19 @@ int main(int argc, char** argv) {
 		case 's':
 			bMakePass = true;
 			break;
-#ifdef HAVE_LIBSSL
 		case 'p':
-			bMakePem = true;
-			break;
-#endif /* HAVE_LIBSSL */
+#ifdef HAVE_LIBSSL
+  			bMakePem = true;
+  			break;
+#else
+			CUtils::PrintError("ZNC is compiled without SSL support.");
+			return 1;
+  #endif /* HAVE_LIBSSL */
 		case 'd':
 			sDataDir = CString(optarg);
 			break;
 		case 'D':
-			CUtils::SetDebug(true);
+			CDebug::SetDebug(true);
 			break;
 		case '?':
 		default:
@@ -235,7 +231,7 @@ int main(int argc, char** argv) {
 					NULL
 				};
 				int pos = 3;
-				if (CUtils::Debug())
+				if (CDebug::Debug())
 					args[pos++] = strdup("--debug");
 #if 0
 				else if (bForeground)
