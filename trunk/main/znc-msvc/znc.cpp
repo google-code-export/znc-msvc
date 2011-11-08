@@ -603,6 +603,8 @@ bool CZNC::WriteConfig() {
 #ifdef _WIN32
 	// on win32, we need to close the ~ temp file first.
 	pFile->Close();
+	// we also need to close the file we are going to overwrite:
+	m_pLockFile->Close();
 #endif
 
 	if (!pFile->Move(GetConfigFile(), true)) {
