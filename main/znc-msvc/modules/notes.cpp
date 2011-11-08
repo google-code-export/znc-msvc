@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+#include "Chan.h"
 #include "HTTPSock.h"
 #include "Server.h"
 #include "Template.h"

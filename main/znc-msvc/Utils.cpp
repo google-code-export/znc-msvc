@@ -8,6 +8,9 @@
 
 #include "stdafx.hpp"
 #include "Utils.h"
+#ifndef HAVE_LIBSSL
+#include "MD5.h"
+#endif /* HAVE_LIBSSL */
 #include "main.h"
 #include "ZNCDebug.h"
 #include <errno.h>

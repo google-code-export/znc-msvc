@@ -8,6 +8,7 @@
 
 #include "stdafx.hpp"
 #include "Modules.h"
+#include "znc.h"
 
 using std::map;
 

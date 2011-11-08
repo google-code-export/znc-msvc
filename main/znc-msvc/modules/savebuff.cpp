@@ -13,6 +13,9 @@
  */
 
 #include "stdafx.hpp"
+
+#define REQUIRESSL
+
 #include "Chan.h"
 #include "User.h"
 #include "FileUtils.h"

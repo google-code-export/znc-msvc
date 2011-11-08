@@ -7,8 +7,8 @@
  */
 
 #include "stdafx.hpp"
-#include "znc.h"
 #include "User.h"
+#include "znc.h"
 
 class CFOModule : public CModule {
 public:

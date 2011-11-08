@@ -255,7 +255,6 @@ void CZNC::LoopDoMaintenance()
 	}
 }
 
-
 CFile* CZNC::InitPidFile() {
 	if (!m_sPidFile.empty()) {
 		CString sFile;

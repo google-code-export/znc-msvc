@@ -7,7 +7,6 @@
  */
 
 #include "stdafx.hpp"
-#include "znc.h"
 #include "Modules.h"
 #include "Chan.h"
 

@@ -832,6 +832,7 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 
 	if (bVersionMismatch) {
 		dlclose(p);
+		sRetMsg = "Version mismatch, recompile this module.";
 		return false;
 	}
 
@@ -1044,7 +1045,7 @@ CModules::ModDirList CModules::GetModDirs() {
 
 #ifndef _WIN32
 	// <moduledir> and <datadir> (<prefix>/lib/znc)
-	ret.push(std::make_pair(_MODDIR_ + CString("/"), _DATADIR_ + CString("/")));
+	ret.push(std::make_pair(_MODDIR_ + CString("/"), _DATADIR_ + CString("/modules/")));
 #endif
 
 	return ret;

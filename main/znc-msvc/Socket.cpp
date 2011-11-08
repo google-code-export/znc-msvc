@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+#include "Socket.h"
 #include "Modules.h"
 #include "User.h"
 #include "znc.h"
