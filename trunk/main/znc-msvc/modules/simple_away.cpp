@@ -217,5 +217,8 @@ void CSimpleAwayJob::RunJob() {
 	((CSimpleAway*)m_pModule)->SetAway(false);
 }
 
+template<> void TModInfo<CSimpleAway>(CModInfo& Info) {
+	Info.SetWikiPage("simple_away");
+}
 
 MODULEDEFS(CSimpleAway, "Auto away when last client disconnects")

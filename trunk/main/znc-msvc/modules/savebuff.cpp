@@ -15,6 +15,7 @@
 #include "stdafx.hpp"
 #include "Chan.h"
 #include "User.h"
+#include "FileUtils.h"
 #include <sys/stat.h>
 
 #define CRYPT_VERIFICATION_TOKEN "::__:SAVEBUFF:__::"
@@ -67,7 +68,7 @@ public:
 			}
 		}
 		else if( sArgs.empty() )
-			m_sPassword = CBlowfish::MD5( CRYPT_LAME_PASS ); 
+			m_sPassword = CBlowfish::MD5( CRYPT_LAME_PASS );
 		else
 			m_sPassword = CBlowfish::MD5(sArgs);
 
@@ -331,6 +332,10 @@ void CSaveBuffJob::RunJob()
 {
 	CSaveBuff *p = (CSaveBuff *)m_pModule;
 	p->SaveBufferToDisk();
+}
+
+template<> void TModInfo<CSaveBuff>(CModInfo& Info) {
+	Info.SetWikiPage("savebuff");
 }
 
 MODULEDEFS(CSaveBuff, "Stores channel buffers to disk, encrypted")

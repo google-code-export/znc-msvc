@@ -11,8 +11,7 @@
 
 #include "zncconfig.h"
 #include "WebModules.h"
-#include "FileUtils.h"
-#include "Utils.h"
+#include "main.h"
 #include <set>
 #include <queue>
 
@@ -25,6 +24,9 @@ class CClient;
 class CWebSock;
 class CTemplate;
 class CIRCSock;
+class CModule;
+class CGlobalModule;
+class CModInfo;
 // !Forward Declarations
 
 // User Module Macros
@@ -40,13 +42,40 @@ class CIRCSock;
 
 typedef void* ModHandle;
 
-#define MODCOMMONDEFS(DESCRIPTION, GLOBAL) \
-	ZNC_HELPER_DLL_EXPORT const char *ZNCModDescription(); \
-	ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal(); \
-	ZNC_HELPER_DLL_EXPORT double ZNCModVersion(); \
-	ZNC_HELPER_DLL_EXPORT const char *ZNCModDescription() { return DESCRIPTION; } \
-	ZNC_HELPER_DLL_EXPORT double ZNCModVersion() { return MODVERSION; } \
-	ZNC_HELPER_DLL_EXPORT bool ZNCModGlobal() { return GLOBAL; }
+template<class M> void TModInfo(CModInfo& Info) {}
+
+template<class M> CModule* TModLoad(ModHandle p, CUser* pUser,
+		const CString& sModName, const CString& sModPath) {
+	return new M(p, pUser, sModName, sModPath);
+}
+template<class M> CGlobalModule* TModLoadGlobal(ModHandle p,
+		const CString& sModName, const CString& sModPath) {
+	return new M(p, sModName, sModPath);
+}
+
+#ifdef _WIN32
+# define MODULE_EXPORT ZNC_HELPER_DLL_EXPORT
+#else
+#if HAVE_VISIBILITY
+# define MODULE_EXPORT __attribute__((__visibility__("default")))
+#else
+# define MODULE_EXPORT
+#endif
+#endif
+
+#define MODCOMMONDEFS(CLASS, DESCRIPTION, GLOBAL, LOADER) \
+	extern "C" { \
+		MODULE_EXPORT bool ZNCModInfo(double dCoreVersion, CModInfo& Info); \
+		bool ZNCModInfo(double dCoreVersion, CModInfo& Info) { \
+			if (dCoreVersion != VERSION) \
+				return false; \
+			Info.SetDescription(DESCRIPTION); \
+			Info.SetGlobal(GLOBAL); \
+			LOADER; \
+			TModInfo<CLASS>(Info); \
+			return true; \
+		} \
+	}
 
 /** Instead of writing a constructor, you should call this macro. It accepts all
  *  the necessary arguments and passes them on to CModule's constructor. You
@@ -76,15 +105,7 @@ typedef void* ModHandle;
  *  @see For global modules you need GLOBALMODULEDEFS.
  */
 #define MODULEDEFS(CLASS, DESCRIPTION) \
-	extern "C" { \
-		MODCOMMONDEFS(DESCRIPTION, false) \
-		/* First the definitions to shut up some compiler warnings */ \
-		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, const CString& sModPath); \
-		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod); \
-		ZNC_HELPER_DLL_EXPORT CModule* ZNCModLoad(ModHandle p, CUser* pUser, const CString& sModName, const CString& sModPath) \
-		{ return new CLASS(p, pUser, sModName, sModPath); } \
-		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CModule* pMod) { if (pMod) { delete pMod; } } \
-	}
+	MODCOMMONDEFS(CLASS, DESCRIPTION, false, Info.SetLoader(TModLoad<CLASS>))
 // !User Module Macros
 
 // Global Module Macros
@@ -95,15 +116,7 @@ typedef void* ModHandle;
 
 /** This works exactly like MODULEDEFS, but for global modules. */
 #define GLOBALMODULEDEFS(CLASS, DESCRIPTION) \
-	extern "C" { \
-		MODCOMMONDEFS(DESCRIPTION, true) \
-		/* First the definitions to shut up some compiler warnings */ \
-		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, const CString& sModPath); \
-		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod); \
-		ZNC_HELPER_DLL_EXPORT CGlobalModule* ZNCModLoad(ModHandle p, const CString& sModName, const CString& sModPath) \
-		{ return new CLASS(p, sModName, sModPath); } \
-		ZNC_HELPER_DLL_EXPORT void ZNCModUnload(CGlobalModule* pMod) { if (pMod) { delete pMod; } } \
-	}
+	MODCOMMONDEFS(CLASS, DESCRIPTION, true, Info.SetGlobalLoader(TModLoadGlobal<CLASS>))
 // !Global Module Macros
 
 // Forward Declarations
@@ -163,11 +176,19 @@ private:
 
 class CModInfo {
 public:
-	CModInfo() {}
+	typedef CModule* (*ModLoader)(ModHandle p, CUser* pUser, const CString& sModName, const CString& sModPath);
+	typedef CGlobalModule* (*GlobalModLoader)(ModHandle p, const CString& sModName, const CString& sModPath);
+
+	CModInfo() {
+		m_fGlobalLoader = NULL;
+		m_fLoader = NULL;
+	}
 	CModInfo(const CString& sName, const CString& sPath, bool bGlobal) {
 		m_bGlobal = bGlobal;
 		m_sName = sName;
 		m_sPath = sPath;
+		m_fGlobalLoader = NULL;
+		m_fLoader = NULL;
 	}
 	~CModInfo() {}
 
@@ -179,25 +200,34 @@ public:
 	const CString& GetName() const { return m_sName; }
 	const CString& GetPath() const { return m_sPath; }
 	const CString& GetDescription() const { return m_sDescription; }
+	const CString& GetWikiPage() const { return m_sWikiPage; }
 	bool IsGlobal() const { return m_bGlobal; }
+	ModLoader GetLoader() const { return m_fLoader; }
+	GlobalModLoader GetGlobalLoader() const { return m_fGlobalLoader; }
 	// !Getters
 
 	// Setters
 	void SetName(const CString& s) { m_sName = s; }
 	void SetPath(const CString& s) { m_sPath = s; }
 	void SetDescription(const CString& s) { m_sDescription = s; }
+	void SetWikiPage(const CString& s) { m_sWikiPage = s; }
 	void SetGlobal(bool b) { m_bGlobal = b; }
+	void SetLoader(ModLoader fLoader) { m_fLoader = fLoader; }
+	void SetGlobalLoader(GlobalModLoader fGlobalLoader) { m_fGlobalLoader = fGlobalLoader; }
 	// !Setters
 private:
 protected:
-	bool     m_bGlobal;
-	CString  m_sName;
-	CString  m_sPath;
-	CString  m_sDescription;
+	bool            m_bGlobal;
+	CString         m_sName;
+	CString         m_sPath;
+	CString         m_sDescription;
+	CString         m_sWikiPage;
+	ModLoader       m_fLoader;
+	GlobalModLoader m_fGlobalLoader;
 };
 
 /** A helper class for handling commands in modules. */
-class CModCommand {
+class ZNC_API CModCommand {
 public:
 	/// Type for the callback function that handles the actual command.
 	typedef void (CModule::*ModCmdFunc)(const CString& sLine);
@@ -388,6 +418,11 @@ public:
 	 *  @return See CModule::EModRet.
 	 */
 	virtual EModRet OnIRCConnecting(CIRCSock *pIRCSock);
+	/** This module hook is called when a CIRCSock fails to connect or
+	 *  a module returned HALTCORE from OnIRCConnecting.
+	 *  @param pIRCSock The socket that failed to connect.
+	 */
+	virtual void OnIRCConnectionError(CIRCSock *pIRCSock);
 	/** This module hook is called before loging in to the IRC server. The
 	 *  low-level connection is established at this point, but SSL
 	 *  handshakes didn't necessarily finish yet.
@@ -404,38 +439,6 @@ public:
 	 *  @return see CModule::EModRet
 	 */
 	virtual EModRet OnBroadcast(CString& sMessage);
-
-	/** Called when a module-specific config line is read from znc.conf.
-	 *  Module specific config lines are always prefixed with "GM:".
-	 *  @param sName Name of the config entry without the "GM:" prefix.
-	 *  @param sValue The value of the config entry.
-	 *  @param pUser If this line was found in a user section, then this is
-	 *               the corresponding CUser instance.
-	 *  @param pChan If this line was found in a chan section, then this is
-	 *               the corresponding CChan instance.
-	 *  @return See CModule::EModRet.
-	 */
-	virtual EModRet OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
-	/** Called just before ZNC finishes a user section in the config file.
-	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
-	 *  which would get lost otherwise.
-	 *  @param Config Reference to the CFile which will be used for writing
-	 *                the config file.
-	 */
-	virtual void OnWriteUserConfig(CFile& Config);
-	/** Called just before ZNC finishes a chan section in the config file.
-	 *  This can be used to re-write the "GM:" lines for OnConfigLine()
-	 *  which would get lost otherwise.
-	 *  @param Config Reference to the CFile which will be used for writing
-	 *                the config file.
-	 *  @param Chan The channel which is being written.
-	 */
-	virtual void OnWriteChanConfig(CFile& Config, CChan& Chan);
-
-	/** This module hook is called when a user sends a DCC SEND request to
-	 *  your module fake-nickname.
-	 */
-	virtual EModRet OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize);
 
 	/** This module hook is called when a user mode on a channel changes.
 	 *  @param OpNick The nick who sent the mode change.
@@ -726,7 +729,7 @@ public:
 	virtual EModRet OnTimerAutoJoin(CChan& Channel);
 
 	ModHandle GetDLL() { return m_pDLL; }
-	static double GetCoreVersion() { return MODVERSION; }
+	static double GetCoreVersion() { return VERSION; }
 
 	/** This function sends a given raw IRC line to the IRC server, if we
 	 *  are connected to one. Else this line is discarded.
@@ -843,7 +846,7 @@ public:
 	void DelNV(MCString::iterator it) { m_mssRegistry.erase(it); }
 	bool ClearNV(bool bWriteToDisk = true);
 
-	const CString& GetSavePath() const { if (!CFile::Exists(m_sSavePath)) { CDir::MakeDir(m_sSavePath); } return m_sSavePath; }
+	const CString& GetSavePath() const;
 
 	// Setters
 	void SetGlobal(bool b) { m_bGlobal = b; }
@@ -909,13 +912,9 @@ public:
 	bool OnIRCDisconnected();
 	bool OnIRCConnected();
 	bool OnIRCConnecting(CIRCSock *pIRCSock);
+	bool OnIRCConnectionError(CIRCSock *pIRCSock);
 	bool OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName);
 	bool OnBroadcast(CString& sMessage);
-	bool OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan);
-	bool OnWriteUserConfig(CFile& Config);
-	bool OnWriteChanConfig(CFile& Config, CChan& Chan);
-
-	bool OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize);
 
 	bool OnChanPermission(const CNick& OpNick, const CNick& Nick, CChan& Channel, unsigned char uMode, bool bAdded, bool bNoChange);
 	bool OnOp(const CNick& OpNick, const CNick& Nick, CChan& Channel, bool bNoChange);
@@ -992,7 +991,7 @@ public:
 
 private:
 	static ModHandle OpenModule(const CString& sModule, const CString& sModPath,
-			bool &bVersionMismatch, bool &bIsGlobal, CString& sDesc, CString& sRetMsg);
+			bool &bVersionMismatch, CModInfo& Info, CString& sRetMsg);
 
 protected:
 	CUser*    m_pUser;
@@ -1014,14 +1013,6 @@ public:
 			const CString &sDataDir) : CModule(pDLL, sModName, sDataDir) {}
 	virtual ~CGlobalModule() {}
 
-	/** Called when ZNC starts rewriting the config file. This can be used
-	 *  re-write the "GM:" lines for OnConfigLine() which would get lost
-	 *  otherwise.
-	 *  @param Config Reference to the CFile which will be used for writing
-	 *                the config file.
-	 *  @return See CModule::EModRet.
-	 */
-	virtual EModRet OnWriteConfig(CFile& Config);
 	/** This module hook is called when a user is being added.
 	 * @param User The user which will be added.
 	 * @param sErrorRet A message that may be displayed to the user if
@@ -1119,7 +1110,6 @@ public:
 	CGlobalModules() : CModules() {}
 	~CGlobalModules() {}
 
-	bool OnWriteConfig(CFile& Config);
 	bool OnAddUser(CUser& User, CString& sErrorRet);
 	bool OnDeleteUser(CUser& User);
 	bool OnClientConnect(CZNCSock* pSock, const CString& sHost, unsigned short uPort);

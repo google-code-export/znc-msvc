@@ -37,6 +37,7 @@
 #endif /* __NetBSD__ */
 
 #ifdef HAVE_LIBSSL
+#include <stdio.h>
 #include <openssl/conf.h>
 #include <openssl/engine.h>
 #endif /* HAVE_LIBSSL */
@@ -242,7 +243,7 @@ void Csock::FreeAres()
 static void AresHostCallback( void *pArg, int status, int timeouts, struct hostent *hent )
 {
 	Csock *pSock = (Csock *)pArg;
-	if( status == ARES_SUCCESS && hent )
+	if( status == ARES_SUCCESS && hent && hent->h_addr_list[0] != NULL )
 	{
 		CSSockAddr *pSockAddr = pSock->GetCurrentAddr();
 		if( hent->h_addrtype == AF_INET )
@@ -265,6 +266,11 @@ static void AresHostCallback( void *pArg, int status, int timeouts, struct hoste
 	else
 	{
 		CS_DEBUG( ares_strerror( status ) );
+		if( status == ARES_SUCCESS )
+		{
+			CS_DEBUG("Received ARES_SUCCESS without any useful reply, using NODATA instead");
+			status = ARES_ENODATA;
+		}
 	}
 	pSock->SetAresFinished( status );
 }
@@ -487,7 +493,7 @@ void SSLErrors( const char *filename, u_int iLineNum )
 
 void __Perror( const CS_STRING & s, const char *pszFile, unsigned int iLineNo )
 {
-#if defined(__sun) || defined(_WIN32) || (defined(__NetBSD_Version__) && __NetBSD_Version__ < 4000000000)
+#if defined( sgi ) || defined(__sun) || defined(_WIN32) || (defined(__NetBSD_Version__) && __NetBSD_Version__ < 4000000000)
 	std::cerr << s << "(" << pszFile << ":" << iLineNo << "): " << strerror( GetSockError() ) << endl;
 #else
 	char buff[512];
@@ -1128,15 +1134,6 @@ bool Csock::SSLClientSetup()
 
 	switch( m_iMethod )
 	{
-		case SSL2:
-			m_ssl_ctx = SSL_CTX_new ( SSLv2_client_method() );
-			if ( !m_ssl_ctx )
-			{
-				CS_DEBUG( "WARNING: MakeConnection .... SSLv2_client_method failed!" );
-				return( false );
-			}
-			break;
-
 		case SSL3:
 			m_ssl_ctx = SSL_CTX_new ( SSLv3_client_method() );
 			if ( !m_ssl_ctx )
@@ -1153,6 +1150,17 @@ bool Csock::SSLClientSetup()
 				return( false );
 			}
 			break;
+		case SSL2:
+#ifndef OPENSSL_NO_SSL2
+			m_ssl_ctx = SSL_CTX_new ( SSLv2_client_method() );
+			if ( !m_ssl_ctx )
+			{
+				CS_DEBUG( "WARNING: MakeConnection .... SSLv2_client_method failed!" );
+				return( false );
+			}
+			break;
+#endif
+			/* Fall through if SSL2 is disabled */
 		case SSL23:
 		default:
 			m_ssl_ctx = SSL_CTX_new ( SSLv23_client_method() );
@@ -1223,15 +1231,6 @@ bool Csock::SSLServerSetup()
 
 	switch( m_iMethod )
 	{
-		case SSL2:
-			m_ssl_ctx = SSL_CTX_new ( SSLv2_server_method() );
-			if ( !m_ssl_ctx )
-			{
-				CS_DEBUG( "WARNING: MakeConnection .... SSLv2_server_method failed!" );
-				return( false );
-			}
-			break;
-
 		case SSL3:
 			m_ssl_ctx = SSL_CTX_new ( SSLv3_server_method() );
 			if ( !m_ssl_ctx )
@@ -1249,7 +1248,17 @@ bool Csock::SSLServerSetup()
 				return( false );
 			}
 			break;
-
+#ifndef OPENSSL_NO_SSL2
+		case SSL2:
+			m_ssl_ctx = SSL_CTX_new ( SSLv2_server_method() );
+			if ( !m_ssl_ctx )
+			{
+				CS_DEBUG( "WARNING: MakeConnection .... SSLv2_server_method failed!" );
+				return( false );
+			}
+			break;
+#endif
+			/* Fall through if SSL2 is disabled */
 		case SSL23:
 		default:
 			m_ssl_ctx = SSL_CTX_new ( SSLv23_server_method() );
@@ -1275,21 +1284,49 @@ bool Csock::SSLServerSetup()
 
 	//
 	// set up the CTX
-	if ( SSL_CTX_use_certificate_chain_file( m_ssl_ctx, m_sPemFile.c_str() ) <= 0 )
+	if( SSL_CTX_use_certificate_chain_file( m_ssl_ctx, m_sPemFile.c_str() ) <= 0 )
 	{
 		CS_DEBUG( "Error with PEM file [" << m_sPemFile << "]" );
 		SSLErrors( __FILE__, __LINE__ );
 		return( false );
 	}
 
-	if ( SSL_CTX_use_PrivateKey_file( m_ssl_ctx, m_sPemFile.c_str(), SSL_FILETYPE_PEM ) <= 0 )
+	if( SSL_CTX_use_PrivateKey_file( m_ssl_ctx, m_sPemFile.c_str(), SSL_FILETYPE_PEM ) <= 0 )
 	{
 		CS_DEBUG( "Error with PEM file [" << m_sPemFile << "]" );
 		SSLErrors( __FILE__, __LINE__ );
 		return( false );
 	}
 
-	if ( SSL_CTX_set_cipher_list( m_ssl_ctx, m_sCipherType.c_str() ) <= 0 )
+	// check to see if this pem file contains a DH structure for use with DH key exchange
+	// https://github.com/znc/znc/pull/46
+	FILE *dhParamsFile = fopen( m_sPemFile.c_str(), "r" );
+	if( !dhParamsFile )
+	{
+		CS_DEBUG( "There is a problem with [" << m_sPemFile << "]" );
+		return( false );
+	}
+
+	DH * dhParams = PEM_read_DHparams( dhParamsFile, NULL, NULL, NULL );
+	fclose( dhParamsFile );
+	if( dhParams )
+	{
+		SSL_CTX_set_options( m_ssl_ctx, SSL_OP_SINGLE_DH_USE );
+		if( !SSL_CTX_set_tmp_dh( m_ssl_ctx, dhParams ) )
+		{
+			CS_DEBUG( "Error setting ephemeral DH parameters from [" << m_sPemFile << "]" );
+			SSLErrors( __FILE__, __LINE__ );
+			DH_free( dhParams );
+			return( false );
+		}
+		DH_free( dhParams );
+	}
+	else
+	{ // Presumably PEM_read_DHparams failed, as there was no DH structure. Clearing those errors here so they are removed off the stack
+		ERR_clear_error();
+	}
+
+	if( SSL_CTX_set_cipher_list( m_ssl_ctx, m_sCipherType.c_str() ) <= 0 )
 	{
 		CS_DEBUG( "Could not assign cipher [" << m_sCipherType << "]" );
 		return( false );
@@ -1297,7 +1334,7 @@ bool Csock::SSLServerSetup()
 
 	//
 	// setup the SSL
-	m_ssl = SSL_new ( m_ssl_ctx );
+	m_ssl = SSL_new( m_ssl_ctx );
 	if ( !m_ssl )
 		return( false );
 
@@ -1539,7 +1576,7 @@ cs_ssize_t Csock::Read( char *data, size_t len )
 {
 	cs_ssize_t bytes = 0;
 
-	if ( ( IsReadPaused() ) && ( SslIsEstablished() ) )
+	if ( IsReadPaused() && SslIsEstablished() )
 		return( READ_EAGAIN ); // allow the handshake to complete first
 
 	if ( m_bBLOCK )
@@ -1557,7 +1594,11 @@ cs_ssize_t Csock::Read( char *data, size_t len )
 
 #ifdef HAVE_LIBSSL
 	if ( m_bssl )
+	{
 		bytes = SSL_read( m_ssl, data, (int)len );
+		if( bytes >= 0 )
+			m_bsslEstablished = true; // this means all is good in the realm of ssl
+	}
 	else
 #endif /* HAVE_LIBSSL */
 #ifdef _WIN32

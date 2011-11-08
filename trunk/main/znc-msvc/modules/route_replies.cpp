@@ -309,7 +309,8 @@ public:
 
 		if (GetNV("silent_timeouts") != "yes") {
 			PutModule("This module hit a timeout which is possibly a bug.");
-			PutModule("Use \"silent yes\" to disable this message.");
+			PutModule("To disable this message, do \"/msg " + GetModNick()
+					+ " silent yes\"");
 			PutModule("Last request: " + m_sLastRequest);
 			PutModule("Expected replies: ");
 
@@ -421,6 +422,10 @@ void CRouteTimeout::RunJob()
 {
 	CRouteRepliesMod *pMod = (CRouteRepliesMod *) m_pModule;
 	pMod->Timeout();
+}
+
+template<> void TModInfo<CRouteRepliesMod>(CModInfo& Info) {
+	Info.SetWikiPage("route_replies");
 }
 
 MODULEDEFS(CRouteRepliesMod, "Send replies (e.g. to /who) to the right client only")

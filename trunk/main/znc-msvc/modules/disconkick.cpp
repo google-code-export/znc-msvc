@@ -30,4 +30,8 @@ public:
 	}
 };
 
+template<> void TModInfo<CKickClientOnIRCDisconnect>(CModInfo& Info) {
+	Info.SetWikiPage("disconkick");
+}
+
 MODULEDEFS(CKickClientOnIRCDisconnect, "Kicks the client from all channels when the connection to the IRC server is lost")

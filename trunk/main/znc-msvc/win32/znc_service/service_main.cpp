@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	CZNCWindowsService Svc;
 
 	CUtils::SeedPRNG();
-	CUtils::SetStdoutIsTTY(false);
+	CDebug::SetStdoutIsTTY(false);
 
 	// process command line options first, only accept a single command,
 	// for example "--install" and "--uninstall" at the same time is meaningless 

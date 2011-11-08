@@ -10,7 +10,6 @@
 #define _CHAN_H
 
 #include "zncconfig.h"
-#include "FileUtils.h"
 #include "Nick.h"
 #include "ZNCString.h"
 #include <map>
@@ -24,6 +23,8 @@ using std::set;
 // Forward Declarations
 class CUser;
 class CClient;
+class CConfig;
+class CFile;
 // !Forward Declarations
 
 class ZNC_API CChan {
@@ -51,7 +52,7 @@ public:
 		M_Except     = 'e'
 	} EModes;
 
-	CChan(const CString& sName, CUser* pUser, bool bInConfig);
+	CChan(const CString& sName, CUser* pUser, bool bInConfig, CConfig *pConfig = NULL);
 	~CChan();
 
 	void Reset();
@@ -87,6 +88,7 @@ public:
 	// Buffer
 	size_t AddBuffer(const CString& sLine);
 	void ClearBuffer();
+	void TrimBuffer(const unsigned int uMax);
 	void SendBuffer(CClient* pClient);
 	// !Buffer
 

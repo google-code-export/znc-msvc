@@ -10,9 +10,127 @@
 #include "Chan.h"
 #include "Modules.h"
 
+class CAttachMatch {
+public:
+	CAttachMatch(const CString& sChannels, const CString& sHostmasks, bool bNegated)
+	{
+		m_sChannelWildcard = sChannels;
+		m_sHostmaskWildcard = sHostmasks;
+		m_bNegated = bNegated;
+
+		if (m_sChannelWildcard.empty())
+			m_sChannelWildcard = "*";
+		if (m_sHostmaskWildcard.empty())
+			m_sHostmaskWildcard = "*!*@*";
+	}
+
+	bool IsMatch(const CString& sChan, const CString& sHost) const {
+		if (!sHost.WildCmp(m_sHostmaskWildcard))
+			return false;
+		if (!sChan.WildCmp(m_sChannelWildcard))
+			return false;
+		return true;
+	}
+
+	bool IsNegated() const {
+		return m_bNegated;
+	}
+
+	const CString& GetHostMask() const {
+		return m_sHostmaskWildcard;
+	}
+
+	const CString& GetChans() const {
+		return m_sChannelWildcard;
+	}
+
+	CString ToString() {
+		CString sRes;
+		if (m_bNegated)
+			sRes += "!";
+		sRes += m_sChannelWildcard;
+		sRes += " ";
+		sRes += m_sHostmaskWildcard;
+		return sRes;
+	}
+
+private:
+	bool m_bNegated;
+	CString m_sChannelWildcard;
+	CString m_sHostmaskWildcard;
+};
+
 class CChanAttach : public CModule {
 public:
-	MODCONSTRUCTOR(CChanAttach) {}
+	typedef vector<CAttachMatch> VAttachMatch;
+	typedef VAttachMatch::iterator VAttachIter;
+
+private:
+	void HandleAdd(const CString& sLine) {
+		CString sMsg = sLine.Token(1, true);
+		bool bHelp = false;
+		bool bNegated = sMsg.TrimPrefix("!");
+		CString sChan = sMsg.Token(0);
+		CString sHost = sMsg.Token(1, true);
+
+		if (sChan.empty()) {
+			bHelp = true;
+		} else if (Add(bNegated, sChan, sHost)) {
+			PutModule("Added to list");
+		} else {
+			PutModule(sLine.Token(1, true) + " is already added");
+			bHelp = true;
+		}
+		if (bHelp) {
+			PutModule("Usage: Add [!]<#chan> <host>");
+			PutModule("Wildcards are allowed");
+		}
+	}
+
+	void HandleDel(const CString& sLine) {
+		CString sMsg  = sLine.Token(1, true);
+		bool bNegated = sMsg.TrimPrefix("!");
+		CString sChan = sMsg.Token(0);
+		CString sHost = sMsg.Token(1, true);
+
+		if (Del(bNegated, sChan, sHost)) {
+			PutModule("Removed " + sChan + " from list");
+		} else {
+			PutModule("Usage: Del [!]<#chan> <host>");
+		}
+	}
+
+	void HandleList(const CString& sLine) {
+		CTable Table;
+		Table.AddColumn("Neg");
+		Table.AddColumn("Chan");
+		Table.AddColumn("Host");
+
+		VAttachIter it = m_vMatches.begin();
+		for (; it != m_vMatches.end(); ++it) {
+			Table.AddRow();
+			Table.SetCell("Neg", it->IsNegated() ? "!" : "");
+			Table.SetCell("Chan", it->GetChans());
+			Table.SetCell("Host", it->GetHostMask());
+		}
+
+		if (Table.size()) {
+			PutModule(Table);
+		} else {
+			PutModule("You have no entries.");
+		}
+	}
+
+public:
+	MODCONSTRUCTOR(CChanAttach) {
+		AddHelpCommand();
+		AddCommand("Add",    static_cast<CModCommand::ModCmdFunc>(&CChanAttach::HandleAdd),
+			"[!]<#chan> <host>", "Add an entry, use !#chan to negate and * for wildcards");
+		AddCommand("Del",    static_cast<CModCommand::ModCmdFunc>(&CChanAttach::HandleDel),
+			"[!]<#chan> <host>", "Remove an entry, needs to be an exact match");
+		AddCommand("List",    static_cast<CModCommand::ModCmdFunc>(&CChanAttach::HandleList),
+			"",           "List all entries");
+	}
 
 	virtual ~CChanAttach() {
 	}
@@ -22,7 +140,12 @@ public:
 		sArgs.Split(" ", vsChans, false);
 
 		for (VCString::const_iterator it = vsChans.begin(); it != vsChans.end(); ++it) {
-			if (!Add(*it)) {
+			CString sAdd = *it;
+			bool bNegated = sAdd.TrimPrefix("!");
+			CString sChan = sAdd.Token(0);
+			CString sHost = sAdd.Token(1, true);
+
+			if (!Add(bNegated, sChan, sHost)) {
 				PutModule("Unable to add [" + *it + "]");
 			}
 		}
@@ -30,191 +153,102 @@ public:
 		// Load our saved settings, ignore errors
 		MCString::iterator it;
 		for (it = BeginNV(); it != EndNV(); ++it) {
-			Add(it->first);
+			CString sAdd = it->first;
+			bool bNegated = sAdd.TrimPrefix("!");
+			CString sChan = sAdd.Token(0);
+			CString sHost = sAdd.Token(1, true);
+
+			Add(bNegated, sChan, sHost);
 		}
 
 		return true;
 	}
 
-	void TryAttach(CChan& Channel) {
+	void TryAttach(const CNick& Nick, CChan& Channel) {
 		const CString& sChan = Channel.GetName();
+		const CString& sHost = Nick.GetHostMask();
+		VAttachIter it;
 
-		if (Channel.IsDetached() && IsAutoAttach(sChan)) {
-			Channel.JoinUser();
+		if (!Channel.IsDetached())
+			return;
+
+		// Any negated match?
+		for (it = m_vMatches.begin(); it != m_vMatches.end(); ++it) {
+			if (it->IsNegated() && it->IsMatch(sChan, sHost))
+				return;
+		}
+
+		// Now check for a positive match
+		for (it = m_vMatches.begin(); it != m_vMatches.end(); ++it) {
+			if (!it->IsNegated() && it->IsMatch(sChan, sHost)) {
+				Channel.JoinUser();
+				return;
+			}
 		}
 	}
 
 	virtual EModRet OnChanNotice(CNick& Nick, CChan& Channel, CString& sMessage) {
-		TryAttach(Channel);
+		TryAttach(Nick, Channel);
 		return CONTINUE;
 	}
 
 	virtual EModRet OnChanMsg(CNick& Nick, CChan& Channel, CString& sMessage) {
-		TryAttach(Channel);
+		TryAttach(Nick, Channel);
 		return CONTINUE;
 	}
 
 	virtual EModRet OnChanAction(CNick& Nick, CChan& Channel, CString& sMessage) {
-		TryAttach(Channel);
+		TryAttach(Nick, Channel);
 		return CONTINUE;
 	}
 
-	virtual void OnModCommand(const CString& sLine) {
-		CString sCommand = sLine.Token(0);
-
-		if (sCommand.Equals("ADD")) {
-			CString sChan = sLine.Token(1);
-
-			if (AlreadyAdded(sChan)) {
-				PutModule(sChan + " is already added");
-			} else if (Add(sChan)) {
-				PutModule("Added " + sChan + " to list");
-			} else {
-				PutModule("Usage: Add [!]<#chan>");
-			}
-		} else if (sCommand.Equals("DEL")) {
-			CString sChan = sLine.Token(1);
-
-			if (Del(sChan))
-				PutModule("Removed " + sChan + " from list");
-			else
-				PutModule("Usage: Del [!]<#chan>");
-		} else if (sCommand.Equals("LIST")) {
-			CTable Table;
-			Table.AddColumn("Chan");
-
-			for (unsigned int a = 0; a < m_vsChans.size(); a++) {
-				Table.AddRow();
-				Table.SetCell("Chan", m_vsChans[a]);
-			}
-
-			for (unsigned int b = 0; b < m_vsNegChans.size(); b++) {
-				Table.AddRow();
-				Table.SetCell("Chan", "!" + m_vsNegChans[b]);
-			}
-
-			if (Table.size()) {
-				PutModule(Table);
-			} else {
-				PutModule("You have no entries.");
-			}
-		} else if (sCommand.Equals("HELP")) {
-			CTable Table;
-			Table.AddColumn("Command");
-			Table.AddColumn("Description");
-
-			Table.AddRow();
-			Table.SetCell("Command", "Add");
-			Table.SetCell("Description", "Add an entry, use !#chan to negate and * for wildcards");
-
-			Table.AddRow();
-			Table.SetCell("Command", "Del");
-			Table.SetCell("Description", "Remove an entry, needs to be an exact match");
-
-			Table.AddRow();
-			Table.SetCell("Command", "List");
-			Table.SetCell("Description", "List all entries");
-
-			if (Table.size()) {
-				PutModule(Table);
-			} else {
-				PutModule("You have no entries.");
-			}
+	VAttachIter FindEntry(const CString& sChan, const CString& sHost) {
+		VAttachIter it = m_vMatches.begin();
+		for (; it != m_vMatches.end(); ++it) {
+			if (sHost.empty() || it->GetHostMask() != sHost)
+				continue;
+			if (sChan.empty() || it->GetChans() != sChan)
+				continue;
+			return it;
 		}
+		return m_vMatches.end();
 	}
 
-	bool AlreadyAdded(const CString& sInput) {
-		vector<CString>::iterator it;
+	bool Add(bool bNegated, const CString& sChan, const CString& sHost) {
+		CAttachMatch attach(sChan, sHost, bNegated);
 
-		if (sInput.Left(1) == "!") {
-			CString sChan = sInput.substr(1);
-			for (it = m_vsNegChans.begin(); it != m_vsNegChans.end();
-					++it) {
-				if (*it == sChan)
-					return true;
-			}
-		} else {
-			for (it = m_vsChans.begin(); it != m_vsChans.end(); ++it) {
-				if (*it == sInput)
-					return true;
-			}
-		}
-		return false;
-	}
-
-	bool Add(const CString& sChan) {
-		if (sChan.empty() || sChan == "!") {
-			return false;
+		// Check for duplicates
+		VAttachIter it = m_vMatches.begin();
+		for (; it != m_vMatches.end(); ++it) {
+			if (it->GetHostMask() == attach.GetHostMask()
+					&& it->GetChans() == attach.GetChans())
+				return false;
 		}
 
-		if (sChan.Left(1) == "!") {
-			m_vsNegChans.push_back(sChan.substr(1));
-		} else {
-			m_vsChans.push_back(sChan);
-		}
+		m_vMatches.push_back(attach);
 
 		// Also save it for next module load
-		SetNV(sChan, "");
+		SetNV(attach.ToString(), "");
 
 		return true;
 	}
 
-	bool Del(const CString& sChan) {
-		vector<CString>::iterator it, end;
-
-		if (sChan.empty() || sChan == "!")
+	bool Del(bool bNegated, const CString& sChan, const CString& sHost) {
+		VAttachIter it = FindEntry(sChan, sHost);
+		if (it == m_vMatches.end() || it->IsNegated() != bNegated)
 			return false;
 
-		if (sChan.Left(1) == "!") {
-			CString sTmp = sChan.substr(1);
-			it = m_vsNegChans.begin();
-			end = m_vsNegChans.end();
-
-			for (; it != end; ++it)
-				if (*it == sTmp)
-					break;
-
-			if (it == end)
-				return false;
-
-			m_vsNegChans.erase(it);
-		} else {
-			it = m_vsChans.begin();
-			end = m_vsChans.end();
-
-			for (; it != end; ++it)
-				if (*it == sChan)
-					break;
-
-			if (it == end)
-				return false;
-
-			m_vsChans.erase(it);
-		}
-
-		DelNV(sChan);
+		DelNV(it->ToString());
+		m_vMatches.erase(it);
 
 		return true;
 	}
-
-	bool IsAutoAttach(const CString& sChan) {
-		for (unsigned int a = 0; a < m_vsNegChans.size(); a++) {
-			if (sChan.WildCmp(m_vsNegChans[a])) {
-				return false;
-			}
-		}
-
-		for (unsigned int b = 0; b < m_vsChans.size(); b++) {
-			if (sChan.WildCmp(m_vsChans[b])) {
-				return true;
-			}
-		}
-
-		return false;
-	}
 private:
-	vector<CString> m_vsChans;
-	vector<CString> m_vsNegChans;
+	VAttachMatch m_vMatches;
 };
+
+template<> void TModInfo<CChanAttach>(CModInfo& Info) {
+	Info.SetWikiPage("autoattach");
+}
 
 MODULEDEFS(CChanAttach, "Reattaches you to channels on activity.")

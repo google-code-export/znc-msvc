@@ -464,4 +464,8 @@ void CAutoOpTimer::RunJob() {
 	m_pParent->ProcessQueue();
 }
 
+template<> void TModInfo<CAutoOpMod>(CModInfo& Info) {
+	Info.SetWikiPage("autoop");
+}
+
 MODULEDEFS(CAutoOpMod, "Auto op the good guys")

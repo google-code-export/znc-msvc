@@ -8,11 +8,12 @@
 
 #include "stdafx.hpp"
 #include "Modules.h"
+#include "FileUtils.h"
+#include "Template.h"
 #include "User.h"
+#include "WebModules.h"
 #include "znc.h"
 #include <dlfcn.h>
-#include "WebModules.h"
-#include "Template.h"
 
 #ifndef RTLD_LOCAL
 # define RTLD_LOCAL 0
@@ -145,6 +146,13 @@ CModule::~CModule() {
 
 void CModule::SetUser(CUser* pUser) { m_pUser = pUser; }
 void CModule::SetClient(CClient* pClient) { m_pClient = pClient; }
+
+const CString& CModule::GetSavePath() const {
+	if (!CFile::Exists(m_sSavePath)) {
+		CDir::MakeDir(m_sSavePath);
+	}
+	return m_sSavePath;
+}
 
 bool CModule::LoadRegistry() {
 	//CString sPrefix = (m_pUser) ? m_pUser->GetUserName() : ".global";
@@ -462,13 +470,9 @@ void CModule::OnPostRehash() {}
 void CModule::OnIRCDisconnected() {}
 void CModule::OnIRCConnected() {}
 CModule::EModRet CModule::OnIRCConnecting(CIRCSock *IRCSock) { return CONTINUE; }
+void CModule::OnIRCConnectionError(CIRCSock *IRCSock) {}
 CModule::EModRet CModule::OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName) { return CONTINUE; }
 CModule::EModRet CModule::OnBroadcast(CString& sMessage) { return CONTINUE; }
-CModule::EModRet CModule::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) { return CONTINUE; }
-void CModule::OnWriteUserConfig(CFile& Config) {}
-void CModule::OnWriteChanConfig(CFile& Config, CChan& Chan) {}
-
-CModule::EModRet CModule::OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize) { return CONTINUE; }
 
 void CModule::OnChanPermission(const CNick& OpNick, const CNick& Nick, CChan& Channel, unsigned char uMode, bool bAdded, bool bNoChange) {}
 void CModule::OnOp(const CNick& OpNick, const CNick& Nick, CChan& Channel, bool bNoChange) {}
@@ -488,7 +492,12 @@ void CModule::OnModCommand(const CString& sCommand) {
 	HandleCommand(sCommand);
 }
 void CModule::OnUnknownModCommand(const CString& sLine) {
-	if (!m_mCommands.empty())
+	if (m_mCommands.empty())
+		// This function is only called if OnModCommand wasn't
+		// overriden, so no false warnings for modules which don't use
+		// CModCommand for command handling.
+		PutModule("This module doesn't implement any commands.");
+	else
 		PutModule("Unknown command!");
 }
 
@@ -564,7 +573,6 @@ bool CModule::PutModNotice(const CString& sLine) {
 ///////////////////
 // CGlobalModule //
 ///////////////////
-CModule::EModRet CGlobalModule::OnWriteConfig(CFile& Config) { return CONTINUE; }
 CModule::EModRet CGlobalModule::OnAddUser(CUser& User, CString& sErrorRet) { return CONTINUE; }
 CModule::EModRet CGlobalModule::OnDeleteUser(CUser& User) { return CONTINUE; }
 void CGlobalModule::OnClientConnect(CZNCSock* pClient, const CString& sHost, unsigned short uPort) {}
@@ -621,13 +629,10 @@ bool CModules::OnPreRehash() { MODUNLOADCHK(OnPreRehash()); return false; }
 bool CModules::OnPostRehash() { MODUNLOADCHK(OnPostRehash()); return false; }
 bool CModules::OnIRCConnected() { MODUNLOADCHK(OnIRCConnected()); return false; }
 bool CModules::OnIRCConnecting(CIRCSock *pIRCSock) { MODHALTCHK(OnIRCConnecting(pIRCSock)); }
+bool CModules::OnIRCConnectionError(CIRCSock *pIRCSock) { MODUNLOADCHK(OnIRCConnectionError(pIRCSock)); return false; }
 bool CModules::OnIRCRegistration(CString& sPass, CString& sNick, CString& sIdent, CString& sRealName) { MODHALTCHK(OnIRCRegistration(sPass, sNick, sIdent, sRealName)); }
 bool CModules::OnBroadcast(CString& sMessage) { MODHALTCHK(OnBroadcast(sMessage)); }
-bool CModules::OnConfigLine(const CString& sName, const CString& sValue, CUser* pUser, CChan* pChan) { MODHALTCHK(OnConfigLine(sName, sValue, pUser, pChan)); }
-bool CModules::OnWriteUserConfig(CFile& Config) { MODUNLOADCHK(OnWriteUserConfig(Config)); return false; }
-bool CModules::OnWriteChanConfig(CFile& Config, CChan& Chan) { MODUNLOADCHK(OnWriteChanConfig(Config, Chan)); return false; }
 bool CModules::OnIRCDisconnected() { MODUNLOADCHK(OnIRCDisconnected()); return false; }
-bool CModules::OnDCCUserSend(const CNick& RemoteNick, unsigned long uLongIP, unsigned short uPort, const CString& sFile, unsigned long uFileSize) { MODHALTCHK(OnDCCUserSend(RemoteNick, uLongIP, uPort, sFile, uFileSize)); }
 bool CModules::OnChanPermission(const CNick& OpNick, const CNick& Nick, CChan& Channel, unsigned char uMode, bool bAdded, bool bNoChange) { MODUNLOADCHK(OnChanPermission(OpNick, Nick, Channel, uMode, bAdded, bNoChange)); return false; }
 bool CModules::OnOp(const CNick& OpNick, const CNick& Nick, CChan& Channel, bool bNoChange) { MODUNLOADCHK(OnOp(OpNick, Nick, Channel, bNoChange)); return false; }
 bool CModules::OnDeop(const CNick& OpNick, const CNick& Nick, CChan& Channel, bool bNoChange) { MODUNLOADCHK(OnDeop(OpNick, Nick, Channel, bNoChange)); return false; }
@@ -707,10 +712,6 @@ bool CModules::OnServerCapResult(const CString& sCap, bool bSuccess) { MODUNLOAD
 ////////////////////
 // CGlobalModules //
 ////////////////////
-bool CGlobalModules::OnWriteConfig(CFile& Config) {
-	GLOBALMODHALTCHK(OnWriteConfig(Config));
-}
-
 bool CGlobalModules::OnAddUser(CUser& User, CString& sErrorRet) {
 	GLOBALMODHALTCHK(OnAddUser(User, sErrorRet));
 }
@@ -816,16 +817,15 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 	GLOBALMODULECALL(OnModuleLoading(sModule, sArgs, bSuccess, sRetMsg), pUser, NULL, return bSuccess);
 
 	CString sModPath, sDataPath;
-	CString sDesc;
 	bool bVersionMismatch;
-	bool bIsGlobal;
+	CModInfo Info;
 
 	if (!FindModPath(sModule, sModPath, sDataPath)) {
 		sRetMsg = "Unable to find module [" + sModule + "]";
 		return false;
 	}
 
-	ModHandle p = OpenModule(sModule, sModPath, bVersionMismatch, bIsGlobal, sDesc, sRetMsg);
+	ModHandle p = OpenModule(sModule, sModPath, bVersionMismatch, Info, sRetMsg);
 
 	if (!p)
 		return false;
@@ -835,10 +835,10 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 		return false;
 	}
 
-	if ((pUser == NULL) != bIsGlobal) {
+	if ((pUser == NULL) != Info.IsGlobal()) {
 		dlclose(p);
 		sRetMsg = "Module [" + sModule + "] is ";
-		sRetMsg += (bIsGlobal) ? "" : "not ";
+		sRetMsg += Info.IsGlobal() ? "" : "not ";
 		sRetMsg += "a global module.";
 		return false;
 	}
@@ -846,33 +846,13 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 	CModule* pModule = NULL;
 
 	if (pUser) {
-		typedef CModule* (*fp)(ModHandle, CUser* pUser,
-				const CString& sModName, const CString& sDataPath);
-		fp Load = (fp) dlsym(p, "ZNCModLoad");
-
-		if (!Load) {
-			dlclose(p);
-			sRetMsg = "Could not find ZNCModLoad() in module [" + sModule + "]";
-			return false;
-		}
-
-		pModule = Load(p, pUser, sModule, sDataPath);
+		pModule = Info.GetLoader()(p, pUser, sModule, sDataPath);
 	} else {
-		typedef CModule* (*fp)(ModHandle, const CString& sModName,
-				const CString& sDataPath);
-		fp Load = (fp) dlsym(p, "ZNCModLoad");
-
-		if (!Load) {
-			dlclose(p);
-			sRetMsg = "Could not find ZNCModLoad() in module [" + sModule + "]";
-			return false;
-		}
-
-		pModule = Load(p, sModule, sDataPath);
+		pModule = Info.GetGlobalLoader()(p, sModule, sDataPath);
 	}
 
-	pModule->SetDescription(sDesc);
-	pModule->SetGlobal(bIsGlobal);
+	pModule->SetDescription(Info.GetDescription());
+	pModule->SetGlobal(Info.IsGlobal());
 	pModule->SetArgs(sArgs);
 	pModule->SetModPath(CDir::ChangeDir(CZNC::Get().GetCurPath(), sModPath));
 	push_back(pModule);
@@ -895,10 +875,9 @@ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CUser* p
 	}
 
 	if (!sRetMsg.empty()) {
-		sRetMsg = "Loaded module [" + sModule + "] [" + sRetMsg + "] [" + sModPath + "]";
-	} else {
-		sRetMsg = "Loaded module [" + sModule + "] [" + sModPath + "]";
+		sRetMsg += "[" + sRetMsg + "] ";
 	}
+	sRetMsg += "[" + sModPath + "]";
 	return true;
 }
 
@@ -923,27 +902,19 @@ bool CModules::UnloadModule(const CString& sModule, CString& sRetMsg) {
 	ModHandle p = pModule->GetDLL();
 
 	if (p) {
-		typedef void (*fp)(CModule*);
-		fp Unload = (fp)dlsym(p, "ZNCModUnload");
+		delete pModule;
 
-		if (Unload) {
-			Unload(pModule);
-
-			for (iterator it = begin(); it != end(); ++it) {
-				if (*it == pModule) {
-					erase(it);
-					break;
-				}
+		for (iterator it = begin(); it != end(); ++it) {
+			if (*it == pModule) {
+				erase(it);
+				break;
 			}
-
-			dlclose(p);
-			sRetMsg = "Module [" + sMod + "] unloaded";
-
-			return true;
-		} else {
-			sRetMsg = "Unable to unload module [" + sMod + "] could not find ZNCModUnload()";
-			return false;
 		}
+
+		dlclose(p);
+		sRetMsg = "Module [" + sMod + "] unloaded";
+
+		return true;
 	}
 
 	sRetMsg = "Unable to unload module [" + sMod + "]";
@@ -980,17 +951,13 @@ bool CModules::GetModInfo(CModInfo& ModInfo, const CString& sModule, CString& sR
 }
 
 bool CModules::GetModPathInfo(CModInfo& ModInfo, const CString& sModule, const CString& sModPath, CString& sRetMsg) {
-	CString sDesc;
 	bool bVersionMismatch;
-	bool bIsGlobal;
 
-	ModHandle p = OpenModule(sModule, sModPath, bVersionMismatch, bIsGlobal, sDesc, sRetMsg);
+	ModHandle p = OpenModule(sModule, sModPath, bVersionMismatch, ModInfo, sRetMsg);
 
 	if (!p)
 		return false;
 
-	ModInfo.SetGlobal(bIsGlobal);
-	ModInfo.SetDescription(sDesc);
 	ModInfo.SetName(sModule);
 	ModInfo.SetPath(sModPath);
 
@@ -1064,11 +1031,11 @@ CModules::ModDirList CModules::GetModDirs() {
 #ifdef RUN_FROM_SOURCE
 	// ./modules
 	sDir = CZNC::Get().GetCurPath() + "/modules/";
-	ret.push(std::make_pair(sDir, sDir));
+	ret.push(std::make_pair(sDir, sDir + "data/"));
 
 	// ./modules/extra
 	sDir = CZNC::Get().GetCurPath() + "/modules/extra/";
-	ret.push(std::make_pair(sDir, sDir));
+	ret.push(std::make_pair(sDir, sDir + "data/"));
 #endif
 
 	// ~/.znc/modules
@@ -1084,11 +1051,9 @@ CModules::ModDirList CModules::GetModDirs() {
 }
 
 ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, bool &bVersionMismatch,
-		bool &bIsGlobal, CString& sDesc, CString& sRetMsg) {
+		CModInfo& Info, CString& sRetMsg) {
 	// Some sane defaults in case anything errors out below
 	bVersionMismatch = false;
-	bIsGlobal = false;
-	sDesc.clear();
 	sRetMsg.clear();
 
 	for (unsigned int a = 0; a < sModule.length(); a++) {
@@ -1121,47 +1086,22 @@ ModHandle CModules::OpenModule(const CString& sModule, const CString& sModPath, 
 		return NULL;
 	}
 
-	typedef double (*dFP)();
-	dFP Version = (dFP) dlsym(p, "ZNCModVersion");
+	typedef bool (*InfoFP)(double, CModInfo&);
+	InfoFP ZNCModInfo = (InfoFP) dlsym(p, "ZNCModInfo");
 
-	if (!Version) {
+	if (!ZNCModInfo) {
 		dlclose(p);
-		sRetMsg = "Could not find ZNCModVersion() in module [" + sModule + "]";
+		sRetMsg = "Could not find ZNCModInfo() in module [" + sModule + "]";
 		return NULL;
 	}
 
-	typedef bool (*bFP)();
-	bFP IsGlobal = (bFP) dlsym(p, "ZNCModGlobal");
-
-	if (!IsGlobal) {
-		dlclose(p);
-		sRetMsg = "Could not find ZNCModGlobal() in module [" + sModule + "]";
-		return NULL;
-	}
-
-	typedef const char *(*sFP)();
-	sFP GetDesc = (sFP) dlsym(p, "ZNCModDescription");
-
-	if (!GetDesc) {
-		dlclose(p);
-		sRetMsg = "Could not find ZNCModDescription() in module [" + sModule + "]";
-		return NULL;
-	}
-
-	if (CModule::GetCoreVersion() != Version()) {
-		bVersionMismatch = true;
-#ifndef _WIN32
-		sRetMsg = "Version mismatch, recompile this module.";
-#else
-		sRetMsg = "Module version is '" + CString(Version(), 3) + "', but core expects '" +
-			CString(CModule::GetCoreVersion(), 3) + "'. Please re-download/re-install/re-compile the module.";
-#endif
+	if (ZNCModInfo(CModule::GetCoreVersion(), Info)) {
+  	sRetMsg = "";
+  	bVersionMismatch = false;
 	} else {
-		sRetMsg = "";
-		bVersionMismatch = false;
-		bIsGlobal = IsGlobal();
-		sDesc = GetDesc();
-	}
+		bVersionMismatch = true;
+		sRetMsg = "Version mismatch, recompile this module.";
+ 	}
 
 	return p;
 }

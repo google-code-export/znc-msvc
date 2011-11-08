@@ -8,6 +8,7 @@
 
 #include "stdafx.hpp"
 #include "Listener.h"
+#include "znc.h"
 
 CListener::~CListener() {
 	if (m_pListener)
@@ -16,6 +17,7 @@ CListener::~CListener() {
 
 bool CListener::Listen() {
 	if (!m_uPort || m_pListener) {
+		errno = EINVAL;
 		return false;
 	}
 
@@ -29,6 +31,10 @@ bool CListener::Listen() {
 	}
 #endif
 
+	// If e.g. getaddrinfo() fails, the following might not set errno.
+	// Make sure there is a consistent error message, not something random
+	// which might even be "Error: Success".
+	errno = EINVAL;
 	return CZNC::Get().GetManager().ListenHost(m_uPort, "_LISTENER", m_sBindHost, bSSL, SOMAXCONN,
 			m_pListener, 0, m_eAddr);
 }
@@ -64,6 +70,9 @@ void CRealListener::SockError(int iErrno) {
 	if (iErrno == EMFILE) {
 		// We have too many open fds, let's close this listening port to be able to continue
 		// to work, next rehash will (try to) reopen it.
+		CZNC::Get().Broadcast("We hit the FD limit, closing listening socket on ["
+				+ GetLocalIP() + " : " + CString(GetLocalPort()) + "]");
+		CZNC::Get().Broadcast("An admin has to rehash to reopen the listening port");
 		Close();
 	}
 }

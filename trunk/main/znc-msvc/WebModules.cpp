@@ -8,6 +8,7 @@
 
 #include "stdafx.hpp"
 #include "WebModules.h"
+#include "FileUtils.h"
 #include "User.h"
 #include "znc.h"
 #include <sstream>
@@ -34,6 +35,20 @@ struct CSessionManager {
 typedef std::multimap<CString, CWebSession*>::iterator mIPSessionsIterator;
 
 static CSessionManager Sessions;
+
+class CWebAuth : public CAuthBase {
+public:
+	CWebAuth(CWebSock* pWebSock, const CString& sUsername, const CString& sPassword);
+	virtual ~CWebAuth() {}
+
+	void SetWebSock(CWebSock* pWebSock) { m_pWebSock = pWebSock; }
+	void AcceptedLogin(CUser& User);
+	void RefusedLogin(const CString& sReason);
+	void Invalidate();
+private:
+protected:
+	CWebSock*   m_pWebSock;
+};
 
 void CWebSock::FinishUserSessions(const CUser& User) {
 	Sessions.m_mspSessions.FinishUserSessions(User);
@@ -199,7 +214,7 @@ void CWebSock::ParsePath() {
 	DEBUG("Path [" + m_sPath + "], Module [" + m_sModName + "], Page [" + m_sPage + "]");
 }
 
-size_t CWebSock::GetAvailSkins(vector<CFile>& vRet) const {
+void CWebSock::GetAvailSkins(VCString& vRet) const {
 	vRet.clear();
 
 	CString sRoot(GetSkinPath("_default_"));
@@ -219,7 +234,8 @@ size_t CWebSock::GetAvailSkins(vector<CFile>& vRet) const {
 			const CFile& SubDir = *Dir[d];
 
 			if (SubDir.IsDir() && SubDir.GetShortName() == "_default_") {
-				vRet.push_back(SubDir);
+				vRet.push_back(SubDir.GetShortName());
+				break;
 			}
 		}
 
@@ -227,12 +243,10 @@ size_t CWebSock::GetAvailSkins(vector<CFile>& vRet) const {
 			const CFile& SubDir = *Dir[e];
 
 			if (SubDir.IsDir() && SubDir.GetShortName() != "_default_" && SubDir.GetShortName() != ".svn") {
-				vRet.push_back(SubDir);
+				vRet.push_back(SubDir.GetShortName());
 			}
 		}
 	}
-
-	return vRet.size();
 }
 
 VCString CWebSock::GetDirs(CModule* pModule, bool bIsTemplate) {
@@ -523,7 +537,16 @@ void CWebSock::OnPageRequest(const CString& sURI) {
 }
 
 CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CString& sPageRet) {
-	if (GetSession()->GetIP() != GetRemoteIP()) {
+	// Check that their session really belongs to their IP address. IP-based
+	// authentication is bad, but here it's just an extra layer that makes
+	// stealing cookies harder to pull off.
+	//
+	// When their IP is wrong, we give them an invalid cookie. This makes
+	// sure that they will get a new cookie on their next request.
+	if (CZNC::Get().GetProtectWebSessions() && GetSession()->GetIP() != GetRemoteIP()) {
+		DEBUG("Expected IP: " << GetSession()->GetIP());
+		DEBUG("Remote IP:   " << GetRemoteIP());
+		SendCookie("SessionId", "WRONG_IP_FOR_SESSION");
 		PrintErrorPage(403, "Access denied", "This session does not belong to your IP.");
 		return PAGE_DONE;
 	}
@@ -533,6 +556,8 @@ CWebSock::EPageReqResult CWebSock::OnPageRequestInternal(const CString& sURI, CS
 	// CSRF against the login form makes no sense and the login form does a
 	// cookies-enabled check which would break otherwise.
 	if (IsPost() && GetParam("_CSRF_Check") != GetCSRFCheck() && sURI != "/login") {
+		DEBUG("Expected _CSRF_Check: " << GetCSRFCheck());
+		DEBUG("Actual _CSRF_Check:   " << GetParam("_CSRF_Check"));
 		PrintErrorPage(403, "Access denied", "POST requests need to send "
 				"a secret token to prevent cross-site request forgery attacks.");
 		return PAGE_DONE;
@@ -714,7 +739,8 @@ CSmartPtr<CWebSession> CWebSock::GetSession() {
 
 	if (Sessions.m_mIPSessions.count(GetRemoteIP()) > m_uiMaxSessions) {
 		mIPSessionsIterator it = Sessions.m_mIPSessions.find(GetRemoteIP());
-		Sessions.m_mIPSessions.erase(it);
+		DEBUG("Remote IP:   " << GetRemoteIP() << "; discarding session [" << it->second->GetId() << "]");
+		Sessions.m_mspSessions.RemItem(it->second->GetId());
 	}
 
 	CString sSessionID;

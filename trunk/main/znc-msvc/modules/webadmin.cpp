@@ -44,10 +44,7 @@ inline bool FOR_EACH_MODULE_CanContinue(FOR_EACH_MODULE_Type& state, CModules::i
 		i = state.CMuser.begin();
 		state.bOnCMuser = true;
 	}
-	if (state.bOnCMuser && i == state.CMuser.end()) {
-		return false;
-	}
-	return true;
+	return !(state.bOnCMuser && i == state.CMuser.end());
 }
 
 #define FOR_EACH_MODULE(I, pUser)\
@@ -252,8 +249,6 @@ public:
 		pNewUser->SetSkinName(WebSock.GetParam("skin"));
 		pNewUser->SetKeepBuffer(WebSock.GetParam("keepbuffer").ToBool());
 		pNewUser->SetMultiClients(WebSock.GetParam("multiclients").ToBool());
-		pNewUser->SetBounceDCCs(WebSock.GetParam("bouncedccs").ToBool());
-		pNewUser->SetUseClientIP(WebSock.GetParam("useclientip").ToBool());
 		pNewUser->SetTimestampAppend(WebSock.GetParam("appendtimestamp").ToBool());
 		pNewUser->SetTimestampPrepend(WebSock.GetParam("prependtimestamp").ToBool());
 		pNewUser->SetTimezoneOffset(WebSock.GetParam("timezoneoffset").ToDouble());
@@ -585,7 +580,7 @@ public:
 		FOR_EACH_MODULE(it, pUser) {
 			(*it)->OnEmbeddedWebRequest(WebSock, "webadmin/channel", TmplMod);
 		}
-	
+
 		if (!CZNC::Get().WriteConfig()) {
 			WebSock.PrintErrorPage("Channel added/modified, but config was not written");
 			return true;
@@ -727,15 +722,15 @@ public:
 				}
 			}
 
-			vector<CFile> vDirs;
+			vector<CString> vDirs;
 			WebSock.GetAvailSkins(vDirs);
 
 			for (unsigned int d = 0; d < vDirs.size(); d++) {
-				const CFile& SubDir = vDirs[d];
+				const CString& SubDir = vDirs[d];
 				CTemplate& l = Tmpl.AddRow("SkinLoop");
-				l["Name"] = SubDir.GetShortName();
+				l["Name"] = SubDir;
 
-				if (pUser && SubDir.GetShortName() == pUser->GetSkinName()) {
+				if (pUser && SubDir == pUser->GetSkinName()) {
 					l["Checked"] = "true";
 				}
 			}
@@ -750,6 +745,7 @@ public:
 				l["Name"] = Info.GetName();
 				l["Description"] = Info.GetDescription();
 				l["Args"] = GetModArgs(pUser, Info.GetName());
+				l["Wiki"] = Info.GetWikiPage();
 
 				if (pUser && pUser->GetModules().FindModule(Info.GetName())) {
 					l["Checked"] = "true";
@@ -771,16 +767,6 @@ public:
 			o4["Name"] = "multiclients";
 			o4["DisplayName"] = "Multi Clients";
 			if (!pUser || pUser->MultiClients()) { o4["Checked"] = "true"; }
-
-			CTemplate& o5 = Tmpl.AddRow("OptionLoop");
-			o5["Name"] = "bouncedccs";
-			o5["DisplayName"] = "Bounce DCCs";
-			if (!pUser || pUser->BounceDCCs()) { o5["Checked"] = "true"; }
-
-			CTemplate& o6 = Tmpl.AddRow("OptionLoop");
-			o6["Name"] = "useclientip";
-			o6["DisplayName"] = "Use Client IP";
-			if (pUser && pUser->UseClientIP()) { o6["Checked"] = "true"; }
 
 			CTemplate& o7 = Tmpl.AddRow("OptionLoop");
 			o7["Name"] = "appendtimestamp";
@@ -867,7 +853,7 @@ public:
 		FOR_EACH_MODULE(it, pUser) {
 			(*it)->OnEmbeddedWebRequest(WebSock, "webadmin/user", TmplMod);
 		}
-	
+
 		if (!CZNC::Get().WriteConfig()) {
 			WebSock.PrintErrorPage("User " + sAction + ", but config was not written");
 			return true;
@@ -970,12 +956,11 @@ public:
 			Tmpl["Action"] = "settings";
 			Tmpl["Title"] = "Settings";
 			Tmpl["StatusPrefix"] = CZNC::Get().GetStatusPrefix();
-			Tmpl["ISpoofFile"] = CZNC::Get().GetISpoofFile();
-			Tmpl["ISpoofFormat"] = CZNC::Get().GetISpoofFormat();
 			Tmpl["MaxBufferSize"] = CString(CZNC::Get().GetMaxBufferSize());
 			Tmpl["ConnectDelay"] = CString(CZNC::Get().GetConnectDelay());
 			Tmpl["ServerThrottle"] = CString(CZNC::Get().GetServerThrottle());
 			Tmpl["AnonIPLimit"] = CString(CZNC::Get().GetAnonIPLimit());
+			Tmpl["ProtectWebSessions"] = CString(CZNC::Get().GetProtectWebSessions());
 
 			const VCString& vsBindHosts = CZNC::Get().GetBindHosts();
 			for (unsigned int a = 0; a < vsBindHosts.size(); a++) {
@@ -1024,15 +1009,15 @@ public:
 #endif
 			}
 
-			vector<CFile> vDirs;
+			vector<CString> vDirs;
 			WebSock.GetAvailSkins(vDirs);
 
 			for (unsigned int d = 0; d < vDirs.size(); d++) {
-				const CFile& SubDir = vDirs[d];
+				const CString& SubDir = vDirs[d];
 				CTemplate& l = Tmpl.AddRow("SkinLoop");
-				l["Name"] = SubDir.GetShortName();
+				l["Name"] = SubDir;
 
-				if (SubDir.GetShortName() == CZNC::Get().GetSkinName()) {
+				if (SubDir == CZNC::Get().GetSkinName()) {
 					l["Checked"] = "true";
 				}
 			}
@@ -1055,6 +1040,7 @@ public:
 				l["Name"] = Info.GetName();
 				l["Description"] = Info.GetDescription();
 				l["Args"] = GetModArgs(NULL, Info.GetName(), true);
+				l["Wiki"] = Info.GetWikiPage();
 			}
 
 			return true;
@@ -1062,12 +1048,11 @@ public:
 
 		CString sArg;
 		sArg = WebSock.GetParam("statusprefix"); CZNC::Get().SetStatusPrefix(sArg);
-		sArg = WebSock.GetParam("ispooffile"); CZNC::Get().SetISpoofFile(sArg);
-		sArg = WebSock.GetParam("ispoofformat"); CZNC::Get().SetISpoofFormat(sArg);
 		sArg = WebSock.GetParam("maxbufsize"); CZNC::Get().SetMaxBufferSize(sArg.ToUInt());
 		sArg = WebSock.GetParam("connectdelay"); CZNC::Get().SetConnectDelay(sArg.ToUInt());
 		sArg = WebSock.GetParam("serverthrottle"); CZNC::Get().SetServerThrottle(sArg.ToUInt());
 		sArg = WebSock.GetParam("anoniplimit"); CZNC::Get().SetAnonIPLimit(sArg.ToUInt());
+		sArg = WebSock.GetParam("protectwebsessions"); CZNC::Get().SetProtectWebSessions(sArg.ToBool());
 
 		VCString vsArgs;
 		WebSock.GetRawParam("motd").Split("\n", vsArgs);
@@ -1140,5 +1125,9 @@ public:
 		return false;
 	}
 };
+
+template<> void TModInfo<CWebAdminMod>(CModInfo& Info) {
+	Info.SetWikiPage("webadmin");
+}
 
 GLOBALMODULEDEFS(CWebAdminMod, "Web based administration module")

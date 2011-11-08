@@ -30,6 +30,9 @@ Makefile
 /modules/modpython/*.pyc
 /modules/*.pyc
 
+/test/ConfigTest
+/test/EscapeTest
+
 # Compiled Object files
 *.o
 

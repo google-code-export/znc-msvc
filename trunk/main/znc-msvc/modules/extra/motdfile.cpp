@@ -10,6 +10,7 @@
 #include "znc.h"
 #include "Modules.h"
 #include "Client.h"
+#include "FileUtils.h"
 
 class CMotdFileMod : public CGlobalModule {
 public:
