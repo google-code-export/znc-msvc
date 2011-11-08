@@ -66,7 +66,14 @@ void CLogMod::PutLog(const CString& sLine, const CString& sWindow /*= "Status"*/
 	curtime += (time_t) (m_pUser->GetTimezoneOffset() * 60 * 60);
 	timeinfo = localtime(&curtime);
 
-	/* Generate file name: ~/.znc/users/<user>/moddata/log/WINDOW_YYYYMMDD.log  */
+	// Generate file name
+	if (!strftime(buffer, sizeof(buffer), m_sLogPath.c_str(), timeinfo))
+	{
+		DEBUG("Could not format log path [" << sPath << "]");
+		return;
+	}
+	sPath = buffer;
+
 	CString sWindowFixed(sWindow);
 	sWindowFixed = sWindowFixed.Replace_n("/", "_");
 	sWindowFixed = sWindowFixed.Replace_n("\\", "_");
@@ -78,12 +85,20 @@ void CLogMod::PutLog(const CString& sLine, const CString& sWindow /*= "Status"*/
 	sWindowFixed = sWindowFixed.Replace_n(">", "_");
 	sWindowFixed = sWindowFixed.Replace_n("|", "_");
 
-	sPath = GetSavePath() + "/" + sWindowFixed + "_";
-	snprintf(buffer, sizeof(buffer), "%04d%02d%02d.log", timeinfo->tm_year + 1900,
-			timeinfo->tm_mon + 1, timeinfo->tm_mday);
-	sPath += buffer;
+	// $WINDOW has to be handled last, since it can contain %
+	sPath.Replace("$WINDOW", sWindowFixed);
+
+	// Check if it's allowed to write in this specific path
+	sPath = CDir::CheckPathPrefix(GetSavePath(), sPath);
+	if (sPath.empty())
+	{
+		DEBUG("Invalid log path ["<<m_sLogPath<<"].");
+		return;
+	}
 
 	CFile LogFile(sPath);
+	CString sLogDir = LogFile.GetDir();
+	if (!CFile::Exists(sLogDir)) CDir::MakeDir(sLogDir);
 	if (LogFile.Open(O_WRONLY | O_APPEND | O_CREAT))
 	{
 		snprintf(buffer, sizeof(buffer), "[%02d:%02d:%02d] ",

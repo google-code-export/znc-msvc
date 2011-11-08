@@ -26,6 +26,8 @@
 #include "Chan.h"
 #include "User.h"
 
+#define REQUIRESSL	1
+
 class CCryptMod : public CModule {
 public:
 	MODCONSTRUCTOR(CCryptMod) {}

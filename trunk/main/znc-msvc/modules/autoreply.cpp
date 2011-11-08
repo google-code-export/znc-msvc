@@ -8,7 +8,6 @@
  */
 
 #include "stdafx.hpp"
-#include "znc.h"
 #include "Modules.h"
 #include "IRCSock.h"
 #include "User.h"

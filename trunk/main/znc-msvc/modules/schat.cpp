@@ -10,8 +10,12 @@
  */
 
 #include "stdafx.hpp"
+
+#define REQUIRESSL
+
 #include "FileUtils.h"
 #include "User.h"
+#include "znc.h"
 #include <sstream>
 
 using std::pair;

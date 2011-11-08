@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+#include "znc.h"
 
 class CFailToBanMod : public CGlobalModule {
 public:

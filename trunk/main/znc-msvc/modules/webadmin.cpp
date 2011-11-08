@@ -12,6 +12,7 @@
 #include "Server.h"
 #include "Template.h"
 #include "User.h"
+#include "znc.h"
 #include "WebModules.h"
 #include "ZNCString.h"
 #include "Listener.h"

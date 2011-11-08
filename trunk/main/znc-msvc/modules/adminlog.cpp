@@ -7,9 +7,10 @@
  */
 
 #include "stdafx.hpp"
-#include "User.h"
 #include "Client.h"
+#include "FileUtils.h"
 #include "Server.h"
+#include "User.h"
 
 #ifndef _WIN32
 #include <syslog.h>

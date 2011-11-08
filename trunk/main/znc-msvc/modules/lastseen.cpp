@@ -7,6 +7,7 @@
  */
 
 #include "stdafx.hpp"
+#include "User.h"
 #include "Chan.h"
 #include "znc.h"
 
@@ -85,7 +86,6 @@ public:
 
 	// Web stuff:
 
-	virtual bool WebRequiresLogin() { return true; }
 	virtual bool WebRequiresAdmin() { return true; }
 	virtual CString GetWebMenuTitle() { return "Last Seen"; }
 
