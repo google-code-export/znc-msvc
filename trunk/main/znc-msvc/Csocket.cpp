@@ -875,8 +875,14 @@ bool Csock::Connect( const CS_STRING & sBindHost, bool bSkipSetup )
 
 	}
 
+#ifndef _WIN32
 	// set it none blocking
 	set_non_blocking( m_iReadSock );
+#else
+	if( !GetIPv6() )
+			set_non_blocking( m_iReadSock );
+	/* non-blocking IPv6 sockets on systems without IPv6 connectivity don't always (never?) return ENETUNREACH/EHOSTUNREACH */
+#endif
 
 	m_iConnType = OUTBOUND;
 
@@ -2280,11 +2286,15 @@ int Csock::GetAddrInfo( const CS_STRING & sHostname, CSSockAddr & csSockAddr )
 			}
 			m_pCurrAddr = &csSockAddr; // flag its starting
 
+#if ARES_VERSION < CREATE_ARES_VER( 1, 6, 0 )
 			int iFamily = AF_INET;
 #ifdef HAVE_IPV6
 			// as of ares 1.6.0 if it fails on af_inet6, it falls back to af_inet, this code was here in the previous Csocket version, just adding the comment as a reminder
 			iFamily = csSockAddr.GetAFRequire() == CSSockAddr::RAF_ANY ? AF_INET6 : csSockAddr.GetAFRequire();
 #endif /* HAVE_IPV6 */
+#else
+			int iFamily = csSockAddr.GetAFRequire();
+#endif
 			ares_gethostbyname( m_pARESChannel, sHostname.c_str(), iFamily, AresHostCallback, this );
 		}
 		if( !m_pCurrAddr )
@@ -2298,7 +2308,11 @@ int Csock::GetAddrInfo( const CS_STRING & sHostname, CSSockAddr & csSockAddr )
 				{
 					SetSkipConnect( true );
 				}
+#ifndef _WIN32
 				else if( GetSockError() == ENETUNREACH )
+#else
+				else if( GetSockError() == ENETUNREACH || GetSockError() == EHOSTUNREACH )
+#endif
 				{
 					// the Connect() failed, so throw a retry back in with ipv4, and let it process normally
 					CS_DEBUG( "Failed ipv6 connection with PF_UNSPEC, falling back to ipv4" );
