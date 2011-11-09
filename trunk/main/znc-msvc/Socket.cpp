@@ -17,7 +17,7 @@ unsigned int CSockManager::GetAnonConnectionCount(const CString &sIP) const {
 	unsigned int ret = 0;
 
 	for (it = begin(); it != end(); ++it) {
-		CZNCSock *pSock = *it;
+		Csock *pSock = *it;
 		// Logged in CClients have "USR::<username>" as their sockname
 		if (pSock->GetType() == Csock::INBOUND && pSock->GetRemoteIP() == sIP
 				&& pSock->GetSockName().Left(5) != "USR::") {
@@ -87,10 +87,10 @@ bool CSocket::ConnectionFrom(const CString& sHost, unsigned short uPort) {
 	return CZNC::Get().AllowConnectionFrom(sHost);
 }
 
-bool CSocket::Connect(const CString& sHostname, unsigned short uPort, bool bSSL, unsigned int uTimeout) {
+void CSocket::Connect(const CString& sHostname, unsigned short uPort, bool bSSL, unsigned int uTimeout) {
 	if (!m_pModule) {
 		DEBUG("ERROR: CSocket::Connect called on instance without m_pModule handle!");
-		return false;
+		return;
 	}
 
 	CUser* pUser = m_pModule->GetUser();
@@ -107,7 +107,7 @@ bool CSocket::Connect(const CString& sHostname, unsigned short uPort, bool bSSL,
 		sSockName = GetSockName();
 	}
 
-	return m_pModule->GetManager()->Connect(sHostname, uPort, sSockName, uTimeout, bSSL, sBindHost, this);
+	m_pModule->GetManager()->Connect(sHostname, uPort, sSockName, uTimeout, bSSL, sBindHost, this);
 }
 
 bool CSocket::Listen(unsigned short uPort, bool bSSL, unsigned int uTimeout) {
