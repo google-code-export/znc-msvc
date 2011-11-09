@@ -91,7 +91,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;libeay32.lib;ssleay32.lib;cares.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;shlwapi.lib;libeay32.lib;ssleay32.lib;caresd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)ZNC.dll</OutputFile>
       <AdditionalLibraryDirectories>..\..\..\dependencies\lib_x86\debug;..\..\..\dependencies\lib_x86\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
