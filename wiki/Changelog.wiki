@@ -1,6 +1,10 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2011-11-09 (0.202r2) ==
+  * Important bugfix that prevented lots of servers from being connected to. Please refer to issue 39 and revision 339, revision 340 and revision 341 for details.
+  * Updated c-ares to git master branch version + patch by [http://c-ares.haxx.se/mail/c-ares-archive-2011-10/0001.shtml Bert Belder].
+
 == 2011-11-08 (0.202) ==
   * Based on upstream ZNC 0.202 as released in September ([http://github.com/znc/znc/tree/znc-0.202 source], [http://en.znc.in/wiki/ChangeLog/0.202 Changelog]) - includes changes from [http://en.znc.in/wiki/ChangeLog/0.200 0.200]
   * Updated OpenSSL to 1.0.0e
