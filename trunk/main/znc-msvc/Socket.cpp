@@ -30,10 +30,12 @@ unsigned int CSockManager::GetAnonConnectionCount(const CString &sIP) const {
 	return ret;
 }
 
-CS_STRING CZNCSock::ConvertAddress(void *addr, bool ipv6) {
-	CString sRet = Csock::ConvertAddress(addr, ipv6);
-	sRet.TrimPrefix("::ffff:");
-	return sRet;
+int CZNCSock::ConvertAddress( const struct sockaddr_storage * pAddr, socklen_t iAddrLen, CS_STRING & sIP, u_short * piPort ) {
+	int iRet = Csock::ConvertAddress(pAddr, iAddrLen, sIP, piPort);
+	if (pAddr->ss_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&reinterpret_cast<const struct sockaddr_in6 *>(pAddr)->sin6_addr)) {
+		sIP.TrimPrefix("::ffff:");
+	}
+	return iRet;
 }
 
 /////////////////// CSocket ///////////////////
