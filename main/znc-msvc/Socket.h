@@ -20,7 +20,7 @@ public:
 	CZNCSock(const CString& sHost, u_short port, int timeout = 60) : Csock(sHost, port, timeout) {}
 	~CZNCSock() {}
 
-	virtual CS_STRING ConvertAddress(void *addr, bool ipv6 = false);
+	virtual int ConvertAddress( const struct sockaddr_storage * pAddr, socklen_t iAddrLen, CS_STRING & sIP, u_short * piPort );
 };
 
 enum EAddrType {
