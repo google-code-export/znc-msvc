@@ -28,9 +28,6 @@
 
 using std::stringstream;
 
-outputHook CUtils::outputHook = NULL;
-void* CUtils::outputHookUserData = NULL;
-
 CUtils::CUtils() {}
 CUtils::~CUtils() {}
 
@@ -274,122 +271,79 @@ bool CUtils::GetInput(const CString& sPrompt, CString& sRet, const CString& sDef
 }
 
 void CUtils::PrintError(const CString& sMessage) {
-	if(!OutputHooked())
-	{
-		if (CDebug::StdoutIsTTY())
-			fprintf(stdout, "\033[1m\033[34m[\033[31m ** \033[34m]\033[39m\033[22m %s\n", sMessage.c_str());
-		else
-			fprintf(stdout, "%s\n", sMessage.c_str());
-		fflush(stdout);
-	}
+	if (CDebug::StdoutIsTTY())
+		fprintf(stdout, "\033[1m\033[34m[\033[31m ** \033[34m]\033[39m\033[22m %s\n", sMessage.c_str());
 	else
-	{
-		HookedOutput(2, sMessage);
-	}
+		fprintf(stdout, "%s\n", sMessage.c_str());
+	fflush(stdout);
 }
 
 void CUtils::PrintDebug(const CString& sMessage) {
-	if(!OutputHooked())
-	{
-		fprintf(stdout, "%s\n", sMessage.c_str());
-		fflush(stdout);
-	}
-	else
-	{
-		HookedOutput(1, sMessage);
-	}
+	fprintf(stdout, "%s\n", sMessage.c_str());
+	fflush(stdout);
 }
 
 void CUtils::PrintPrompt(const CString& sMessage) {
-	if(!OutputHooked())
-	{
-		if (CDebug::StdoutIsTTY())
-			fprintf(stdout, "\033[1m\033[34m[\033[33m ?? \033[34m]\033[39m\033[22m %s: ", sMessage.c_str());
-		else
-			fprintf(stdout, "[ ?? ] %s: ", sMessage.c_str());
-		fflush(stdout);
-	}
+	if (CDebug::StdoutIsTTY())
+		fprintf(stdout, "\033[1m\033[34m[\033[33m ?? \033[34m]\033[39m\033[22m %s: ", sMessage.c_str());
 	else
-	{
-		// this should never be called, since the hooked output probably can't return anything from a prompt.
-		HookedOutput(-1, sMessage);
-	}
+		fprintf(stdout, "[ ?? ] %s: ", sMessage.c_str());
+	fflush(stdout);
 }
 
 void CUtils::PrintMessage(const CString& sMessage, bool bStrong) {
-	if(!OutputHooked())
-	{
-		if (CDebug::StdoutIsTTY()) {
-			if (bStrong)
-				fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m \033[1m%s\033[22m\n",
-						sMessage.c_str());
-			else
-				fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m %s\n",
-						sMessage.c_str());
-		} else
-			fprintf(stdout, "%s\n", sMessage.c_str());
+	if (CDebug::StdoutIsTTY()) {
+		if (bStrong)
+			fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m \033[1m%s\033[22m\n",
+					sMessage.c_str());
+		else
+			fprintf(stdout, "\033[1m\033[34m[\033[33m ** \033[34m]\033[39m\033[22m %s\n",
+					sMessage.c_str());
+	} else
+		fprintf(stdout, "%s\n", sMessage.c_str());
 
-		fflush(stdout);
-	}
-	else
-	{
-		HookedOutput((bStrong ? 6 : 5), sMessage);
-	}
+	fflush(stdout);
 }
 
 void CUtils::PrintAction(const CString& sMessage) {
-	if(!OutputHooked())
-	{
-		if (CDebug::StdoutIsTTY())
-			fprintf(stdout, "\033[1m\033[34m[\033[32m    \033[34m]\033[39m\033[22m %s... ", sMessage.c_str());
-		else
-			fprintf(stdout, "%s... ", sMessage.c_str());
-		fflush(stdout);
-	}
+	if (CDebug::StdoutIsTTY())
+		fprintf(stdout, "\033[1m\033[34m[\033[32m    \033[34m]\033[39m\033[22m %s... ", sMessage.c_str());
 	else
-	{
-		HookedOutput(5, sMessage + "...");
-	}
+		fprintf(stdout, "%s... ", sMessage.c_str());
+	fflush(stdout);
 }
 
 void CUtils::PrintStatus(bool bSuccess, const CString& sMessage) {
-	if(!OutputHooked())
-	{
-		if (CDebug::StdoutIsTTY()) {
-			if (!sMessage.empty()) {
-				if (bSuccess) {
-					fprintf(stdout, "%s", sMessage.c_str());
-				} else {
-					fprintf(stdout, "\033[1m\033[34m[\033[31m %s \033[34m]"
-							"\033[39m\033[22m", sMessage.c_str());
-				}
-			}
-
-			fprintf(stdout, "\r");
-
+	if (CDebug::StdoutIsTTY()) {
+		if (!sMessage.empty()) {
 			if (bSuccess) {
-				fprintf(stdout, "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m\n");
+				fprintf(stdout, "%s", sMessage.c_str());
 			} else {
-				fprintf(stdout, "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m\n");
-			}
-		} else {
-			if (bSuccess) {
-				fprintf(stdout, "%s\n", sMessage.c_str());
-			} else {
-				if (!sMessage.empty()) {
-					fprintf(stdout, "[ %s ]", sMessage.c_str());
-				}
-
-				fprintf(stdout, "\n");
+				fprintf(stdout, "\033[1m\033[34m[\033[31m %s \033[34m]"
+						"\033[39m\033[22m", sMessage.c_str());
 			}
 		}
 
-		fflush(stdout);
+		fprintf(stdout, "\r");
+
+		if (bSuccess) {
+			fprintf(stdout, "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m\n");
+		} else {
+			fprintf(stdout, "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m\n");
+		}
+	} else {
+		if (bSuccess) {
+			fprintf(stdout, "%s\n", sMessage.c_str());
+		} else {
+			if (!sMessage.empty()) {
+				fprintf(stdout, "[ %s ]", sMessage.c_str());
+			}
+
+			fprintf(stdout, "\n");
+		}
 	}
-	else
-	{
-		HookedOutput((bSuccess ? 10 : 11), sMessage);
-	}
+
+	fflush(stdout);
 }
 
 #ifdef _WIN32

@@ -125,7 +125,6 @@ public:
 	// Static allocator
 	static CZNC& Get();
 	static void _Reset();
-	void HookOutput(outputHook fHook);
 	CUser* FindUser(const CString& sUsername);
 	CModule* FindModule(const CString& sModName, const CString& sUsername);
 	CModule* FindModule(const CString& sModName, CUser* pUser);
