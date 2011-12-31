@@ -24,8 +24,6 @@ using std::map;
 using std::vector;
 using std::pair;
 
-typedef void (*outputHook)(int type, const char* text, void *userData);
-
 static inline void SetFdCloseOnExec(int fd)
 {
 #ifndef _WIN32
@@ -46,9 +44,6 @@ public:
 
 	static CString GetIP(unsigned long addr);
 	static unsigned long GetLongIP(const CString& sIP);
-	static void HookOutput(outputHook fHook, void* userData) { outputHook = fHook; outputHookUserData = userData; }
-	static bool OutputHooked() { return (outputHook != NULL); }
-	static void HookedOutput(int type, const CString& message) { if(OutputHooked()) { outputHook(type, message.c_str(), outputHookUserData); } }
 
 	static void PrintError(const CString& sMessage);
 	static void PrintDebug(const CString& sMessage);
@@ -88,8 +83,6 @@ public:
 
 private:
 protected:
-	static outputHook outputHook;
-	static void* outputHookUserData;
 };
 
 class CException {

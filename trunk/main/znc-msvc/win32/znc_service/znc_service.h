@@ -17,7 +17,6 @@ public:
 	~CZNCWindowsService();
 	static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv);
 	static VOID WINAPI ControlHandler(DWORD dwControl);
-	static void OutputHookProc(int type, const char* text, void *userData);
 	void SetDataDir(char *dataDir) { sDataDir = CString(dataDir); };
 
 protected:	

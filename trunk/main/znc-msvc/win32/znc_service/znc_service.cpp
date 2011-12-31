@@ -36,8 +36,6 @@ DWORD CZNCWindowsService::Init()
 	if (hEventLog == NULL)
 		return ERROR_EXITCODE;
 
-	CUtils::HookOutput(&OutputHookProc, NULL);
-
 	if(CZNC::GetCoreVersion() != VERSION)
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, INIT_CATEGORY, MSG_DLL_VERSION_MISMATCH, NULL, 0, 0, NULL, NULL);
@@ -161,7 +159,7 @@ VOID WINAPI CZNCWindowsService::ControlHandler(DWORD dwControl)
 	return;
 }
 
-void CZNCWindowsService::OutputHookProc(int type, const char* text, void *userData)
+/*void CZNCWindowsService::OutputHookProc(int type, const char* text, void *userData)
 {
 	if(type == 2)
 	{
@@ -169,4 +167,4 @@ void CZNCWindowsService::OutputHookProc(int type, const char* text, void *userDa
 		pInsertStrings[0] = const_cast<char*>(text);
 		ReportEvent(thisSvc->hEventLog, EVENTLOG_ERROR_TYPE, RUNTIME_CATEGORY, MSG_RUNTIME_ERROR, NULL, 1, 0, (LPCSTR*)pInsertStrings, NULL);
 	}
-}
+}*/
