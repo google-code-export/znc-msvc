@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZNC_Service", "ZNC_Service.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Modules", "Modules.vcxproj", "{1F28EB13-7603-4103-97E7-E8DC786F63B7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZNC_Tray", "ZNC_Tray.vcxproj", "{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -49,6 +51,12 @@ Global
 		{1F28EB13-7603-4103-97E7-E8DC786F63B7}.Release|Win32.Build.0 = Release|Win32
 		{1F28EB13-7603-4103-97E7-E8DC786F63B7}.Release|x64.ActiveCfg = Release|x64
 		{1F28EB13-7603-4103-97E7-E8DC786F63B7}.Release|x64.Build.0 = Release|x64
+		{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}.Debug|Win32.Build.0 = Debug|Win32
+		{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}.Debug|x64.ActiveCfg = Debug|Win32
+		{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}.Release|Win32.ActiveCfg = Release|Win32
+		{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}.Release|Win32.Build.0 = Release|Win32
+		{F429F1FA-46F6-4A34-BCC0-95C59ECCDBFD}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
