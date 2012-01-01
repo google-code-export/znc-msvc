@@ -1,5 +1,6 @@
 #include "stdafx.hpp"
 #include "znc_service.h"
+#include "registry.h"
 
 
 CZNCWindowsService *CZNCWindowsService::thisSvc = 0;
@@ -12,6 +13,7 @@ CZNCWindowsService::CZNCWindowsService() :
 	memset(&serviceStatus, 0, sizeof(serviceStatus));
 	serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
 }
+
 
 CZNCWindowsService::~CZNCWindowsService()
 {
@@ -30,7 +32,7 @@ DWORD CZNCWindowsService::Init()
 	_set_fmode(_O_BINARY);
 	CRYPTO_malloc_init();
 
-	hEventLog = RegisterEventSource(NULL, ZNC_EVENT_PROVIDER);
+	hEventLog = RegisterEventSourceW(NULL, ZNC_EVENT_PROVIDER);
 	if (hEventLog == NULL)
 		return ERROR_EXITCODE;
 
@@ -68,6 +70,7 @@ DWORD CZNCWindowsService::Init()
 	return 0;
 }
 
+
 DWORD CZNCWindowsService::Loop()
 {
 	CZNC* pZNC = &CZNC::Get();
@@ -96,6 +99,7 @@ DWORD CZNCWindowsService::Loop()
 	return dwRet;
 }
 
+
 VOID CZNCWindowsService::ReportServiceStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
 	serviceStatus.dwCurrentState = dwCurrentState;
@@ -116,12 +120,13 @@ VOID CZNCWindowsService::ReportServiceStatus(DWORD dwCurrentState, DWORD dwWin32
 	SetServiceStatus(hServiceStatus, &serviceStatus);
 }
 
+
 // ----------------
 // static callbacks
 // ----------------
-VOID WINAPI CZNCWindowsService::ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
+VOID WINAPI CZNCWindowsService::ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 {
-	thisSvc->hServiceStatus = RegisterServiceCtrlHandler(ZNC_SERVICE_NAME, ControlHandler);
+	thisSvc->hServiceStatus = RegisterServiceCtrlHandlerW(ZNC_SERVICE_NAME, ControlHandler);
 	if (thisSvc->hServiceStatus == NULL)
 	{
 		return;
@@ -140,6 +145,7 @@ VOID WINAPI CZNCWindowsService::ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	Result = thisSvc->Loop();
 	thisSvc->ReportServiceStatus(SERVICE_STOPPED, Result, 0);
 }
+
 
 VOID WINAPI CZNCWindowsService::ControlHandler(DWORD dwControl)
 {
@@ -166,3 +172,140 @@ VOID WINAPI CZNCWindowsService::ControlHandler(DWORD dwControl)
 		ReportEvent(thisSvc->hEventLog, EVENTLOG_ERROR_TYPE, RUNTIME_CATEGORY, MSG_RUNTIME_ERROR, NULL, 1, 0, (LPCSTR*)pInsertStrings, NULL);
 	}
 }*/
+
+
+#pragma comment(lib, "Shlwapi.lib") // :TODO: move me
+
+static std::wstring GetExePath() // :TODO: move me
+{
+	WCHAR l_buf[1000] = {0};
+	WCHAR l_buf2[1000] = {0};
+
+	::GetModuleFileNameW(NULL, (LPWCH)l_buf, 999);
+	::GetLongPathNameW(l_buf, l_buf2, 999);
+
+	return l_buf2;
+}
+
+static std::wstring GetExeDir() // :TODO: move me
+{
+	WCHAR l_buf[1000] = {0};
+	WCHAR l_buf2[1000] = {0};
+
+	::GetModuleFileNameW(NULL, (LPWCH)l_buf, 999);
+	::GetLongPathNameW(l_buf, l_buf2, 999);
+	::PathRemoveFileSpecW(l_buf2);
+	::PathRemoveBackslashW(l_buf2);
+
+	return l_buf2;
+}
+
+
+DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
+{
+	SC_HANDLE l_hscm = ::OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW,
+		SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE);
+
+	if(!l_hscm)
+	{
+		// most probably ERROR_ACCESS_DENIED.
+		return ::GetLastError();
+	}
+
+	DWORD l_result = 0;
+	
+	const std::wstring l_exePath = L"\"" + GetExePath() + L"\"";
+
+	SC_HANDLE l_hsvc = ::CreateServiceW(l_hscm, ZNC_SERVICE_NAME, ZNC_SERVICE_NAME,
+		SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG | SERVICE_START | SERVICE_STOP,
+		SERVICE_WIN32_OWN_PROCESS, (a_startTypeManual ? SERVICE_DEMAND_START : SERVICE_AUTO_START), SERVICE_ERROR_NORMAL,
+		l_exePath.c_str(), NULL, NULL, NULL, L"NT AUTHORITY\\LocalService", NULL);
+
+	if(!l_hsvc)
+	{
+		l_result = ::GetLastError();
+	}
+	else
+	{
+		if(!a_startTypeManual)
+		{
+			// change start type to "auto (delayed)" on supported OSes:
+
+			OSVERSIONINFOEXW l_osver = { sizeof(OSVERSIONINFOEXW), 0 };
+			l_osver.dwMajorVersion = 6;
+
+			DWORDLONG dwlVerCond = 0;
+			VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
+			VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+			if(::VerifyVersionInfoW(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond))
+			{
+				SERVICE_DELAYED_AUTO_START_INFO l_sdasi = { 0 };
+				l_sdasi.fDelayedAutostart = TRUE;
+				::ChangeServiceConfig2(l_hsvc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, &l_sdasi);
+			}
+		}
+
+		// update description:
+		SERVICE_DESCRIPTIONW l_sd = { 0 };
+		l_sd.lpDescription = ZNC_SERVICE_DESCRIPTION;
+		::ChangeServiceConfig2W(l_hsvc, SERVICE_CONFIG_DESCRIPTION, &l_sd);
+
+		::CloseServiceHandle(l_hsvc);
+
+		// register event provider:
+		CRegistryKey l_evlKey(HKEY_LOCAL_MACHINE);
+
+		if(l_evlKey.OpenForWriting(L"SYSTEM\\CurrentControlSet\\services\\eventlog\\Application\\" ZNC_EVENT_PROVIDER))
+		{
+			const std::wstring l_eventProviderDllPath = GetExeDir() + L"\\IncoWatchEvents.dll";
+
+			l_evlKey.WriteDword(L"CategoryCount", 3);
+			l_evlKey.WriteString(L"CategoryMessageFile", l_eventProviderDllPath);
+			l_evlKey.WriteString(L"EventMessageFile", l_eventProviderDllPath);
+			l_evlKey.WriteString(L"ParameterMessageFile", l_eventProviderDllPath);
+			l_evlKey.WriteDword(L"TypesSupported", 0x07);
+		}
+	}
+
+	::CloseServiceHandle(l_hscm);
+
+	return l_result;
+}
+
+
+DWORD CZNCWindowsService::UninstallService()
+{
+	SC_HANDLE l_hscm = ::OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, SC_MANAGER_ALL_ACCESS);
+
+	if(!l_hscm)
+	{
+		// most probably ERROR_ACCESS_DENIED.
+		return ::GetLastError();
+	}
+
+	DWORD l_result = 0;
+
+	SC_HANDLE l_hsvc = ::OpenServiceW(l_hscm, ZNC_SERVICE_NAME, SERVICE_ALL_ACCESS);
+
+	if(!l_hsvc)
+	{
+		l_result = ::GetLastError();
+	}
+	else
+	{
+		if(!::DeleteService(l_hsvc))
+		{
+			l_result = ::GetLastError();
+		}
+
+		::CloseServiceHandle(l_hsvc);
+
+		// delete event provider information:
+		CRegistryKey::DeleteKey(L"SYSTEM\\CurrentControlSet\\services\\eventlog\\Application", ZNC_EVENT_PROVIDER);
+	}
+
+	::CloseServiceHandle(l_hscm);
+
+	return l_result;
+}

@@ -5,6 +5,7 @@
 static const struct option g_LongOpts[] = {
 	{ "help",		no_argument,	0,	'h' },
 	{ "install",	no_argument,	0,	'i' },
+	{ "manual",		no_argument,	0,	'm' },
 	{ "uninstall",	no_argument,	0,	'u' },
 	{ "datadir",	required_argument, 0, 'd' },
 	{ 0, 0, 0, 0 }
@@ -14,7 +15,7 @@ static void GenerateHelp(const char *appname) {
 	CUtils::PrintMessage("USAGE: " + CString(appname) + " [commands / options]");
 	CUtils::PrintMessage("Commands are:");
 	CUtils::PrintMessage("\t-h, --help         List available command line options (this page)");
-	CUtils::PrintMessage("\t-i, --install      Install ZNC service");
+	CUtils::PrintMessage("\t-i, --install      Install ZNC service.");
 	CUtils::PrintMessage("\t-h, --uninstall    Uninstall ZNC service");
 	CUtils::PrintMessage("The only option is:");
 	CUtils::PrintMessage("\t-d, --datadir      Set a different znc repository (default is ~/.znc)\n");
@@ -35,11 +36,13 @@ int main(int argc, char *argv[])
 
 	int iArg, iOptIndex = -1;
 	enum { cmdNone, cmdErr, cmdHelp, cmdInstall, cmdUninstall } Command = cmdNone;
+	bool bManualStartupInstall = false;
 
-	while ((iArg = getopt_long(argc, argv, "hiud:", g_LongOpts, &iOptIndex)) != -1) {
+	while ((iArg = getopt_long(argc, argv, "hiumd:", g_LongOpts, &iOptIndex)) != -1) {
 		switch (iArg) {
 		case 'h':
 			Command = cmdHelp;
+			break;
 		case 'i':
 			if (Command == cmdNone)
 				Command = cmdInstall;
@@ -55,15 +58,18 @@ int main(int argc, char *argv[])
 		case 'd':
 			Svc.SetDataDir(optarg);
 			break;
+		case 'm':
+			bManualStartupInstall = true;
+			break;
 		}
 	}
 
-	SERVICE_TABLE_ENTRY ServiceTable[] = {
+	SERVICE_TABLE_ENTRYW ServiceTable[] = {
 		{ZNC_SERVICE_NAME, Svc.ServiceMain},
 		{NULL, NULL}
 	};
 	// it was started by the Windows Service Control Manager
-	if (StartServiceCtrlDispatcher(ServiceTable) != NULL)
+	if (StartServiceCtrlDispatcherW(ServiceTable) != NULL)
 		return 0;
 	else if (GetLastError() == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
 		// it was started as a console app
@@ -72,10 +78,28 @@ int main(int argc, char *argv[])
 			GenerateHelp(argv[0]);
 			return 0;
 		case cmdInstall:
-			// ToDo: install service
+			if(CZNCWindowsService::InstallService(bManualStartupInstall) == 0)
+			{
+				std::cout << "OK" << std::endl;
+				return 0;
+			}
+			else
+			{
+				std::cerr << "Error" << std::endl;
+				return 1;
+			}
 			break;
 		case cmdUninstall:
-			// ToDo: uninstall service
+			if(CZNCWindowsService::UninstallService() == 0)
+			{
+				std::cout << "OK" << std::endl;
+				return 0;
+			}
+			else
+			{
+				std::cerr << "Error" << std::endl;
+				return 1;
+			}
 			break;
 
 		// unknown command or none specified

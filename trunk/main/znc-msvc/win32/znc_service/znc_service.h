@@ -4,8 +4,9 @@
 #include <windows.h>
 #include "service_provider.h"
 
-#define ZNC_SERVICE_NAME TEXT("ZNCIRCBouncer")
-#define ZNC_EVENT_PROVIDER TEXT("ZNCServiceEventProvider")
+#define ZNC_SERVICE_NAME L"ZNC"
+#define ZNC_EVENT_PROVIDER L"ZNCServiceEventProvider"
+#define ZNC_SERVICE_DESCRIPTION L"ZNC is an advanced IRC network bouncer or BNC."
 #define ERROR_EXITCODE -1
 
 class CString;
@@ -15,10 +16,12 @@ class CZNCWindowsService
 public:
 	CZNCWindowsService();
 	~CZNCWindowsService();
-	static VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv);
+	static VOID WINAPI ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv);
 	static VOID WINAPI ControlHandler(DWORD dwControl);
 	void SetDataDir(char *dataDir) { sDataDir = CString(dataDir); };
 
+	static DWORD InstallService(bool a_startTypeManual);
+	static DWORD UninstallService();
 protected:	
 	DWORD Init();
 	DWORD Loop();

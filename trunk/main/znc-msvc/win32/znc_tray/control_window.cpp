@@ -91,7 +91,7 @@ void CControlWindow::OnBeforeDestroy()
 }
 
 
-BOOL CALLBACK CControlWindow::DialogProcStatic(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CControlWindow::DialogProcStatic(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LONG_PTR l_ptr = ::GetWindowLongPtr(hDlg, GWLP_USERDATA);
 
@@ -243,7 +243,7 @@ int CControlWindow::MessageLoop()
 		}
 	}
 
-	return msg.wParam;
+	return static_cast<int>(msg.wParam);
 }
 
 

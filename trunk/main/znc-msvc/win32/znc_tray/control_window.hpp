@@ -38,7 +38,7 @@ protected:
 
 	bool CreateDlg();
 	int MessageLoop();
-	static BOOL CALLBACK DialogProcStatic(HWND, UINT, WPARAM, LPARAM);
+	static INT_PTR CALLBACK DialogProcStatic(HWND, UINT, WPARAM, LPARAM);
 	bool DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	bool OnWmCommand(UINT uCmd);
 	void OnPaint();
