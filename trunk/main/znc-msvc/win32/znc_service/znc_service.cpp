@@ -28,9 +28,7 @@ DWORD CZNCWindowsService::Init()
 	CUtils::SeedPRNG();
 
 	_set_fmode(_O_BINARY);
-#ifdef HAVE_LIBSSL
 	CRYPTO_malloc_init();
-#endif
 
 	hEventLog = RegisterEventSource(NULL, ZNC_EVENT_PROVIDER);
 	if (hEventLog == NULL)
