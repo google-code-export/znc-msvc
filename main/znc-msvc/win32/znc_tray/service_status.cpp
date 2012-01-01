@@ -9,6 +9,7 @@
 #include "stdafx.hpp"
 #include "service_status.hpp"
 
+// for QueryServiceStatus & friends:
 #pragma comment(lib, "Advapi32.lib")
 
 
@@ -38,6 +39,8 @@ bool CServiceStatus::IsInstalled()
 {
 	if(this->OpenService())
 	{
+		// service can be opened, so it must be installed
+
 		this->CloseService();
 
 		return true;
@@ -58,6 +61,9 @@ bool CServiceStatus::IsRunning()
 			return (ss.dwCurrentState == SERVICE_RUNNING ||
 				ss.dwCurrentState == SERVICE_START_PENDING);
 		}
+
+		// we are lazy and don't CloseService here,
+		// destructor or the next call will take care of it
 	}
 
 	return false;
@@ -66,11 +72,18 @@ bool CServiceStatus::IsRunning()
 
 bool CServiceStatus::OpenService()
 {
+	if(!m_scm)
+	{
+		return false;
+	}
+
 	if(m_hService)
 	{
+		// already open
 		return true;
 	}
 
+	// read-only handle!
 	m_hService = ::OpenService(m_scm, m_serviceName, SERVICE_QUERY_STATUS);
 
 	return (m_hService != NULL);
@@ -110,9 +123,7 @@ unsigned __stdcall CServiceStatus::WatchThreadProc(void *ptr)
 	CServiceStatus *instance = static_cast<CServiceStatus*>(ptr);
 
 	if(!instance)
-	{
 		return -1;
-	}
 
 	instance->WatchWait();
 
@@ -122,6 +133,7 @@ unsigned __stdcall CServiceStatus::WatchThreadProc(void *ptr)
 
 void CServiceStatus::WatchWait()
 {
+	// get a separate service handle for this thread:
 	SC_HANDLE l_service = ::OpenService(m_scm, m_serviceName, SERVICE_QUERY_STATUS);
 
 	// check for OS support:
@@ -132,34 +144,46 @@ void CServiceStatus::WatchWait()
 	VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
 	VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
 
-	if(::VerifyVersionInfoW(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond))
+	bool bFallback = false;
+
+	if(::VerifyVersionInfo(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond))
 	{
 		// the good version: NotifyServiceStatusChange
 		typedef DWORD (WINAPI *tfnssc)(SC_HANDLE hService, DWORD dwNotifyMask, PSERVICE_NOTIFY pNotifyBuffer);
 		tfnssc nssc = (tfnssc)::GetProcAddress(::GetModuleHandle(L"Advapi32.dll"), "NotifyServiceStatusChange");
 
-		if(!nssc) return; // shouldn't happen, we checked the OS version
-
-		SERVICE_NOTIFY serviceNotify = { 0 };
-		serviceNotify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
-		serviceNotify.pfnNotifyCallback = &ServiceNotifyCallback;
-		serviceNotify.pContext = static_cast<void*>(this);
-
-		while(m_doWatch)
+		if(!nssc)
 		{
-			if(nssc(l_service, SERVICE_NOTIFY_RUNNING | SERVICE_NOTIFY_START_PENDING |
-				SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_STOP_PENDING, &serviceNotify) == ERROR_SUCCESS)
+			bFallback = true;
+		}
+		else
+		{
+			SERVICE_NOTIFY serviceNotify = { 0 };
+			serviceNotify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
+			serviceNotify.pfnNotifyCallback = &ServiceNotifyCallback;
+			serviceNotify.pContext = static_cast<void*>(this);
+
+			while(m_doWatch)
 			{
-				::SleepEx(INFINITE, TRUE); // Wait for the notification
+				if(nssc(l_service, SERVICE_NOTIFY_RUNNING | SERVICE_NOTIFY_START_PENDING |
+					SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_STOP_PENDING, &serviceNotify) == ERROR_SUCCESS)
+				{
+					::SleepEx(INFINITE, TRUE); // Wait for the notification
+				}
+				else
+					break;
 			}
-			else
-				break;
+			// exit proc
 		}
 	}
 	else
 	{
-		// for legacy OS (pre-Vista):
+		// legacy OS (pre-Vista):
+		bFallback = true;
+	}
 
+	if(bFallback)
+	{
 		SERVICE_STATUS_PROCESS ssp = {0};
 		DWORD dwBytesNeeded = 0;
 		DWORD dwState = 0;
