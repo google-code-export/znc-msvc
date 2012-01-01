@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "winver.h"
+#include "target_winver.h"
 #include <stdlib.h>
 #include <windows.h>
 #include <stdio.h>
