@@ -14,7 +14,7 @@
  *	
  */
 
-#include "winver.h"
+#include "target_winver.h"
 
 #include <stdlib.h>
 #include <errno.h>

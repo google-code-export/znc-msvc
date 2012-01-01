@@ -86,7 +86,7 @@
 #  define RUN_FROM_SOURCE
 #endif
 
-#include "winver.h"
+#include "target_winver.h"
 #include "exports.h"
 
 #ifdef WIN_MSVC

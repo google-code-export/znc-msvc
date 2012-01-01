@@ -27,7 +27,7 @@
  *
  */
 
-#include "winver.h"
+#include "target_winver.h"
 #include "exports.h"
 #include "znc_msvc.h"
 #include <stdarg.h>
