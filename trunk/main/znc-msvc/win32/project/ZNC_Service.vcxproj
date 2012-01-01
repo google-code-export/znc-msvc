@@ -226,11 +226,13 @@ xcopy /y $(IntDir)service_provider.dll $(SolutionDir)..\..\..\build-out\$(Platfo
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
     </ClCompile>
+    <ClCompile Include="..\src\registry.cpp" />
     <ClCompile Include="..\znc_service\service_main.cpp" />
     <ClCompile Include="..\znc_service\znc_service.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\getopt.h" />
+    <ClInclude Include="..\src\registry.h" />
     <ClInclude Include="..\znc_service\znc_service.h" />
   </ItemGroup>
   <ItemGroup>
