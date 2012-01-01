@@ -22,6 +22,7 @@ only statically link XP-compatible things and use runtime versions checks. */
 #include <Windowsx.h>
 #include <Shellapi.h>
 #include <Shlwapi.h>
+#include <process.h>
 
 #include <memory>
 #include <string>
