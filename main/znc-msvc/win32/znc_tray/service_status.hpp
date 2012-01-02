@@ -46,6 +46,8 @@ protected:
 	// watching implementation internals:
 	static unsigned __stdcall WatchThreadProc(void *ptr);
 	void WatchWait();
+	bool WatchWaitNT6(SC_HANDLE hService);
+	void WatchWaitFallback(SC_HANDLE hService);
 	static void CALLBACK ServiceNotifyCallback(void *ptr);
 	void OnWatchEvent(const LPSERVICE_STATUS_PROCESS pss);
 };

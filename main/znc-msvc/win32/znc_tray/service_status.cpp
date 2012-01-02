@@ -144,37 +144,11 @@ void CServiceStatus::WatchWait()
 	VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
 	VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
 
-	bool bFallback = false;
+	bool bFallback;
 
 	if(::VerifyVersionInfo(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond))
 	{
-		// the good version: NotifyServiceStatusChange
-		typedef DWORD (WINAPI *tfnssc)(SC_HANDLE hService, DWORD dwNotifyMask, PSERVICE_NOTIFY pNotifyBuffer);
-		tfnssc nssc = (tfnssc)::GetProcAddress(::GetModuleHandle(L"Advapi32.dll"), "NotifyServiceStatusChange");
-
-		if(!nssc)
-		{
-			bFallback = true;
-		}
-		else
-		{
-			SERVICE_NOTIFY serviceNotify = { 0 };
-			serviceNotify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
-			serviceNotify.pfnNotifyCallback = &ServiceNotifyCallback;
-			serviceNotify.pContext = static_cast<void*>(this);
-
-			while(m_doWatch)
-			{
-				if(nssc(l_service, SERVICE_NOTIFY_RUNNING | SERVICE_NOTIFY_START_PENDING |
-					SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_STOP_PENDING, &serviceNotify) == ERROR_SUCCESS)
-				{
-					::SleepEx(INFINITE, TRUE); // Wait for the notification
-				}
-				else
-					break;
-			}
-			// exit proc
-		}
+		bFallback = (this->WatchWaitNT6(l_service) == false);
 	}
 	else
 	{
@@ -184,28 +158,65 @@ void CServiceStatus::WatchWait()
 
 	if(bFallback)
 	{
-		SERVICE_STATUS_PROCESS ssp = {0};
-		DWORD dwBytesNeeded = 0;
-		DWORD dwState = 0;
-
-		do
-		{
-			if(!::QueryServiceStatusEx(l_service, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssp, sizeof(SERVICE_STATUS_PROCESS), &dwBytesNeeded))
-				break;
-
-			if(ssp.dwCurrentState != dwState)
-			{
-				this->OnWatchEvent(&ssp);
-
-				dwState = ssp.dwCurrentState;
-			}
-
-			::SleepEx(1000, TRUE); // probe every second
-		}
-		while(m_doWatch);
+		this->WatchWaitFallback(l_service);
 	}
 
 	::CloseServiceHandle(l_service);
+}
+
+
+bool CServiceStatus::WatchWaitNT6(SC_HANDLE hService)
+{
+	// the good version: NotifyServiceStatusChange
+	typedef DWORD (WINAPI *tfnssc)(SC_HANDLE hService, DWORD dwNotifyMask, PSERVICE_NOTIFY pNotifyBuffer);
+	tfnssc nssc = (tfnssc)::GetProcAddress(::GetModuleHandle(L"Advapi32.dll"), "NotifyServiceStatusChange");
+
+	if(!nssc)
+	{
+		return false;
+	}
+
+	SERVICE_NOTIFY serviceNotify = { 0 };
+	serviceNotify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
+	serviceNotify.pfnNotifyCallback = &ServiceNotifyCallback;
+	serviceNotify.pContext = static_cast<void*>(this);
+
+	while(m_doWatch)
+	{
+		if(nssc(hService, SERVICE_NOTIFY_RUNNING | SERVICE_NOTIFY_START_PENDING |
+			SERVICE_NOTIFY_STOPPED | SERVICE_NOTIFY_STOP_PENDING, &serviceNotify) == ERROR_SUCCESS)
+		{
+			::SleepEx(INFINITE, TRUE); // Wait for the notification
+		}
+		else
+			break;
+	}
+
+	return true;
+}
+
+
+void CServiceStatus::WatchWaitFallback(SC_HANDLE hService)
+{
+	SERVICE_STATUS_PROCESS ssp = {0};
+	DWORD dwBytesNeeded = 0;
+	DWORD dwState = 0;
+
+	do
+	{
+		if(!::QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssp, sizeof(SERVICE_STATUS_PROCESS), &dwBytesNeeded))
+			break;
+
+		if(ssp.dwCurrentState != dwState)
+		{
+			this->OnWatchEvent(&ssp);
+
+			dwState = ssp.dwCurrentState;
+		}
+
+		::SleepEx(1000, TRUE); // probe every second
+	}
+	while(m_doWatch);
 }
 
 
