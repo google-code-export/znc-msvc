@@ -23,10 +23,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR wszComm
 	CUtil::HardenHeap();
 	CUtil::RemoveCwdFromDllSearchPath();
 
+	// init COM:
+	::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	
 	// init GDI+:
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&s_gdiplusToken, &gdiplusStartupInput, NULL);
 
+	// init CC:
 	INITCOMMONCONTROLSEX icce = { sizeof(INITCOMMONCONTROLSEX), ICC_STANDARD_CLASSES | ICC_BAR_CLASSES };
 	::InitCommonControlsEx(&icce);
 
@@ -41,8 +45,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR wszComm
 	// shut down GDI+:
 	Gdiplus::GdiplusShutdown(s_gdiplusToken);
 
+	// shut down COM:
+	::CoUninitialize();
+
 	return ret;
 }
+
+
+// enable "visual styles":
+#pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+	processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 
 // global var, extern'd in znc_tray.hpp

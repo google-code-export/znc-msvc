@@ -14,6 +14,17 @@
 namespace ZNCTray
 {
 
+typedef enum _service_status
+{
+	ZS_UNKNOWN = 0,
+	ZS_NOT_INSTALLED,
+	ZS_STANDALONE,
+	ZS_STARTING,
+	ZS_RUNNING,
+	ZS_STOPPING,
+	ZS_STOPPED
+} EServiceStatus;
+
 
 class CControlWindow
 {
@@ -35,6 +46,7 @@ protected:
 	HWND m_hwndStatusBar;
 
 	std::shared_ptr<CServiceStatus> m_serviceStatus;
+	EServiceStatus m_statusFlag;
 
 	bool CreateDlg();
 	int MessageLoop();
@@ -45,6 +57,9 @@ protected:
 
 	void InitialSetup();
 	void OnBeforeDestroy();
+
+	void DetectServiceStatus();
+	void UpdateUIWithServiceStatus();
 };
 
 

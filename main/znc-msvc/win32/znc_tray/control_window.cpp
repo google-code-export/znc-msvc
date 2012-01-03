@@ -17,7 +17,8 @@ using namespace ZNCTray;
 CControlWindow::CControlWindow() :
 	m_hwndDlg(0),
 	m_hIconSmall(0), m_hIconBig(0),
-	m_hwndStatusBar(0)
+	m_hwndStatusBar(0),
+	m_statusFlag(ZS_UNKNOWN)
 {
 }
 
@@ -64,25 +65,93 @@ void CControlWindow::InitialSetup()
 		WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, m_hwndDlg, NULL, g_hInstance, NULL);
 	::SendMessage(m_hwndStatusBar, SB_SIMPLE, TRUE, 0);
 
+	// set up UAC button icons:
+	if(CUtil::WinVerAtLeast(6, 0))
+	{
+		::SendDlgItemMessage(m_hwndDlg, IDC_BTN_START, BCM_SETSHIELD, 0, TRUE);
+		::SendDlgItemMessage(m_hwndDlg, IDC_BTN_STOP, BCM_SETSHIELD, 0, TRUE);
+	}
+
 	// set up tray icon:
 	m_trayIcon = std::shared_ptr<CTrayIcon>(new CTrayIcon(m_hwndDlg, L"ZNC"));
 
 	m_trayIcon->Add('B');
 
-
+	// set up service manager interface:
 	m_serviceStatus->Init();
+
+	DetectServiceStatus();
+	UpdateUIWithServiceStatus();
+
+	bool b = m_serviceStatus->CanStartStop();
 }
 
 
 void CControlWindow::Show()
 {
+	m_serviceStatus->StartWatchingStatus(m_hwndDlg);
+
 	::ShowWindow(m_hwndDlg, SW_SHOWNORMAL);
 }
 
 
 void CControlWindow::Hide()
 {
+	m_serviceStatus->StopWatchingStatus();
+
 	::ShowWindow(m_hwndDlg, SW_HIDE);
+}
+
+
+void CControlWindow::DetectServiceStatus()
+{
+	if(!m_serviceStatus->IsInstalled())
+	{
+		m_statusFlag = ZS_NOT_INSTALLED;
+	}
+	else if(m_serviceStatus->IsRunning())
+	{
+		m_statusFlag = ZS_RUNNING;
+	}
+	else
+	{
+		m_statusFlag = ZS_STOPPED;
+	}
+}
+
+
+void CControlWindow::UpdateUIWithServiceStatus()
+{
+	std::wstring sStatus;
+
+	switch(m_statusFlag)
+	{
+	case ZS_NOT_INSTALLED:
+		sStatus = L"Service not installed.";
+		break;
+	case ZS_STANDALONE:
+		sStatus = L"Running in stand-alone mode.";
+		break;
+	case ZS_STARTING:
+		sStatus = L"Service is starting...";
+		break;
+	case ZS_RUNNING:
+		sStatus = L"Service is up and running.";
+		break;
+	case ZS_STOPPING:
+		sStatus = L"Service is stopping...";
+		break;
+	case ZS_STOPPED:
+		sStatus = L"Service is stopped.";
+		break;
+	default:
+		sStatus = L"Unknown :(";
+	}
+
+	::SetDlgItemText(m_hwndDlg, IDC_LBL_STATUS, sStatus.c_str());
+
+	::EnableDlgItem(m_hwndDlg, IDC_BTN_START, m_statusFlag == ZS_STOPPED);
+	::EnableDlgItem(m_hwndDlg, IDC_BTN_STOP, m_statusFlag == ZS_RUNNING);
 }
 
 
@@ -144,9 +213,34 @@ bool CControlWindow::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		this->Hide();
 		return true;
 
+	// custom messages below this line
+
 	case WM_TRAYICONEVENT:
 		m_trayIcon->OnWmTrayIconEvent(wParam, lParam);
 		return true;
+
+	case WM_SERVICESTARTED:
+		m_statusFlag = ZS_RUNNING;
+		UpdateUIWithServiceStatus();
+		break;
+
+	case WM_SERVICESTARTING:
+		m_statusFlag = ZS_STARTING;
+		UpdateUIWithServiceStatus();
+		break;
+
+	case WM_SERVICESTOPPED:
+		m_statusFlag = ZS_STOPPED;
+		UpdateUIWithServiceStatus();
+		break;
+
+	case WM_SERVICESTOPPING:
+		m_statusFlag = ZS_STOPPING;
+		UpdateUIWithServiceStatus();
+		break;
+
+	// end of custom messages
+
 	}
 
 	// catch explorer.exe restarts:
@@ -181,6 +275,14 @@ bool CControlWindow::OnWmCommand(UINT uCmd)
 			::DestroyWindow(m_hwndDlg);
 		}
 		return true;
+
+	case IDC_BTN_START:
+		m_serviceStatus->StartService(m_hwndDlg);
+		break;
+
+	case IDC_BTN_STOP:
+		m_serviceStatus->StopService(m_hwndDlg);
+		break;
 	}
 
 	return false;
@@ -196,7 +298,7 @@ void CControlWindow::OnPaint()
 	// white background:
 	RECT rectClient;
 	RECT rectStatusBar;
-	if(::GetClientRect(m_hwndDlg, &rectClient) && ::GetClientRect(m_hwndStatusBar, &rectStatusBar))
+	if(::GetClientRect(m_hwndDlg, &rectClient) && ::GetWindowRect(m_hwndStatusBar, &rectStatusBar))
 	{
 		// remove status bar from client rect:
 		rectClient.bottom -= (rectStatusBar.bottom - rectStatusBar.top);
@@ -214,6 +316,21 @@ void CControlWindow::OnPaint()
 		gr.DrawImage(m_bmpLogo->GetBmp().get(), 10,
 			(rectClient.bottom - rectClient.top) / 2 - m_bmpLogo->GetBmp()->GetHeight() / 2,
 			m_bmpLogo->GetBmp()->GetWidth(), m_bmpLogo->GetBmp()->GetHeight());
+	}
+	
+	// add a background for the group box control...
+	RECT rectStatusGroupBox;
+	if(::GetWindowRect(::GetDlgItem(m_hwndDlg, IDC_STATUS_GROUPBOX), &rectStatusGroupBox))
+	{
+		::ScreenToClient(m_hwndDlg, (LPPOINT)&rectStatusGroupBox.left);
+		::ScreenToClient(m_hwndDlg, (LPPOINT)&rectStatusGroupBox.right);
+		HBRUSH hbWindowColor = ::GetSysColorBrush(COLOR_BTNFACE);
+		HPEN hPen = ::CreatePen(PS_NULL, 0, 0);
+		::SelectObject(hDC, hbWindowColor);
+		::SelectObject(hDC, hPen);
+		::RoundRect(hDC, rectStatusGroupBox.left - 6, rectStatusGroupBox.top - 1,
+			rectStatusGroupBox.right + 6, rectStatusGroupBox.bottom + 5, 5, 5);
+		::DeleteObject(hPen);
 	}
 
 	::EndPaint(m_hwndDlg, &ps);

@@ -32,3 +32,8 @@ only statically link XP-compatible things and use runtime versions checks. */
 
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
+
+#define EnableDlgItem(HWND, ITEM, ENABLE) EnableWindow(::GetDlgItem(HWND, ITEM), (ENABLE) ? TRUE : FALSE)
+
+
+#define HAVE_COM_SERVICE_CONTROL
