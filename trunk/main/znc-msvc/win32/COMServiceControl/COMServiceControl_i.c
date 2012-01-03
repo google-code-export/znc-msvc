@@ -6,7 +6,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Tue Jan 03 23:15:34 2012
+/* at Wed Jan 04 00:07:06 2012
  */
 /* Compiler settings for COMServiceControl.idl:
     Oicf, W1, Zp8, env=Win32 (32b run), target_arch=X86 7.00.0555 
