@@ -8,6 +8,10 @@
 
 #include "stdafx.hpp"
 #include "service_status.hpp"
+#ifdef HAVE_COM_SERVICE_CONTROL
+#include "COMServiceControl_i.h"
+#include "Strsafe.h"
+#endif
 
 // for QueryServiceStatus & friends:
 #pragma comment(lib, "Advapi32.lib")
@@ -90,6 +94,206 @@ bool CServiceStatus::OpenService()
 }
 
 
+bool CServiceStatus::CanStartStop()
+{
+	// try to obtain handle with start/stop privileges
+	SC_HANDLE hService = ::OpenService(m_scm, m_serviceName,
+		SERVICE_QUERY_STATUS | SERVICE_START | SERVICE_STOP);
+
+	if(hService != NULL)
+	{
+		::CloseServiceHandle(hService);
+
+		return true;
+	}
+
+#ifdef HAVE_COM_SERVICE_CONTROL
+
+	if(CServiceStatus::IsNT6())
+	{
+		IServiceControlSTA *ppSS = NULL;
+
+		HRESULT hr = ::CoCreateInstance(CLSID_ServiceControlSTA, NULL, CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&ppSS));
+
+		if(SUCCEEDED(hr))
+		{
+			// class registered, so it's hopefully usable
+
+			ppSS->Release();
+
+			return true;
+		}
+	}
+
+#endif
+
+	return false;
+}
+
+
+struct start_stop_service_proc_data_t
+{
+	int action;
+	CServiceStatus *p;
+	HWND hwnd;
+	HANDLE signal;
+};
+
+
+bool CServiceStatus::StartService(HWND a_hwnd)
+{
+	if(this->IsRunning())
+	{
+		return true;
+	}
+
+	// StartService may block for up to 30 seconds, so we use a separate fire-and-forget thread
+
+	start_stop_service_proc_data_t data;
+	data.action = 1;
+	data.p = this;
+	data.hwnd = a_hwnd;
+	data.signal = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if(_beginthread(&StartStopperThread, 0, &data) != (uintptr_t)-1)
+	{
+		::WaitForSingleObject(data.signal, INFINITE);
+	}
+
+	::CloseHandle(data.signal);
+
+	// :TODO: more meaningful return value, re-think fire-and-forget
+
+	return true;
+}
+
+
+bool CServiceStatus::StopService(HWND a_hwnd)
+{
+	SERVICE_STATUS ss = {0};
+
+	if(::QueryServiceStatus(m_hService, &ss) &&
+		(ss.dwCurrentState == SERVICE_STOPPED || ss.dwCurrentState == SERVICE_STOP_PENDING))
+	{
+		return true;
+	}
+
+	// ControlService may block for up to 30 seconds, so we use a separate fire-and-forget thread
+
+	start_stop_service_proc_data_t data;
+	data.action = 0;
+	data.p = this;
+	data.hwnd = a_hwnd;
+	data.signal = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if(_beginthread(&StartStopperThread, 0, &data) != (uintptr_t)-1)
+	{
+		::WaitForSingleObject(data.signal, INFINITE);
+	}
+
+	::CloseHandle(data.signal);
+
+	// :TODO: more meaningful return value, re-think fire-and-forget
+
+	return true;
+}
+
+
+void __cdecl CServiceStatus::StartStopperThread(void *ptr)
+{
+	start_stop_service_proc_data_t data;
+	memcpy_s(&data, sizeof(start_stop_service_proc_data_t), ptr, sizeof(start_stop_service_proc_data_t));
+	// ptr is safe to release now:
+	::SetEvent(data.signal);
+	data.signal = NULL;
+
+	data.p->DoStartStopInternal(data.action == 1, data.hwnd);
+}
+
+
+// utility function copied from: http://msdn.microsoft.com/en-us/library/ms679687
+static HRESULT CoCreateInstanceAsAdmin(HWND hwnd, REFCLSID rclsid, REFIID riid, __out void ** ppv)
+{
+	BIND_OPTS3 bo;
+    WCHAR wszCLSID[50];
+    WCHAR wszMonikerName[300];
+
+    ::StringFromGUID2(rclsid, wszCLSID, sizeof(wszCLSID) / sizeof(wszCLSID[0]));
+
+    HRESULT hr = ::StringCchPrintf(wszMonikerName, sizeof(wszMonikerName) / sizeof(wszMonikerName[0]),
+		L"Elevation:Administrator!new:%s", wszCLSID);
+
+    if(FAILED(hr))
+	{
+        return hr;
+	}
+    
+	ZeroMemory(&bo, sizeof(bo));
+    bo.cbStruct = sizeof(bo);
+    bo.hwnd = hwnd;
+    bo.dwClassContext = CLSCTX_LOCAL_SERVER;
+
+    return ::CoGetObject(wszMonikerName, &bo, riid, ppv);
+}
+
+
+void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
+{
+	SC_HANDLE hService = ::OpenService(m_scm, m_serviceName, (start ? SERVICE_START : SERVICE_STOP));
+
+	if(hService)
+	{
+		// for XP, admin users without UAC etc., try "locally"
+
+		if(start)
+		{
+			::StartService(hService, 0, NULL);
+		}
+		else
+		{
+			SERVICE_STATUS dummy;
+
+			::ControlService(hService, SERVICE_CONTROL_STOP, &dummy);
+		}
+
+		::CloseServiceHandle(hService);
+	}
+	else if(CServiceStatus::IsNT6())
+	{
+		// woo-hoo moniking action!
+		::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+		IServiceControlSTA *ppSS = NULL;
+
+		HRESULT hr = ::CoCreateInstanceAsAdmin(a_hwnd, CLSID_ServiceControlSTA, IID_PPV_ARGS(&ppSS));
+
+		if(SUCCEEDED(hr))
+		{
+			BSTR bStrServiceName = ::SysAllocString(m_serviceName);
+
+			if(start)
+			{
+				hr = ppSS->DoStartService(bStrServiceName);
+			}
+			else
+			{
+				hr = ppSS->DoStopService(bStrServiceName);
+			}
+
+			_ASSERT(SUCCEEDED(hr));
+
+			ppSS->Release();
+
+			::SysFreeString(bStrServiceName);
+		}
+
+		::CoUninitialize();
+	}
+	else
+		;// shit out of luck...
+}
+
+
 void CServiceStatus::CloseService()
 {
 	if(m_hService)
@@ -136,17 +340,9 @@ void CServiceStatus::WatchWait()
 	// get a separate service handle for this thread:
 	SC_HANDLE l_service = ::OpenService(m_scm, m_serviceName, SERVICE_QUERY_STATUS);
 
-	// check for OS support:
-	OSVERSIONINFOEXW l_osver = { sizeof(OSVERSIONINFOEXW), 0 };
-	l_osver.dwMajorVersion = 6;
-
-	DWORDLONG dwlVerCond = 0;
-	VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
-	VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
-
 	bool bFallback;
 
-	if(::VerifyVersionInfo(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond))
+	if(CServiceStatus::IsNT6())
 	{
 		bFallback = (this->WatchWaitNT6(l_service) == false);
 	}
@@ -270,6 +466,20 @@ void CServiceStatus::StopWatchingStatus()
 		::CloseHandle(m_hWatchThread);
 		m_hWatchThread = NULL;
 	}
+}
+
+
+bool CServiceStatus::IsNT6()
+{
+	// check for OS support:
+	OSVERSIONINFOEXW l_osver = { sizeof(OSVERSIONINFOEXW), 0 };
+	l_osver.dwMajorVersion = 6;
+
+	DWORDLONG dwlVerCond = 0;
+	VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
+	VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+	return (::VerifyVersionInfo(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond) == TRUE);
 }
 
 

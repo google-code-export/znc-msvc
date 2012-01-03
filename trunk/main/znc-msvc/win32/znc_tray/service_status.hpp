@@ -22,10 +22,15 @@ public:
 	// probes:
 	bool IsInstalled();
 	bool IsRunning();
+	bool CanStartStop();
 
 	// watching functionality:
 	bool StartWatchingStatus(HWND a_targetWindow);
 	void StopWatchingStatus();
+
+	// control functionality:
+	bool StartService(HWND a_hwnd);
+	bool StopService(HWND a_hwnd);
 
 protected:
 	const wchar_t* m_serviceName;
@@ -40,8 +45,12 @@ protected:
 	HANDLE m_hWatchThread;
 	bool m_doWatch;
 
+	// used in most of the other calls:
 	bool OpenService();
 	void CloseService();
+
+	// utility method:
+	static bool IsNT6();
 
 	// watching implementation internals:
 	static unsigned __stdcall WatchThreadProc(void *ptr);
@@ -50,6 +59,10 @@ protected:
 	void WatchWaitFallback(SC_HANDLE hService);
 	static void CALLBACK ServiceNotifyCallback(void *ptr);
 	void OnWatchEvent(const LPSERVICE_STATUS_PROCESS pss);
+
+	// starting/stopping thread proc:
+	static void __cdecl StartStopperThread(void *ptr);
+	void DoStartStopInternal(bool start, HWND a_hwnd);
 };
 
 

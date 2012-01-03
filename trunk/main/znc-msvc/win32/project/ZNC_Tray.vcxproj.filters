@@ -33,6 +33,9 @@
     <ClCompile Include="..\znc_tray\service_status.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\COMServiceControl\COMServiceControl_i.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\znc_tray\stdafx.hpp">
