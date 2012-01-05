@@ -154,9 +154,9 @@ CResourceBitmap::~CResourceBitmap()
 {
 	m_bmp.reset();
 
-	/*if(m_hGlobal)
+	if(m_hGlobal)
 	{
 		::GlobalUnlock(m_hGlobal);
 		::GlobalFree(m_hGlobal);
-	}*/
+	}
 }

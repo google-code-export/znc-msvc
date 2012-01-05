@@ -82,8 +82,6 @@ void CControlWindow::InitialSetup()
 
 	DetectServiceStatus();
 	UpdateUIWithServiceStatus();
-
-	bool b = m_serviceStatus->CanStartStop();
 }
 
 

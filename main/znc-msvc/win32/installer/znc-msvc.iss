@@ -34,7 +34,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "core"; Description: "Core Files (required)"; Types: full compact custom; Flags: fixed
 Name: "service"; Description: "ZNC Service"; Types: full compact
 Name: "service/autorun"; Description: "Set Service to Run on Startup"; Types: full
-Name: "service/tray"; Description: "Install Tray Control"; Types: full compact
+Name: "service/tray"; Description: "Install Tray Control"; Types: full compact; Flags: checkablealone
 Name: "service/tray/desktop"; Description: "Create a Desktop Icon"; Types: full
 Name: "service/tray/autorun"; Description: "Launch Tray Control on Startup"; Types: full
 Name: "modules"; Description: "Modules"; Types: full compact
@@ -80,6 +80,9 @@ Name: "{group}\More\{cm:UninstallProgram,ZNC}"; Filename: "{uninstallexe}"; Flag
 Name: "{userdesktop}\ZNC Service Control"; Filename: "{app}\ZNC_Tray.exe"; Components: service/tray/desktop
 Name: "{userstartup}\ZNC Service Control"; Filename: "{app}\ZNC_Tray.exe"; Parameters: "--autorun"; Components: service/tray/autorun
 
+[Registry]
+Root: HKLM; Subkey: "SOFTWARE\ZNC"; ValueType: string; ValueName: "ServiceDataDir"; ValueData: "{code:GetServiceDataDir}"; Components: service; Flags: uninsdeletekey
+
 [Run]
 Filename: "{app}\ZNC_Service.exe"; Parameters: "--install"; Flags: runhidden; Components: service and service/autorun
 Filename: "{app}\ZNC_Service.exe"; Parameters: "--install --manual"; Flags: runhidden; Components: service and not service/autorun
@@ -97,75 +100,12 @@ Filename: "{cmd}"; Parameters: "/c reg delete HKLM\SOFTWARE\Classes\CLSID\{#COMS
 Filename: "{cmd}"; Parameters: "/c reg delete HKLM\SOFTWARE\Classes\CLSID\{#COMServiceControlCLSID}\Elevation /f"; Flags: runhidden; Components: service/tray
 Filename: "{app}\COMServiceControl.exe"; Parameters: "/UnRegServer"; Flags: runhidden; Components: service/tray
 
+#include "vc_redist.iss"
+#include "service_data_dir.iss"
+
 [Code]
-function MsiQueryProductState(ProductCode: String): Integer; external 'MsiQueryProductStateW@msi.dll stdcall';
-
-var
-	cppRuntimeInstalled: Boolean;
-
-const
-	INSTALLSTATE_DEFAULT = 5;
-
-	MSVC_X64_URL = 'http://download.microsoft.com/download/A/8/0/A80747C3-41BD-45DF-B505-E9710D2744E0/vcredist_x64.exe';
-	MSVC_X86_URL = 'http://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe';
-
-
-function InstallCppRuntime(): Boolean;
-begin
-  Result := not cppRuntimeInstalled;
-end;
-
-
 procedure InitializeWizard();
 begin
-	ITD_Init();
-
-	if Is64BitInstallMode() then
-	begin
-		ITD_AddFile(MSVC_X64_URL, expandconstant('{tmp}\vcredist_x64.exe'));
-
-		cppRuntimeInstalled := (MsiQueryProductState('{1D8E6291-B0D5-35EC-8441-6616F567A0F7}') = INSTALLSTATE_DEFAULT) // with SP1
-		  or (MsiQueryProductState('{DA5E371C-6333-3D8A-93A4-6FD5B20BCC6E}') = INSTALLSTATE_DEFAULT); // without SP1
-	end
-	else
-	begin
-		ITD_AddFile(MSVC_X86_URL, expandconstant('{tmp}\vcredist_x86.exe'));
-
-		cppRuntimeInstalled := (MsiQueryProductState('{F0C3E5D1-1ADE-321E-8167-68EF0DE699A5}') = INSTALLSTATE_DEFAULT) // with SP1
-		  or (MsiQueryProductState('{196BB40D-1578-3D01-B289-BEFC77A11A1E}') = INSTALLSTATE_DEFAULT); // without SP1
-	end;
-
-	if InstallCppRuntime() then
-	begin
-		ITD_DownloadAfter(wpReady);
-	end;
-end;
-
-
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-	exepath: String;
-	exitcode: Integer;
-begin
-	if (CurStep = ssInstall) and InstallCppRuntime() then
-	begin
-		// Install C++ Runtime. This MUST NOT be done in [Run] because
-		// regsvr32'ing the shell extension requires the runtimes to be installed
-		// already whereas [Run] would only install them afterwards.
-
-		if Is64BitInstallMode() then
-			exepath := ExpandConstant('{tmp}\vcredist_x64.exe')
-		else
-			exepath := ExpandConstant('{tmp}\vcredist_x86.exe');
-
-		if FileExists(exepath) then
-		begin
-			if Is64BitInstallMode() then
-				WizardForm.StatusLabel.Caption := 'Installing Microsoft Visual C++ 2010 (x64) runtime...'
-			else
-				WizardForm.StatusLabel.Caption := 'Installing Microsoft Visual C++ 2010 (x86) runtime...';
-
-			Exec(exepath, '/q /norestart', '', SW_HIDE, ewWaitUntilTerminated, exitcode);
-		end;
-	end;
+  VC_Redist_InitializeWizard();
+  Service_Data_Dir_InitializeWizard();
 end;

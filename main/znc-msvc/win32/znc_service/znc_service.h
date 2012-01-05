@@ -5,7 +5,7 @@
 #include "service_provider.h"
 
 #define ZNC_SERVICE_NAME L"ZNC"
-#define ZNC_EVENT_PROVIDER L"ZNCServiceEventProvider"
+#define ZNC_EVENT_PROVIDER L"ZNCService"
 #define ZNC_SERVICE_DESCRIPTION L"ZNC is an advanced IRC network bouncer or BNC."
 #define ERROR_EXITCODE -1
 

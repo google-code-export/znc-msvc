@@ -49,10 +49,8 @@ DWORD CZNCWindowsService::Init()
 	}
 
 	CZNC* pZNC = &CZNC::Get();
-	// pZNC->InitDirs(((argc) ? argv[0] : ""), sDataDir);
 	pZNC->InitDirs("", thisSvc->sDataDir);
 
-	// if (!pZNC->ParseConfig(sConfig))
 	if (!pZNC->ParseConfig(""))
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_CONFIG_CORRUPTED, NULL, 0, 0, NULL, NULL);
@@ -258,7 +256,7 @@ DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
 
 		if(l_evlKey.OpenForWriting(L"SYSTEM\\CurrentControlSet\\services\\eventlog\\Application\\" ZNC_EVENT_PROVIDER))
 		{
-			const std::wstring l_eventProviderDllPath = GetExeDir() + L"\\IncoWatchEvents.dll";
+			const std::wstring l_eventProviderDllPath = GetExeDir() + L"\\service_provider.dll";
 
 			l_evlKey.WriteDword(L"CategoryCount", 3);
 			l_evlKey.WriteString(L"CategoryMessageFile", l_eventProviderDllPath);
