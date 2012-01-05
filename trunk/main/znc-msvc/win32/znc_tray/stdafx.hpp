@@ -10,7 +10,7 @@
 
 /* SDK = Vista, so we can use newer features where available, but we do ensure to
 only statically link XP-compatible things and use runtime versions checks. */
-#define WINVER		0x0600
+#define WINVER         0x0600
 #define _WIN32_WINNT   WINVER
 #define _WIN32_WINDOWS WINVER
 #define _WIN32_IE      0x0700
