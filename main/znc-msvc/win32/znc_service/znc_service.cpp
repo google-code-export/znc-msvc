@@ -48,6 +48,35 @@ DWORD CZNCWindowsService::Init()
 		return ERROR_EXITCODE;
 	}
 
+	if (thisSvc->sDataDir.empty())
+	{
+		CRegistryKey l_reg(HKEY_LOCAL_MACHINE);
+
+		// get data dir from registry!
+
+		if (l_reg.OpenForReading(L"SOFTWARE\\ZNC"))
+		{
+			const std::wstring l_pathW = l_reg.ReadString(L"ServiceDataDir", L"");
+
+			if(!l_pathW.empty())
+			{
+				size_t l_bufLen = ::WideCharToMultiByte(CP_OEMCP, 0, l_pathW.c_str(), -1, NULL, NULL, NULL, NULL);
+
+				if(l_bufLen > 0)
+				{
+					char *l_buf = new char[l_bufLen];
+
+					if(l_buf && ::WideCharToMultiByte(CP_OEMCP, 0, l_pathW.c_str(), -1, l_buf, l_bufLen, NULL, NULL))
+					{
+						thisSvc->sDataDir = l_buf;
+					}
+
+					delete[] l_buf;
+				}
+			}
+		}
+	}
+
 	CZNC* pZNC = &CZNC::Get();
 	pZNC->InitDirs("", thisSvc->sDataDir);
 

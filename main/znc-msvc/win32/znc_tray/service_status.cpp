@@ -216,7 +216,7 @@ static HRESULT CoCreateInstanceAsAdmin(HWND hwnd, REFCLSID rclsid, REFIID riid, 
 {
 	BIND_OPTS3 bo;
     WCHAR wszCLSID[50];
-    WCHAR wszMonikerName[300];
+    WCHAR wszMonikerName[100];
 
     ::StringFromGUID2(rclsid, wszCLSID, sizeof(wszCLSID) / sizeof(wszCLSID[0]));
 
