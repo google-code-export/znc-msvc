@@ -12,7 +12,7 @@ begin
     False, 'znc-service-config');
   DataDirPage.Add('');
 
-  DataDirPage.Values[0] := GetPreviousData('ServiceDataDir', 'C:\ZNC\Service-Config');
+  DataDirPage.Values[0] := GetPreviousData('ServiceDataDir', ExpandConstant('{commonappdata}\ZNC\Configuration'));
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
