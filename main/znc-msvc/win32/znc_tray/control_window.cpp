@@ -11,6 +11,8 @@
 #include "control_window.hpp"
 #include "resource.h"
 
+#include "znc_service_defs.h"
+
 using namespace ZNCTray;
 
 
@@ -33,7 +35,7 @@ bool CControlWindow::CreateDlg()
 
 	m_bmpLogo = std::shared_ptr<CResourceBitmap>(new CResourceBitmap(IDB_ZNCLOGO));
 
-	m_serviceStatus = std::shared_ptr<CServiceStatus>(new CServiceStatus(L"ZNC"));
+	m_serviceStatus = std::shared_ptr<CServiceStatus>(new CServiceStatus(ZNC_SERVICE_NAME));
 
 	// our main window is a simple #32770 dialog!
 
@@ -237,6 +239,19 @@ bool CControlWindow::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		UpdateUIWithServiceStatus();
 		break;
 
+	case WM_SERVICECONTROL_RESULT:
+		{
+			bool bOpStart = (wParam != 0), bSuccess = (lParam != 0);
+
+			if(!bSuccess)
+			{
+				::MessageBox(m_hwndDlg,	(bOpStart ?
+					L"Starting the service failed. Make sure it's installed correctly." :
+					L"Stopping the service failed."), L"Error", MB_ICONEXCLAMATION);
+			}
+		}
+		break;
+
 	// end of custom messages
 
 	}
@@ -265,10 +280,11 @@ bool CControlWindow::OnWmCommand(UINT uCmd)
 
 	case WMC_CLOSE_TRAY:
 	case IDM_QUIT:
-		if(::MessageBox(m_hwndDlg,
+		if(m_statusFlag == ZS_NOT_INSTALLED || ::MessageBox(m_hwndDlg,
 			L"You are closing ZNC's tray icon. The ZNC service will keep running, if started. "
 			L"Do you want to continue?", L"Confirm", MB_ICONQUESTION | MB_YESNO)
 			== IDYES)
+			// :TODO: put together message based on m_statusFlag
 		{
 			::DestroyWindow(m_hwndDlg);
 		}

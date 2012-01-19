@@ -38,6 +38,9 @@
     <ClInclude Include="..\src\registry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\znc_service_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\znc_service\service_provider.mc">

@@ -1643,7 +1643,7 @@ CZNC& CZNC::Get() {
 	return *g_pZNC;
 }
 void CZNC::_Reset() {
-	if(g_pZNC) delete g_pZNC;
+	delete g_pZNC;
 	g_pZNC = NULL;
 }
 

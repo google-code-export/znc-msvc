@@ -2,6 +2,8 @@
 #include "znc_service.h"
 #include "registry.h"
 
+#define ERROR_EXITCODE -1
+
 
 CZNCWindowsService *CZNCWindowsService::thisSvc = 0;
 
@@ -12,6 +14,34 @@ CZNCWindowsService::CZNCWindowsService() :
 
 	memset(&serviceStatus, 0, sizeof(serviceStatus));
 	serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+
+	this->RedirectStdStreams();
+}
+
+
+void CZNCWindowsService::RedirectStdStreams()
+{
+	std::wstring l_logPath;
+	wchar_t l_pathBuf[MAX_PATH + 1] = {0};
+
+	if(SUCCEEDED(::SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, l_pathBuf)))
+	{
+		std::wstringstream l_fnBuf;
+		l_fnBuf << L"\\ZNC\\Service.";
+		l_fnBuf << ::GetCurrentProcessId();
+		l_fnBuf << L".log";
+
+		l_logPath = l_pathBuf + l_fnBuf.str();
+		
+		FILE *l_pFile = _wfsopen(l_logPath.c_str(), L"w+", _SH_DENYWR);
+		if(l_pFile)
+		{
+			setvbuf(l_pFile, NULL, _IONBF, 0);
+			
+			*stderr = *l_pFile;
+			*stdout = *l_pFile;
+		}
+	}
 }
 
 
@@ -60,11 +90,11 @@ DWORD CZNCWindowsService::Init()
 
 			if(!l_pathW.empty())
 			{
-				size_t l_bufLen = ::WideCharToMultiByte(CP_OEMCP, 0, l_pathW.c_str(), -1, NULL, NULL, NULL, NULL);
+				int l_bufLen = ::WideCharToMultiByte(CP_OEMCP, 0, l_pathW.c_str(), -1, NULL, NULL, NULL, NULL);
 
 				if(l_bufLen > 0)
 				{
-					char *l_buf = new char[l_bufLen];
+					char *l_buf = new char[l_bufLen + 1];
 
 					if(l_buf && ::WideCharToMultiByte(CP_OEMCP, 0, l_pathW.c_str(), -1, l_buf, l_bufLen, NULL, NULL))
 					{
@@ -83,14 +113,14 @@ DWORD CZNCWindowsService::Init()
 	if (!pZNC->ParseConfig(""))
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_CONFIG_CORRUPTED, NULL, 0, 0, NULL, NULL);
-		delete pZNC;
+		CZNC::_Reset();
 		return ERROR_EXITCODE;
 	}
 
 	if (!pZNC->OnBoot())
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_MODULE_BOOT_ERROR, NULL, 0, 0, NULL, NULL);
-		delete pZNC;
+		CZNC::_Reset();
 		return ERROR_EXITCODE;
 	}
 
@@ -122,7 +152,7 @@ DWORD CZNCWindowsService::Loop()
 		}
 	}
 
-	delete pZNC;
+	CZNC::_Reset();
 	return dwRet;
 }
 

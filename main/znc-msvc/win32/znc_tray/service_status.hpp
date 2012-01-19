@@ -29,8 +29,8 @@ public:
 	void StopWatchingStatus();
 
 	// control functionality:
-	bool StartService(HWND a_hwnd);
-	bool StopService(HWND a_hwnd);
+	void StartService(HWND a_hwnd);
+	void StopService(HWND a_hwnd);
 
 protected:
 	const wchar_t* m_serviceName;
@@ -72,3 +72,4 @@ protected:
 #define WM_SERVICESTARTED (WM_USER + 102)
 #define WM_SERVICESTARTING (WM_USER + 103)
 #define WM_SERVICESTOPPING (WM_USER + 104)
+#define WM_SERVICECONTROL_RESULT (WM_USER + 105)

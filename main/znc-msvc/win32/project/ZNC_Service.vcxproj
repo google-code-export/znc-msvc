@@ -233,6 +233,7 @@ xcopy /y $(IntDir)service_provider.dll $(SolutionDir)..\..\..\build-out\$(Platfo
   <ItemGroup>
     <ClInclude Include="..\src\getopt.h" />
     <ClInclude Include="..\src\registry.h" />
+    <ClInclude Include="..\src\znc_service_defs.h" />
     <ClInclude Include="..\znc_service\znc_service.h" />
   </ItemGroup>
   <ItemGroup>
