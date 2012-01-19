@@ -14,8 +14,6 @@ CZNCWindowsService::CZNCWindowsService() :
 
 	memset(&serviceStatus, 0, sizeof(serviceStatus));
 	serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-
-	this->RedirectStdStreams();
 }
 
 
@@ -57,6 +55,9 @@ CZNCWindowsService::~CZNCWindowsService()
 
 DWORD CZNCWindowsService::Init()
 {
+	// redirect stdout/stderr before calling into ZNC land:
+	this->RedirectStdStreams();
+
 	CUtils::SeedPRNG();
 
 	_set_fmode(_O_BINARY);
@@ -124,7 +125,7 @@ DWORD CZNCWindowsService::Init()
 		return ERROR_EXITCODE;
 	}
 
-	return 0;
+	return NO_ERROR;
 }
 
 
@@ -160,7 +161,11 @@ DWORD CZNCWindowsService::Loop()
 VOID CZNCWindowsService::ReportServiceStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
 	serviceStatus.dwCurrentState = dwCurrentState;
-	serviceStatus.dwWin32ExitCode = dwWin32ExitCode;
+	if(dwWin32ExitCode != NO_ERROR)
+	{
+		serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		serviceStatus.dwServiceSpecificExitCode = dwWin32ExitCode;
+	}
 	serviceStatus.dwWaitHint = dwWaitHint;
 
 	if (dwCurrentState == SERVICE_START_PENDING)
@@ -192,7 +197,7 @@ VOID WINAPI CZNCWindowsService::ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 	thisSvc->ReportServiceStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
 
 	DWORD Result = thisSvc->Init();
-	if (Result != 0)
+	if (Result != NO_ERROR)
 	{
 		thisSvc->ReportServiceStatus(SERVICE_STOPPED, Result, 0);
 		return;
