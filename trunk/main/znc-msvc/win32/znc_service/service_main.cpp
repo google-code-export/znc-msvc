@@ -80,24 +80,24 @@ int main(int argc, char *argv[])
 		case cmdInstall:
 			if(CZNCWindowsService::InstallService(bManualStartupInstall) == 0)
 			{
-				std::cout << "OK" << std::endl;
+				std::cout << "InstallService result: OK" << std::endl;
 				return 0;
 			}
 			else
 			{
-				std::cerr << "Error" << std::endl;
+				std::cerr << "InstallService result: Error" << std::endl;
 				return 1;
 			}
 			break;
 		case cmdUninstall:
 			if(CZNCWindowsService::UninstallService() == 0)
 			{
-				std::cout << "OK" << std::endl;
+				std::cout << "UninstallService result: OK" << std::endl;
 				return 0;
 			}
 			else
 			{
-				std::cerr << "Error" << std::endl;
+				std::cerr << "UninstallService result: Error" << std::endl;
 				return 1;
 			}
 			break;
