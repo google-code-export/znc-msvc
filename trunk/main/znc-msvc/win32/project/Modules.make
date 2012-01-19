@@ -182,7 +182,8 @@ $(MAKDIR)\extra_win32\prowl.dll \
 $(MAKDIR)\extra_win32\rawlog.dll \
 $(MAKDIR)\extra_win32\timed_perform.dll \
 $(MAKDIR)\extra_win32\twitter.dll \
-$(MAKDIR)\extra_win32\watch_only_detached.dll
+$(MAKDIR)\extra_win32\watch_only_detached.dll \
+$(MAKDIR)\extra_win32\win32_service_helper.dll
 
 OBJS=$(MAKDIR)\admin.obj \
 $(MAKDIR)\adminlog.obj \
@@ -252,7 +253,8 @@ $(MAKDIR)\extra_win32\prowl.obj \
 $(MAKDIR)\extra_win32\rawlog.obj \
 $(MAKDIR)\extra_win32\timed_perform.obj \
 $(MAKDIR)\extra_win32\twitter.obj \
-$(MAKDIR)\extra_win32\watch_only_detached.obj
+$(MAKDIR)\extra_win32\watch_only_detached.obj \
+$(MAKDIR)\extra_win32\win32_service_helper.obj
 
 # ----------------
 # Makefile targets

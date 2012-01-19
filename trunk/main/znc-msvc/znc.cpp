@@ -1117,6 +1117,10 @@ bool CZNC::DoRehash(CString& sError)
 	VCString vsList;
 	VCString::const_iterator vit;
 	config.FindStringVector("loadmodule", vsList);
+#ifdef _WIN32
+	if (::ZNCWin32ServiceMode() && msModules.find("win32_service_helper") == msModules.end())
+		vsList.push_back("win32_service_helper");
+#endif
 	for (vit = vsList.begin(); vit != vsList.end(); ++vit) {
 		CString sModName = vit->Token(0);
 		CString sArgs = vit->Token(1, true);

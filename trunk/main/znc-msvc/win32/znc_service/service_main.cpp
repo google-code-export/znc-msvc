@@ -64,6 +64,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	::ZNCWin32SetServiceMode(true);
+
 	SERVICE_TABLE_ENTRYW ServiceTable[] = {
 		{ZNC_SERVICE_NAME, Svc.ServiceMain},
 		{NULL, NULL}
