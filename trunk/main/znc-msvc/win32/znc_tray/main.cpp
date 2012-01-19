@@ -10,7 +10,6 @@
 #include "znc_tray.hpp"
 #include "control_window.hpp"
 
-
 static ULONG_PTR s_gdiplusToken;
 
 

@@ -4,10 +4,7 @@
 #include <windows.h>
 #include "service_provider.h"
 
-#define ZNC_SERVICE_NAME L"ZNC"
-#define ZNC_EVENT_PROVIDER L"ZNCService"
-#define ZNC_SERVICE_DESCRIPTION L"ZNC is an advanced IRC network bouncer or BNC."
-#define ERROR_EXITCODE -1
+#include "znc_service_defs.h"
 
 class CString;
 
@@ -26,6 +23,8 @@ protected:
 	DWORD Init();
 	DWORD Loop();
 	VOID ReportServiceStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint);
+
+	void RedirectStdStreams();
 
 	SERVICE_STATUS serviceStatus;
 	SERVICE_STATUS_HANDLE hServiceStatus;

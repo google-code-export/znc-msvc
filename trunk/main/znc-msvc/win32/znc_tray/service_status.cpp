@@ -140,11 +140,11 @@ struct start_stop_service_proc_data_t
 };
 
 
-bool CServiceStatus::StartService(HWND a_hwnd)
+void CServiceStatus::StartService(HWND a_hwnd)
 {
 	if(this->IsRunning())
 	{
-		return true;
+		return;
 	}
 
 	// StartService may block for up to 30 seconds, so we use a separate fire-and-forget thread
@@ -161,21 +161,17 @@ bool CServiceStatus::StartService(HWND a_hwnd)
 	}
 
 	::CloseHandle(data.signal);
-
-	// :TODO: more meaningful return value, re-think fire-and-forget
-
-	return true;
 }
 
 
-bool CServiceStatus::StopService(HWND a_hwnd)
+void CServiceStatus::StopService(HWND a_hwnd)
 {
 	SERVICE_STATUS ss = {0};
 
 	if(::QueryServiceStatus(m_hService, &ss) &&
 		(ss.dwCurrentState == SERVICE_STOPPED || ss.dwCurrentState == SERVICE_STOP_PENDING))
 	{
-		return true;
+		return;
 	}
 
 	// ControlService may block for up to 30 seconds, so we use a separate fire-and-forget thread
@@ -192,10 +188,6 @@ bool CServiceStatus::StopService(HWND a_hwnd)
 	}
 
 	::CloseHandle(data.signal);
-
-	// :TODO: more meaningful return value, re-think fire-and-forget
-
-	return true;
 }
 
 
@@ -241,6 +233,8 @@ void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 {
 	SC_HANDLE hService = ::OpenService(m_scm, m_serviceName, (start ? SERVICE_START : SERVICE_STOP));
 
+	BOOL bResult = FALSE;
+
 	if(hService)
 	{
 		// for XP, admin users without UAC etc., try "locally"
@@ -253,7 +247,7 @@ void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 		{
 			SERVICE_STATUS dummy;
 
-			::ControlService(hService, SERVICE_CONTROL_STOP, &dummy);
+			bResult = ::ControlService(hService, SERVICE_CONTROL_STOP, &dummy);
 		}
 
 		::CloseServiceHandle(hService);
@@ -280,7 +274,7 @@ void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 				hr = ppSS->DoStopService(bStrServiceName);
 			}
 
-			_ASSERT(SUCCEEDED(hr));
+			bResult = (SUCCEEDED(hr));
 
 			ppSS->Release();
 
@@ -291,6 +285,8 @@ void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 	}
 	else
 		;// shit out of luck...
+
+	::SendMessage(a_hwnd, WM_SERVICECONTROL_RESULT, (start ? 1 : 0), (bResult ? 1 : 0));
 }
 
 
