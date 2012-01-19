@@ -83,6 +83,10 @@ Name: "{userstartup}\ZNC Service Control"; Filename: "{app}\ZNC_Tray.exe"; Param
 [Registry]
 Root: HKLM; Subkey: "SOFTWARE\ZNC"; ValueType: string; ValueName: "ServiceDataDir"; ValueData: "{code:GetServiceDataDir}"; Components: service; Flags: uninsdeletekey
 
+[Dirs]
+Name: "{code:GetServiceDataDir}"
+Name: "{commonappdata}\ZNC"
+
 [Run]
 Filename: "{app}\ZNC_Service.exe"; Parameters: "--install"; Flags: runhidden; Components: service and service/autorun
 Filename: "{app}\ZNC_Service.exe"; Parameters: "--install --manual"; Flags: runhidden; Components: service and not service/autorun
@@ -99,6 +103,10 @@ Filename: "{app}\ZNC_Service.exe"; Flags: runhidden; Parameters: "--uninstall"; 
 Filename: "{cmd}"; Parameters: "/c reg delete HKLM\SOFTWARE\Classes\CLSID\{#COMServiceControlCLSID} /v LocalizedString /f"; Flags: runhidden; Components: service/tray
 Filename: "{cmd}"; Parameters: "/c reg delete HKLM\SOFTWARE\Classes\CLSID\{#COMServiceControlCLSID}\Elevation /f"; Flags: runhidden; Components: service/tray
 Filename: "{app}\COMServiceControl.exe"; Parameters: "/UnRegServer"; Flags: runhidden; Components: service/tray
+
+[UninstallDelete]
+Type: files; Name: "{commonappdata}\ZNC\Service.*.log"
+Type: dirifempty; Name: "{commonappdata}\ZNC"
 
 #include "vc_redist.iss"
 #include "service_data_dir.iss"
