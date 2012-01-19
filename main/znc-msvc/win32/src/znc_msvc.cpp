@@ -12,6 +12,17 @@ int sleep(int seconds)
 	return 0;
 }
 
+static bool s_bServiceMode = false;
+
+bool ZNCWin32ServiceMode()
+{
+	return s_bServiceMode;
+}
+
+void ZNCWin32SetServiceMode(bool b)
+{
+	s_bServiceMode = b;
+}
 
 // Source: http://www.openasthra.com/c-tidbits/gettimeofday-function-for-windows/
 

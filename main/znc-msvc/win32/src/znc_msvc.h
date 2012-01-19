@@ -63,4 +63,7 @@ std::string ZNC_API getpass(const char *prompt);
 
 #define __PRETTY_FUNCTION__ __FUNCTION__
 
+void ZNC_API ZNCWin32SetServiceMode(bool b);
+bool ZNC_API ZNCWin32ServiceMode();
+
 #endif // _ZNC_WIN32_H
