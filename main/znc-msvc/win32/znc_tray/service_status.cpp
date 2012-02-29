@@ -96,7 +96,7 @@ bool CServiceStatus::OpenService()
 
 bool CServiceStatus::CanStartStop()
 {
-	// try to obtain handle with start/stop privileges
+	// try to obtain handle with start/stop privilege
 	SC_HANDLE hService = ::OpenService(m_scm, m_serviceName,
 		SERVICE_QUERY_STATUS | SERVICE_START | SERVICE_STOP);
 
@@ -231,7 +231,8 @@ static HRESULT CoCreateInstanceAsAdmin(HWND hwnd, REFCLSID rclsid, REFIID riid, 
 
 void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 {
-	SC_HANDLE hService = ::OpenService(m_scm, m_serviceName, (start ? SERVICE_START : SERVICE_STOP));
+	SC_HANDLE hService = ::OpenService(m_scm, m_serviceName,
+		SERVICE_QUERY_STATUS | (start ? SERVICE_START : SERVICE_STOP));
 
 	BOOL bResult = FALSE;
 
@@ -250,7 +251,7 @@ void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 			bResult = ::ControlService(hService, SERVICE_CONTROL_STOP, &dummy);
 		}
 
-		::CloseServiceHandle(hService);
+		// handle is closed later on
 	}
 	else if(CServiceStatus::IsNT6())
 	{
@@ -285,6 +286,71 @@ void CServiceStatus::DoStartStopInternal(bool start, HWND a_hwnd)
 	}
 	else
 		;// shit out of luck...
+
+	if(bResult)
+	{
+		// based on http://msdn.microsoft.com/en-us/library/windows/desktop/ms686315%28v=vs.85%29.aspx
+
+		SERVICE_STATUS_PROCESS ssStatus = {0}; 
+		DWORD dwOldCheckPoint; 
+		DWORD dwStartTickCount;
+		DWORD dwWaitTime;
+		DWORD dwBytesNeeded = 0;
+		
+		if(!hService)
+		{
+			hService = ::OpenService(m_scm, m_serviceName, SERVICE_QUERY_STATUS);
+		}
+
+		if(::QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssStatus,
+			sizeof(SERVICE_STATUS_PROCESS), &dwBytesNeeded))
+		{
+			dwStartTickCount = ::GetTickCount();
+			dwOldCheckPoint = ssStatus.dwCheckPoint;
+
+			while(ssStatus.dwCurrentState == (start ? SERVICE_START_PENDING : SERVICE_STOP_PENDING))
+			{
+				// Do not wait longer than the wait hint. A good interval i
+				// one-tenth of the wait hint but not less than 1 second
+				// and not more than 10 seconds.
+ 
+				dwWaitTime = ssStatus.dwWaitHint / 10;
+
+				if(dwWaitTime < 1000)
+					dwWaitTime = 1000;
+				else if(dwWaitTime > 10000)
+					dwWaitTime = 10000;
+
+				::Sleep(dwWaitTime);
+
+				if(!::QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)&ssStatus,
+					sizeof(SERVICE_STATUS_PROCESS), &dwBytesNeeded))
+				{
+					break;
+				}
+
+				if(ssStatus.dwCheckPoint > dwOldCheckPoint)
+				{
+					// Continue to wait and check.
+					dwStartTickCount = ::GetTickCount();
+					dwOldCheckPoint = ssStatus.dwCheckPoint;
+				}
+				else if(::GetTickCount() - dwStartTickCount > ssStatus.dwWaitHint)
+				{
+					// Timeout waiting for service
+					bResult = false;
+					break;
+				}
+			}
+			
+			bResult = (ssStatus.dwCurrentState == (start ? SERVICE_RUNNING : SERVICE_STOPPED));
+		}
+	}
+
+	if(hService)
+	{
+		::CloseServiceHandle(hService);
+	}
 
 	::SendMessage(a_hwnd, WM_SERVICECONTROL_RESULT, (start ? 1 : 0), (bResult ? 1 : 0));
 }
