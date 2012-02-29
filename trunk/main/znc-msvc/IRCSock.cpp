@@ -12,6 +12,7 @@
 #include "Client.h"
 #include "User.h"
 #include "znc.h"
+#include "Server.h"
 
 // These are used in OnGeneralCTCP()
 const time_t CIRCSock::m_uCTCPFloodTime = 5;
@@ -162,6 +163,16 @@ void CIRCSock::ReadLine(const CString& sData) {
 				ParseISupport(sRest);
 				m_pUser->UpdateExactRawBuffer(":" + sServer + " " + sCmd + " ", " " + sRest);
 				break;
+			case 10: { // :irc.server.com 010 nick <hostname> <port> :<info>
+				CString sHost = sRest.Token(0);
+				CString sPort = sRest.Token(1);
+				CString sInfo = sRest.Token(2, true).TrimPrefix_n(":");
+				m_pUser->PutStatus("Server [" + m_pUser->GetCurrentServer()->GetString(false) +
+						"] redirects us to [" + sHost + ":" + sPort + "] with reason [" + sInfo + "]");
+				m_pUser->PutStatus("Perhaps you want to add it as a new server.");
+				// Don't send server redirects to the client
+				return;
+			}
 			case 2:
 			case 3:
 			case 4:
@@ -186,6 +197,15 @@ void CIRCSock::ReadLine(const CString& sData) {
 
 				if (pChan) {
 					pChan->SetModes(sRest.Token(1, true));
+
+					// We don't SetModeKnown(true) here,
+					// because a 329 will follow
+					if (!pChan->IsModeKnown()) {
+						// When we JOIN, we send a MODE
+						// request. This makes sure the
+						// reply isn't forwarded.
+						return;
+					}
 				}
 			}
 				break;
@@ -196,6 +216,14 @@ void CIRCSock::ReadLine(const CString& sData) {
 				if (pChan) {
 					unsigned long ulDate = sLine.Token(4).ToULong();
 					pChan->SetCreationDate(ulDate);
+
+					if (!pChan->IsModeKnown()) {
+						pChan->SetModeKnown(true);
+						// When we JOIN, we send a MODE
+						// request. This makes sure the
+						// reply isn't forwarded.
+						return;
+					}
 				}
 			}
 				break;
@@ -445,6 +473,7 @@ void CIRCSock::ReadLine(const CString& sData) {
 					pChan->ResetJoinTries();
 					pChan->Enable();
 					pChan->SetIsOn(true);
+					PutIRC("MODE " + sChan);
 				}
 			} else {
 				pChan = m_pUser->FindChan(sChan);
