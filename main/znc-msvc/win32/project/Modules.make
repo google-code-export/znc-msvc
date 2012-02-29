@@ -117,7 +117,6 @@ LIBPATHS=$(LIBPATHS) /LIBPATH:"..\..\..\dependencies\lib_$(PLATFORM)\debug" \
 DLLS=$(MAKDIR)\admin.dll \
 $(MAKDIR)\adminlog.dll \
 $(MAKDIR)\autoattach.dll \
-$(MAKDIR)\autocycle.dll \
 $(MAKDIR)\autoop.dll \
 $(MAKDIR)\autoreply.dll \
 $(MAKDIR)\awaynick.dll \
@@ -148,6 +147,7 @@ $(MAKDIR)\stickychan.dll \
 $(MAKDIR)\watch.dll \
 $(MAKDIR)\webadmin.dll \
 $(MAKDIR)\extra\antiidle.dll \
+$(MAKDIR)\extra\autocycle.dll \
 $(MAKDIR)\extra\autovoice.dll \
 $(MAKDIR)\extra\away.dll \
 $(MAKDIR)\extra\block_motd.dll \
@@ -188,7 +188,6 @@ $(MAKDIR)\extra_win32\win32_service_helper.dll
 OBJS=$(MAKDIR)\admin.obj \
 $(MAKDIR)\adminlog.obj \
 $(MAKDIR)\autoattach.obj \
-$(MAKDIR)\autocycle.obj \
 $(MAKDIR)\autoop.obj \
 $(MAKDIR)\autoreply.obj \
 $(MAKDIR)\awaynick.obj \
@@ -219,6 +218,7 @@ $(MAKDIR)\stickychan.obj \
 $(MAKDIR)\watch.obj \
 $(MAKDIR)\webadmin.obj \
 $(MAKDIR)\extra\antiidle.obj \
+$(MAKDIR)\extra\autocycle.obj \
 $(MAKDIR)\extra\autovoice.obj \
 $(MAKDIR)\extra\away.obj \
 $(MAKDIR)\extra\block_motd.obj \

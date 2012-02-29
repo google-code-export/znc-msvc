@@ -239,7 +239,7 @@ public:
 					CDCCBounce* pSock = (CDCCBounce*) *it;
 
 					if (pSock->GetLocalPort() == uResumePort) {
-						m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + m_pClient->GetNick() + " :\001DCC " + sType + " " + sFile + " " + CString(pSock->GetUserPort()) + " " + sMessage.Token(4) + "\001");
+						m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + m_pUser->GetNick() + " :\001DCC " + sType + " " + sFile + " " + CString(pSock->GetUserPort()) + " " + sMessage.Token(4) + "\001");
 					}
 				}
 			} else if (sType.Equals("ACCEPT")) {
@@ -249,7 +249,7 @@ public:
 					CDCCBounce* pSock = (CDCCBounce*) *it;
 
 					if (pSock->GetUserPort() == sMessage.Token(3).ToUShort()) {
-						m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + m_pClient->GetNick() + " :\001DCC " + sType + " " + sFile + " " + CString(pSock->GetLocalPort()) + " " + sMessage.Token(4) + "\001");
+						m_pUser->PutUser(":" + Nick.GetNickMask() + " PRIVMSG " + m_pUser->GetNick() + " :\001DCC " + sType + " " + sFile + " " + CString(pSock->GetLocalPort()) + " " + sMessage.Token(4) + "\001");
 					}
 				}
 			}
