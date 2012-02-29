@@ -34,6 +34,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "core"; Description: "Core Files (required)"; Types: full compact custom; Flags: fixed
 Name: "service"; Description: "ZNC Service"; Types: full compact
 Name: "service/autorun"; Description: "Set Service to Run on Startup"; Types: full
+Name: "service/firewall"; Description: "Add Service firewall exception"; Types: full
 Name: "service/tray"; Description: "Install Tray Control"; Types: full compact; Flags: checkablealone
 Name: "service/tray/desktop"; Description: "Create a Desktop Icon"; Types: full
 Name: "service/tray/autorun"; Description: "Launch Tray Control on Startup"; Types: full
@@ -110,10 +111,29 @@ Type: dirifempty; Name: "{commonappdata}\ZNC"
 
 #include "vc_redist.iss"
 #include "service_data_dir.iss"
+#include "firewall.iss"
 
 [Code]
 procedure InitializeWizard();
 begin
   VC_Redist_InitializeWizard();
   Service_Data_Dir_InitializeWizard();
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+	VC_Redist_CurStepChanged(CurStep);
+
+	if (CurStep = ssInstall) and IsComponentSelected('service') and IsComponentSelected('service/firewall') then
+	begin
+		AddFirewallException('ZNC IRC Bouncer', ExpandConstant('{app}\ZNC_Service.exe'));
+	end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+	if CurUninstallStep = usUninstall then
+	begin
+		RemoveFirewallException(ExpandConstant('{app}\ZNC_Service.exe'));
+	end;
 end;

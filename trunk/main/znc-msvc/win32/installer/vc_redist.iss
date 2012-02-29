@@ -46,7 +46,7 @@ begin
 end;
 
 
-procedure CurStepChanged(CurStep: TSetupStep);
+procedure VC_Redist_CurStepChanged(CurStep: TSetupStep);
 var
 	exepath: String;
 	exitcode: Integer;
