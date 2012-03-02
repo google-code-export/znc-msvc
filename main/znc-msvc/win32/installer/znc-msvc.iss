@@ -26,6 +26,7 @@ ArchitecturesInstallIn64BitMode=x64
 MinVersion=0,5.1sp2
 UninstallDisplayIcon={app}\ZNC_Tray.exe
 UninstallDisplayName=ZNC IRC Bouncer
+SignTool=kSign /d $qZNC IRC Bouncer$q /du $qhttp://znc-msvc.googlecode.com/$q $f
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -34,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "core"; Description: "Core Files (required)"; Types: full compact custom; Flags: fixed
 Name: "service"; Description: "ZNC Service"; Types: full compact
 Name: "service/autorun"; Description: "Set Service to Run on Startup"; Types: full
-Name: "service/firewall"; Description: "Add Service firewall exception"; Types: full
+Name: "service/firewall"; Description: "Add Service Firewall Exception"; Types: full
 Name: "service/tray"; Description: "Install Tray Control"; Types: full compact; Flags: checkablealone
 Name: "service/tray/desktop"; Description: "Create a Desktop Icon"; Types: full
 Name: "service/tray/autorun"; Description: "Launch Tray Control on Startup"; Types: full
@@ -71,6 +72,8 @@ Source: "{#SourceFileDir64}\ZNC_Tray.exe"; DestDir: "{app}"; Flags: ignoreversio
 
 Source: "{#SourceFileDir32}\COMServiceControl.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: service/tray
 Source: "{#SourceFileDir64}\COMServiceControl.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: service/tray
+
+#include "..\project\ModulesList.iss"
 
 [Icons]
 Name: "{group}\ZNC Service Control"; Filename: "{app}\ZNC_Tray.exe"; Components: service/tray
