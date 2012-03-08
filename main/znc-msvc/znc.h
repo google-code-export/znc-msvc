@@ -53,7 +53,7 @@ public:
 	CString ExpandConfigPath(const CString& sConfigFile, bool bAllowMkDir = true);
 	bool WriteNewConfig(const CString& sConfigFile);
 	bool WriteConfig();
-	bool ParseConfig(const CString& sConfig);
+	bool ParseConfig(const CString& sConfig, CString& sError);
 	bool RehashConfig(CString& sError);
 	static CString GetVersion();
 	static CString GetTag(bool bIncludeVersion = true);
