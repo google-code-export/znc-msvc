@@ -181,7 +181,8 @@ int main(int argc, char** argv) {
 		/* Fall through to normal bootup */
 	}
 
-	if (!pZNC->ParseConfig(sConfig)) {
+	CString sDummyError;
+	if (!pZNC->ParseConfig(sConfig, sDummyError)) {
 		if(argc < 2)
 		{
 			CUtils::PrintMessage("\n");

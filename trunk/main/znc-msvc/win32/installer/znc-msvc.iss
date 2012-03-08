@@ -3,6 +3,7 @@
 
 #define SourceFileDir32 "..\..\..\build-out\Win32-Release"
 #define SourceFileDir64 "..\..\..\build-out\x64-Release"
+#define SourceCodeDir "..\.."
 #define COMServiceControlCLSID "{{DC2BF05E-2451-435E-A24C-1B9BA804B5F0}"
 
 #include "it_download.iss"
@@ -10,8 +11,8 @@
 [Setup]
 AppId={{819933F3-A105-4B40-8920-6D74139B5464}
 AppName=ZNC IRC Bouncer
-AppVerName=ZNC 0.202plus
-AppVersion=0.202plus
+AppVerName=ZNC 0.204
+AppVersion=0.204
 AppPublisher=Ingmar Runge
 AppPublisherURL=http://znc-msvc.googlecode.com/
 DefaultDirName={pf}\ZNC
@@ -74,6 +75,11 @@ Source: "{#SourceFileDir32}\COMServiceControl.exe"; DestDir: "{app}"; Flags: ign
 Source: "{#SourceFileDir64}\COMServiceControl.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: service/tray
 
 #include "..\project\ModulesList.iss"
+
+Source: "{#SourceCodeDir}\webskins\_default_\*"; DestDir: "{app}\webskins\_default_"; Excludes: ".svn"; Flags: recursesubdirs
+Source: "{#SourceCodeDir}\webskins\dark-clouds\*"; DestDir: "{app}\webskins\dark-clouds"; Excludes: ".svn"; Flags: recursesubdirs; Components: webskins\darkclouds
+Source: "{#SourceCodeDir}\webskins\forest\*"; DestDir: "{app}\webskins\forest"; Excludes: ".svn"; Flags: recursesubdirs; Components: webskins\forest
+Source: "{#SourceCodeDir}\webskins\ice\*"; DestDir: "{app}\webskins\ice"; Excludes: ".svn"; Flags: recursesubdirs; Components: webskins\ice
 
 [Icons]
 Name: "{group}\ZNC Service Control"; Filename: "{app}\ZNC_Tray.exe"; Components: service/tray
