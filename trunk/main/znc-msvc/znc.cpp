@@ -569,6 +569,13 @@ bool CZNC::WriteConfig() {
 			sArgs = " " + sArgs.FirstLine();
 		}
 
+#ifdef _WIN32
+		if(::ZNCWin32ServiceMode() && sName == "win32_service_helper")
+		{
+			continue;
+		}
+#endif
+
 		pFile->Write("LoadModule   = " + sName.FirstLine() + sArgs + "\n");
 	}
 
@@ -1018,13 +1025,11 @@ size_t CZNC::FilterUncommonModules(set<CModInfo>& ssModules) {
 	return uNrRemoved;
 }
 
-bool CZNC::ParseConfig(const CString& sConfig)
+bool CZNC::ParseConfig(const CString& sConfig, CString& sError)
 {
-	CString s;
-
 	m_sConfigFile = ExpandConfigPath(sConfig, false);
 
-	return DoRehash(s);
+	return DoRehash(sError);
 }
 
 bool CZNC::RehashConfig(CString& sError)
@@ -1118,8 +1123,16 @@ bool CZNC::DoRehash(CString& sError)
 	VCString::const_iterator vit;
 	config.FindStringVector("loadmodule", vsList);
 #ifdef _WIN32
-	if (::ZNCWin32ServiceMode() && msModules.find("win32_service_helper") == msModules.end())
-		vsList.push_back("win32_service_helper");
+	if (::ZNCWin32ServiceMode() &&
+		msModules.find("win32_service_helper") == msModules.end() &&
+		std::find(vsList.begin(), vsList.end(), "win32_service_helper") == vsList.end()) 
+	{
+		CString sModPath, sDataPath;
+		if(CModules::FindModPath("win32_service_helper", sModPath, sDataPath) != NULL)
+		{
+			vsList.push_back("win32_service_helper");
+		}
+	}
 #endif
 	for (vit = vsList.begin(); vit != vsList.end(); ++vit) {
 		CString sModName = vit->Token(0);
