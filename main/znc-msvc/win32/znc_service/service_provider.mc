@@ -65,6 +65,8 @@ Facility=System
 SymbolicName=MSG_CONFIG_CORRUPTED
 Language=English
 The configuration could not be loaded or parsed successfully.
+DataDir: %1
+%2.
 .
 
 MessageId=0x103

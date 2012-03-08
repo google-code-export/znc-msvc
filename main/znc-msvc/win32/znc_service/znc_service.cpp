@@ -111,14 +111,19 @@ DWORD CZNCWindowsService::Init()
 	CZNC* pZNC = &CZNC::Get();
 	pZNC->InitDirs("", thisSvc->sDataDir);
 
-	if (!pZNC->ParseConfig(""))
+	CString sError;
+
+	if(!pZNC->ParseConfig("", sError))
 	{
-		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_CONFIG_CORRUPTED, NULL, 0, 0, NULL, NULL);
+		LPSTR pInsertStrings[2] = { NULL };
+		pInsertStrings[0] = const_cast<char*>(thisSvc->sDataDir.c_str());
+		pInsertStrings[1] = const_cast<char*>(sError.c_str());
+		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_CONFIG_CORRUPTED, NULL, 2, 0, (LPCSTR*)pInsertStrings, NULL);
 		CZNC::_Reset();
 		return ERROR_EXITCODE;
 	}
 
-	if (!pZNC->OnBoot())
+	if(!pZNC->OnBoot())
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_MODULE_BOOT_ERROR, NULL, 0, 0, NULL, NULL);
 		CZNC::_Reset();
