@@ -28,12 +28,17 @@ Function GetInnoSetupFileList()
 	foreach($p in $mod_package_dirs)
 	{
 		Get-Childitem "..\..\modules\$p*.cpp" | ForEach-Object {
-			$name = ($_.name -replace "cpp$", "dll")
+			$name = ($_.name -replace "\.cpp$", "")
 			if($p -eq "") { $compo = "core" } else { $compo = ($p -replace "\\$", "") }
-			$result += "`r`nSource: `"{#SourceFileDir32}\modules\$name`"; DestDir: `"{app}\modules`"; Flags: ignoreversion; Check: not Is64BitInstallMode; "
-			if($_.name -eq "win32_service_helper.cpp") { $result += "Components: service/tray" } else { $result += "Components: modules/$compo" }
-			$result += "`r`nSource: `"{#SourceFileDir64}\modules\$name`"; DestDir: `"{app}\modules`"; Flags: ignoreversion; Check: Is64BitInstallMode; "
-			if($_.name -eq "win32_service_helper.cpp") { $result += "Components: service/tray" } else { $result += "Components: modules/$compo" }
+			$result += "`r`nSource: `"{#SourceFileDir32}\modules\$name.dll`"; DestDir: `"{app}\modules`"; Flags: ignoreversion; Check: not Is64BitInstallMode; "
+			if($_.name -ne "win32_service_helper.cpp") { $result += "Components: modules/$compo" }
+			$result += "`r`nSource: `"{#SourceFileDir64}\modules\$name.dll`"; DestDir: `"{app}\modules`"; Flags: ignoreversion; Check: Is64BitInstallMode; "
+			if($_.name -ne "win32_service_helper.cpp") { $result += "Components: modules/$compo" }
+
+			if(Test-Path -Path ("..\..\modules\$p" + "data\$name") -PathType Container)
+			{
+				$result += "`r`nSource: `"{#SourceCodeDir}\modules\$p" + "data\$name\*`"; DestDir: `"{app}\modules\data\$name`"; Excludes: `".svn`"; Flags: recursesubdirs; Components: modules/$compo"
+			}
 		}
 	}
 	return $result
