@@ -45,12 +45,17 @@ copy build-out\x64-Release\ZNC* build-temp\x64\znc
 copy build-out\Win32-Release\service_provider.dll build-temp\x86\znc
 copy build-out\x64-Release\service_provider.dll build-temp\x64\znc
 
+copy build-out\Win32-Release\COMService*exe build-temp\x86\znc
+copy build-out\x64-Release\COMService*exe build-temp\x64\znc
+
 copy build-out\Win32-Release\modules\* build-temp\x86\znc\modules
 copy build-out\x64-Release\modules\* build-temp\x64\znc\modules
 
 copy dependencies\lib_x86\release\*.dll build-temp\x86\znc
 copy dependencies\lib_x64\release\*.dll build-temp\x64\znc
 
+echo SIGN NOW!
+PAUSE
 
 echo ********************** Copying support files... **********************
 
