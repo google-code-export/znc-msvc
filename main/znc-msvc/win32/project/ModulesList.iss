@@ -13,14 +13,17 @@ Source: "{#SourceFileDir32}\modules\awaynick.dll"; DestDir: "{app}\modules"; Fla
 Source: "{#SourceFileDir64}\modules\awaynick.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\blockuser.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\blockuser.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\blockuser\*"; DestDir: "{app}\modules\data\blockuser"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\bouncedcc.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\bouncedcc.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\buffextras.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\buffextras.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\cert.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\cert.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\cert\*"; DestDir: "{app}\modules\data\cert"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\certauth.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\certauth.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\certauth\*"; DestDir: "{app}\modules\data\certauth"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\chansaver.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\chansaver.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\clientnotify.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
@@ -37,14 +40,17 @@ Source: "{#SourceFileDir32}\modules\kickrejoin.dll"; DestDir: "{app}\modules"; F
 Source: "{#SourceFileDir64}\modules\kickrejoin.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\lastseen.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\lastseen.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\lastseen\*"; DestDir: "{app}\modules\data\lastseen"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\nickserv.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\nickserv.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\notes.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\notes.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\notes\*"; DestDir: "{app}\modules\data\notes"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\partyline.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\partyline.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\perform.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\perform.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\perform\*"; DestDir: "{app}\modules\data\perform"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\q.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\q.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\raw.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
@@ -59,10 +65,12 @@ Source: "{#SourceFileDir32}\modules\simple_away.dll"; DestDir: "{app}\modules"; 
 Source: "{#SourceFileDir64}\modules\simple_away.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\stickychan.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\stickychan.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\stickychan\*"; DestDir: "{app}\modules\data\stickychan"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\watch.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\watch.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir32}\modules\webadmin.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/core
 Source: "{#SourceFileDir64}\modules\webadmin.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/core
+Source: "{#SourceCodeDir}\modules\data\webadmin\*"; DestDir: "{app}\modules\data\webadmin"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/core
 Source: "{#SourceFileDir32}\modules\antiidle.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir64}\modules\antiidle.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir32}\modules\autocycle.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra
@@ -87,6 +95,7 @@ Source: "{#SourceFileDir32}\modules\imapauth.dll"; DestDir: "{app}\modules"; Fla
 Source: "{#SourceFileDir64}\modules\imapauth.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir32}\modules\listsockets.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir64}\modules\listsockets.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra
+Source: "{#SourceCodeDir}\modules\extra\data\listsockets\*"; DestDir: "{app}\modules\data\listsockets"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/extra
 Source: "{#SourceFileDir32}\modules\log.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir64}\modules\log.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir32}\modules\motdfile.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra
@@ -95,6 +104,7 @@ Source: "{#SourceFileDir32}\modules\notify_connect.dll"; DestDir: "{app}\modules
 Source: "{#SourceFileDir64}\modules\notify_connect.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir32}\modules\send_raw.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra
 Source: "{#SourceFileDir64}\modules\send_raw.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra
+Source: "{#SourceCodeDir}\modules\extra\data\send_raw\*"; DestDir: "{app}\modules\data\send_raw"; Excludes: ".svn"; Flags: recursesubdirs; Components: modules/extra
 Source: "{#SourceFileDir32}\modules\blockserver.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra_win32
 Source: "{#SourceFileDir64}\modules\blockserver.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra_win32
 Source: "{#SourceFileDir32}\modules\block_lagchk.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra_win32
@@ -137,5 +147,5 @@ Source: "{#SourceFileDir32}\modules\twitter.dll"; DestDir: "{app}\modules"; Flag
 Source: "{#SourceFileDir64}\modules\twitter.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra_win32
 Source: "{#SourceFileDir32}\modules\watch_only_detached.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: modules/extra_win32
 Source: "{#SourceFileDir64}\modules\watch_only_detached.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: modules/extra_win32
-Source: "{#SourceFileDir32}\modules\win32_service_helper.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; Components: service/tray
-Source: "{#SourceFileDir64}\modules\win32_service_helper.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; Components: service/tray
+Source: "{#SourceFileDir32}\modules\win32_service_helper.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: not Is64BitInstallMode; 
+Source: "{#SourceFileDir64}\modules\win32_service_helper.dll"; DestDir: "{app}\modules"; Flags: ignoreversion; Check: Is64BitInstallMode; 
