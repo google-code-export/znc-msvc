@@ -33,6 +33,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR wszComm
 	INITCOMMONCONTROLSEX icce = { sizeof(INITCOMMONCONTROLSEX), ICC_STANDARD_CLASSES | ICC_BAR_CLASSES };
 	::InitCommonControlsEx(&icce);
 
+	// init winsock (for communication with service helper module):
+	WSADATA wsaData;
+	int iResult = ::WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+	// srand:
+	int seed = ::GetTickCount();
+	seed ^= getpid();
+	seed ^= rand();
+	::srand(seed);
+
 	// run main app:
 	ZNCTray::CControlWindow *l_mainWin = new ZNCTray::CControlWindow();
 
@@ -40,6 +50,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR wszComm
 
 	// make sure this gets destroyed before the following shutdown code is invoked:
 	delete l_mainWin;
+
+	// shut down winsock:
+	::WSACleanup();
 
 	// shut down GDI+:
 	Gdiplus::GdiplusShutdown(s_gdiplusToken);

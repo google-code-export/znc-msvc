@@ -10,6 +10,7 @@
 #include "znc_tray.hpp"
 #include "control_window.hpp"
 #include "resource.h"
+#include "znc_setup_wizard.h"
 
 #include "znc_service_defs.h"
 
@@ -92,6 +93,60 @@ void CControlWindow::Show()
 	m_serviceStatus->StartWatchingStatus(m_hwndDlg);
 
 	::ShowWindow(m_hwndDlg, SW_SHOWNORMAL);
+
+	// check whether we need to run the initial setup:
+	if(m_serviceStatus->IsInstalled() && m_statusFlag == ZS_STOPPED)
+	{
+#if 0
+		if(CZNCSetupWizard::GetServiceConfDirPath().empty())
+		{
+			int l_msgBoxResult = ::MessageBox(m_hwndDlg, L"Warning: No service configuration folder path has been set. Do you want to use the default path? Otherwise, running ZNC won't be possible.",
+				L"ZNC Config", MB_ICONEXCLAMATION | MB_YESNOCANCEL);
+
+			if(l_msgBoxResult == IDYES)
+			{
+				// can't fix this because it's in HKLM
+			}
+			else if(l_msgBoxResult == IDCANCEL)
+			{
+				::PostMessage(m_hwndDlg, WM_DESTROY, 0, 0);
+			}
+		}
+#endif
+
+		if(!CZNCSetupWizard::DoesServiceConfigExist())
+		{
+			std::wstring l_msg = L"The ZNC service has not been configured yet. Do you wish to create a config file at the following location now?\r\n\r\n"
+				+ CZNCSetupWizard::GetServiceConfDirPath() + L"\r\n\r\nZNC can not run without a config file. If you already have an existing .znc configuration folder, "
+				L"please move it to this location and click No.";
+
+			if(::MessageBox(m_hwndDlg, l_msg.c_str(), L"ZNC Config", MB_ICONQUESTION | MB_YESNO) == IDYES)
+			{
+				CInitialZncConf l_newConf;
+				const std::wstring l_confDirPath = CZNCSetupWizard::GetServiceConfDirPath() + L"\\configs";
+
+				// ignore any failures, we handle errors from WriteZncConf below:
+				::SHCreateDirectoryEx(NULL, l_confDirPath.c_str(), NULL);
+
+				if(l_newConf.WriteZncConf(CZNCSetupWizard::GetServiceZncConfPath()))
+				{
+					m_serviceStatus->StartService(m_hwndDlg);
+					/*
+					const std::string l_url = l_newConf.GetWebUrl();
+
+					::ShellExecuteA(m_hwndDlg, "open", l_url.c_str(), NULL, NULL, SW_SHOWNORMAL);*/
+				}
+				else
+				{
+					::MessageBox(m_hwndDlg, L"Writing config failed YADDAYADDA", L"ZNC Config", MB_ICONEXCLAMATION); // :TODO:
+				}
+			}
+			else if(CZNCSetupWizard::DoesServiceConfigExist())
+			{
+				m_serviceStatus->StartService(m_hwndDlg);
+			}
+		}
+	}
 }
 
 
