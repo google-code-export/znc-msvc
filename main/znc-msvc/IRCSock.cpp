@@ -470,7 +470,6 @@ void CIRCSock::ReadLine(const CString& sData) {
 				m_pUser->AddChan(sChan, false);
 				pChan = m_pUser->FindChan(sChan);
 				if (pChan) {
-					pChan->ResetJoinTries();
 					pChan->Enable();
 					pChan->SetIsOn(true);
 					PutIRC("MODE " + sChan);
@@ -809,6 +808,10 @@ bool CIRCSock::OnGeneralCTCP(CNick& Nick, CString& sMessage) {
 	if (it != mssCTCPReplies.end()) {
 		sReply = m_pUser->ExpandString(it->second);
 		bHaveReply = true;
+
+		if (sReply.empty()) {
+			return true;
+		}
 	}
 
 	if (!bHaveReply && !m_pUser->IsUserAttached()) {

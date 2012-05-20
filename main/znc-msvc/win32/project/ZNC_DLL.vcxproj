@@ -325,7 +325,6 @@ xcopy /y $(SolutionDir)..\..\..\dependencies\lib_x64\release\%%f $(SolutionDir).
     <ClInclude Include="..\..\main.h" />
     <ClInclude Include="..\..\Modules.h" />
     <ClInclude Include="..\..\Nick.h" />
-    <ClInclude Include="..\..\revision.h" />
     <ClInclude Include="..\..\Server.h" />
     <ClInclude Include="..\..\Socket.h" />
     <ClInclude Include="..\..\stdafx.hpp" />
