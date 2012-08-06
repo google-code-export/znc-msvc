@@ -3,11 +3,11 @@
 
 === Requirements ===
   * Windows XP/Server 2003 or newer.
-  * Microsoft Visual Studio 2008 (C++ Express Edition may be enough)
+  * Microsoft Visual Studio 2010 (C++ Express Edition may be enough)
   * Having a recent Microsoft Platform SDK is probably a good idea, but not required.
 
 === Building dependencies ===
-  * *OpenSSL*: Get OpenSSL from http://www.openssl.org/source/ (e.g. _openssl-1.0.0a.tar.gz_), download, extract and build according to _INSTALL.W32_ and _INSTALL.W64_.
+  * *OpenSSL*: Get OpenSSL from http://www.openssl.org/source/ (e.g. _openssl-1.0.1c.tar.gz_), download, extract and build according to _INSTALL.W32_ and _INSTALL.W64_.
   * *C-ares*: Get c-ares from http://c-ares.haxx.se/ (e.g. _c-ares-1.7.3.tar.gz_, don't use a snapshot release, they often do not build on Windows), download, extract and build using VC command line and the `nmake -f Makefile.msvc` command *or* via the included project files.
 
 === Getting the ZNC source code ===
