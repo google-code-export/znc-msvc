@@ -129,7 +129,7 @@ class CAway : public CModule
 			char szFormat[64];
 			struct tm t;
 			localtime_r(&iTime, &t);
-			size_t iCount = strftime(szFormat, 64, "%F %T", &t);
+			size_t iCount = strftime_validating(szFormat, 64, "%Y-%m-%d %H:%M:%S", &t);
 
 			if (iCount <= 0) {
 				PutModule("Corrupt time stamp! [" + m_vMessages[a] + "]");
@@ -218,7 +218,7 @@ public:
 	virtual bool OnLoad(const CString& sArgs, CString& sMessage)
 	{
 		CString sMyArgs = sArgs;
-		size_t uIndex = 0;
+		unsigned int uIndex = 0;
 		if (sMyArgs.Token(0) == "-nostore")
 		{
 			uIndex++;
