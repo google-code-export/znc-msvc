@@ -139,9 +139,9 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
 	VC_Redist_CurStepChanged(CurStep);
 
-	if (CurStep = ssInstall) and IsComponentSelected('service') and IsComponentSelected('service/firewall') then
+	if (CurStep = ssPostInstall) and IsComponentSelected('service') and IsComponentSelected('service/firewall') then
 	begin
-		AddFirewallException('ZNC IRC Bouncer', ExpandConstant('{app}\ZNC_Service.exe'));
+		AddFirewallException('ZNC IRC Bouncer Service', ExpandConstant('{app}\ZNC_Service.exe'));
 	end;
 end;
 
@@ -149,6 +149,6 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
 	if CurUninstallStep = usUninstall then
 	begin
-		RemoveFirewallException(ExpandConstant('{app}\ZNC_Service.exe'));
+		RemoveFirewallException('ZNC IRC Bouncer Service', ExpandConstant('{app}\ZNC_Service.exe'));
 	end;
 end;
