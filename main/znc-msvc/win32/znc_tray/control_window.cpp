@@ -336,13 +336,19 @@ bool CControlWindow::OnWmCommand(UINT uCmd)
 	case WMC_CLOSE_TRAY:
 	case IDM_QUIT:
 		if(m_statusFlag == ZS_NOT_INSTALLED || ::MessageBox(m_hwndDlg,
-			L"You are closing ZNC's tray icon. The ZNC service will keep running, if started. "
+			L"You are about to close ZNC's tray icon. The ZNC service will keep running, if started. "
 			L"Do you want to continue?", L"Confirm", MB_ICONQUESTION | MB_YESNO)
 			== IDYES)
 			// :TODO: put together message based on m_statusFlag
 		{
 			::DestroyWindow(m_hwndDlg);
 		}
+		return true;
+
+	case IDM_ABOUT:
+		::MessageBox(m_hwndDlg, L"ZNC is © 2004-2012 all contributors, please see the AUTHORS file for details.\r\n\r\nZNC Tray © Ingmar Runge 2012\r\n\r\n"
+			L"This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License version 2 as published by the Free Software Foundation.",
+			L"About", MB_ICONINFORMATION | MB_OK);
 		return true;
 
 	case IDC_BTN_START:

@@ -62,6 +62,10 @@ echo ********************** Copying support files... **********************
 copy release\* build-temp\x86\znc
 copy release\* build-temp\x64\znc
 
+FOR %%f in (AUTHORS LICENSE LICENSE.OpenSSL) DO (
+	copy znc-msvc\%%f build-temp\x86\znc\%%f.txt
+	copy znc-msvc\%%f build-temp\x64\znc\%%f.txt
+)
 
 echo ****************** Copying web interface skin files... ********************
 

@@ -11,8 +11,8 @@
 [Setup]
 AppId={{819933F3-A105-4B40-8920-6D74139B5464}
 AppName=ZNC IRC Bouncer
-AppVerName=ZNC 0.204
-AppVersion=0.204
+AppVerName=ZNC 0.206
+AppVersion=0.206
 AppPublisher=Ingmar Runge
 AppPublisherURL=http://znc-msvc.googlecode.com/
 DefaultDirName={pf}\ZNC
@@ -28,6 +28,8 @@ MinVersion=0,5.1sp2
 UninstallDisplayIcon={app}\ZNC_Tray.exe
 UninstallDisplayName=ZNC IRC Bouncer
 SignTool=kSign /d $qZNC IRC Bouncer$q /du $qhttp://znc-msvc.googlecode.com/$q $f
+WizardImageFile=compiler:WizModernImage-IS.bmp
+WizardSmallImageFile=compiler:WizModernSmallImage-IS.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -80,6 +82,10 @@ Source: "{#SourceCodeDir}\webskins\_default_\*"; DestDir: "{app}\webskins\_defau
 Source: "{#SourceCodeDir}\webskins\dark-clouds\*"; DestDir: "{app}\webskins\dark-clouds"; Excludes: ".svn"; Flags: recursesubdirs; Components: webskins\darkclouds
 Source: "{#SourceCodeDir}\webskins\forest\*"; DestDir: "{app}\webskins\forest"; Excludes: ".svn"; Flags: recursesubdirs; Components: webskins\forest
 Source: "{#SourceCodeDir}\webskins\ice\*"; DestDir: "{app}\webskins\ice"; Excludes: ".svn"; Flags: recursesubdirs; Components: webskins\ice
+
+Source: "{#SourceCodeDir}\AUTHORS"; DestDir: "{app}"; DestName: "AUTHORS.txt"
+Source: "{#SourceCodeDir}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"
+Source: "{#SourceCodeDir}\LICENSE.OpenSSL"; DestDir: "{app}"; DestName: "LICENSE.OpenSSL.txt"
 
 [Icons]
 Name: "{group}\ZNC Service Control"; Filename: "{app}\ZNC_Tray.exe"; Components: service/tray
