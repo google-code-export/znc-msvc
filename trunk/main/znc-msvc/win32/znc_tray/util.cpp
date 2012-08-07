@@ -76,21 +76,27 @@ bool CUtil::EnforceDEP()
 bool CUtil::WinVerAtLeast(DWORD dwMajor, DWORD dwMinor, WORD dwServicePack)
 {
 	OSVERSIONINFOEX l_osver = { sizeof(OSVERSIONINFOEX), 0 };
+	l_osver.dwPlatformId = VER_PLATFORM_WIN32_NT;
 	l_osver.dwMajorVersion = dwMajor;
 	l_osver.dwMinorVersion = dwMinor;
 
 	DWORDLONG dwlConditionMask = 0;
+	VER_SET_CONDITION(dwlConditionMask, VER_PLATFORMID, VER_EQUAL);
 	VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
 	VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+	DWORD dwlInfo = VER_PLATFORMID | VER_MAJORVERSION | VER_MINORVERSION;
 
 	if(dwServicePack != -1)
 	{
 		l_osver.wServicePackMajor = dwServicePack;
 
 		VER_SET_CONDITION(dwlConditionMask, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+
+		dwlInfo |= VER_SERVICEPACKMAJOR;
 	}
 
-	return (::VerifyVersionInfo(&l_osver, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE);
+	return (::VerifyVersionInfo(&l_osver, dwlInfo, dwlConditionMask) != FALSE);
 }
 
 

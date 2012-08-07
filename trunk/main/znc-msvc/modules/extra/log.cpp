@@ -67,7 +67,7 @@ void CLogMod::PutLog(const CString& sLine, const CString& sWindow /*= "Status"*/
 	timeinfo = localtime(&curtime);
 
 	// Generate file name
-	if (!strftime(buffer, sizeof(buffer), m_sLogPath.c_str(), timeinfo))
+	if (!strftime_validating(buffer, sizeof(buffer), m_sLogPath.c_str(), timeinfo))
 	{
 		DEBUG("Could not format log path [" << sPath << "]");
 		return;

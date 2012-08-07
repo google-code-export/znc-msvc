@@ -402,24 +402,27 @@ void CServiceStatus::WatchWait()
 	// get a separate service handle for this thread:
 	SC_HANDLE l_service = ::OpenService(m_scm, m_serviceName, SERVICE_QUERY_STATUS);
 
-	bool bFallback;
-
-	if(CServiceStatus::IsNT6())
+	if(l_service)
 	{
-		bFallback = (this->WatchWaitNT6(l_service) == false);
-	}
-	else
-	{
-		// legacy OS (pre-Vista):
-		bFallback = true;
-	}
+		bool bFallback;
 
-	if(bFallback)
-	{
-		this->WatchWaitFallback(l_service);
-	}
+		if(CServiceStatus::IsNT6())
+		{
+			bFallback = (this->WatchWaitNT6(l_service) == false);
+		}
+		else
+		{
+			// legacy OS (pre-Vista):
+			bFallback = true;
+		}
 
-	::CloseServiceHandle(l_service);
+		if(bFallback)
+		{
+			this->WatchWaitFallback(l_service);
+		}
+
+		::CloseServiceHandle(l_service);
+	}
 }
 
 
@@ -535,13 +538,15 @@ bool CServiceStatus::IsNT6()
 {
 	// check for OS support:
 	OSVERSIONINFOEXW l_osver = { sizeof(OSVERSIONINFOEXW), 0 };
+	l_osver.dwPlatformId = VER_PLATFORM_WIN32_NT;
 	l_osver.dwMajorVersion = 6;
 
 	DWORDLONG dwlVerCond = 0;
+	VER_SET_CONDITION(dwlVerCond, VER_PLATFORMID, VER_EQUAL);
 	VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
 	VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
 
-	return (::VerifyVersionInfo(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond) == TRUE);
+	return (::VerifyVersionInfo(&l_osver, VER_PLATFORMID | VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond) == TRUE);
 }
 
 
