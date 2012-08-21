@@ -7,6 +7,7 @@
  */
 
 #ifndef UNICODE
+// ZNC hack...
 #define UNICODE
 #endif
 

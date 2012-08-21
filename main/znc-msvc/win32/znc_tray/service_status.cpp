@@ -142,7 +142,7 @@ struct start_stop_service_proc_data_t
 
 void CServiceStatus::StartService(HWND a_hwnd)
 {
-	if(this->IsRunning())
+	if(this->IsRunning()) // implicit OpenService()
 	{
 		return;
 	}
@@ -167,6 +167,11 @@ void CServiceStatus::StartService(HWND a_hwnd)
 void CServiceStatus::StopService(HWND a_hwnd)
 {
 	SERVICE_STATUS ss = {0};
+
+	if(!this->OpenService())
+	{
+		return;
+	}
 
 	if(::QueryServiceStatus(m_hService, &ss) &&
 		(ss.dwCurrentState == SERVICE_STOPPED || ss.dwCurrentState == SERVICE_STOP_PENDING))

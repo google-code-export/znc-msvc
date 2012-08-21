@@ -10,6 +10,7 @@
 
 #include "tray_icon.hpp"
 #include "service_status.hpp"
+#include "znc_setup_wizard.h"
 
 namespace ZNCTray
 {
@@ -37,6 +38,7 @@ public:
 	void Hide();
 
 protected:
+	// main properties:
 	HWND m_hwndDlg;
 	std::shared_ptr<CTrayIcon> m_trayIcon;
 
@@ -48,6 +50,7 @@ protected:
 	std::shared_ptr<CServiceStatus> m_serviceStatus;
 	EServiceStatus m_statusFlag;
 
+	// main methods:
 	bool CreateDlg();
 	int MessageLoop();
 	static INT_PTR CALLBACK DialogProcStatic(HWND, UINT, WPARAM, LPARAM);
@@ -60,6 +63,10 @@ protected:
 
 	void DetectServiceStatus();
 	void UpdateUIWithServiceStatus();
+
+	// initial wizard handling members:
+	std::shared_ptr<CInitialZncConf> m_initialConf;
+	void OnServiceFirstStarted(bool a_started);
 };
 
 

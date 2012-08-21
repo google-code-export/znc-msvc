@@ -68,6 +68,9 @@
     <ClInclude Include="..\znc_tray\znc_setup_wizard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\znc_tray\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\znc_tray\ZNC_Tray.rc">

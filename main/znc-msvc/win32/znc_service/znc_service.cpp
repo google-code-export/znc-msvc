@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2009 laszlo.tamas.szabo
+ * Copyright (C) 2012 Ingmar Runge
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ */
+
 #include "stdafx.hpp"
 #include "znc_service.h"
 #include "registry.h"

@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2009 laszlo.tamas.szabo
+ * Copyright (C) 2012 Ingmar Runge
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation.
+ */
+
 #include "stdafx.hpp"
 #include "znc_service.h"
 #include <getopt.h>
@@ -18,8 +27,8 @@ static void GenerateHelp(const char *appname) {
 	CUtils::PrintMessage("\t-i, --install      Install ZNC service.");
 	CUtils::PrintMessage("\t-h, --uninstall    Uninstall ZNC service");
 	CUtils::PrintMessage("The only option is:");
-	CUtils::PrintMessage("\t-d, --datadir      Set a different znc repository (default is ~/.znc)\n");
-	CUtils::PrintMessage("If there's no .znc directory in ZNC's directory, you have to specify its path with --datadir");
+	CUtils::PrintMessage("\t-d, --datadir      Set a different znc repository (default is read from ServiceDataDir in HKLM\\SOFTWARE\\ZNC)\n");
+	CUtils::PrintMessage("You do not normally have to use --datadir.");
 }
 
 // ToDo: implement --install and -- uninstall functions
