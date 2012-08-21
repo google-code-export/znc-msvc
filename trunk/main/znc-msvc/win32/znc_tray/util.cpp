@@ -100,6 +100,14 @@ bool CUtil::WinVerAtLeast(DWORD dwMajor, DWORD dwMinor, WORD dwServicePack)
 }
 
 
+bool CUtil::CreateFolderPath(const std::wstring& a_path)
+{
+	int r = ::SHCreateDirectoryEx(0, a_path.c_str(), NULL);
+
+	return (r == ERROR_SUCCESS || r == ERROR_FILE_EXISTS || r == ERROR_ALREADY_EXISTS);
+}
+
+
 CResourceBitmap::CResourceBitmap(int resId) :
 	m_hGlobal(NULL)
 {

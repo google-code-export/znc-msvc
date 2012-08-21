@@ -13,6 +13,7 @@ class CZNCSetupWizard
 public:
 	
 	static std::wstring GetServiceConfDirPath();
+	static bool WriteDefaultServiceConfDirPath();
 	static std::wstring GetServiceZncConfPath();
 	static bool DoesServiceConfigExist();
 

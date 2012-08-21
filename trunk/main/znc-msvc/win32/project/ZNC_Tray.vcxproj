@@ -242,6 +242,7 @@ xcopy /y $(TargetDir)$(TargetName).pdb $(SolutionDir)..\..\..\build-out\$(Platfo
     <ClInclude Include="..\src\registry.h" />
     <ClInclude Include="..\znc_tray\control_window.hpp" />
     <ClInclude Include="..\znc_tray\service_status.hpp" />
+    <ClInclude Include="..\znc_tray\util.h" />
     <ClInclude Include="..\znc_tray\znc_setup_wizard.h" />
     <ClInclude Include="..\znc_tray\stdafx.hpp" />
     <ClInclude Include="..\znc_tray\tray_icon.hpp" />

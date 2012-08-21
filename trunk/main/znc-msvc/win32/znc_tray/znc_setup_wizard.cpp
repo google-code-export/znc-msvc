@@ -26,6 +26,30 @@ std::wstring CZNCSetupWizard::GetServiceConfDirPath()
 }
 
 
+bool CZNCSetupWizard::WriteDefaultServiceConfDirPath()
+{
+	CRegistryKey l_key(HKEY_LOCAL_MACHINE);
+
+	if(l_key.OpenForWriting(L"SOFTWARE\\ZNC"))
+	{
+		wchar_t l_buf[1024] = {0};
+
+		if(SUCCEEDED(::SHGetFolderPath(0, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, l_buf)) && ::PathIsDirectory(l_buf))
+		{
+			::PathAddBackslash(l_buf);
+
+			std::wstring l_path(l_buf);
+
+			l_path += L"ZNC\\Configuration";
+
+			return l_key.WriteString(L"ServiceDataDir", l_path);
+		}
+	}
+
+	return false;
+}
+
+
 std::wstring CZNCSetupWizard::GetServiceZncConfPath()
 {
 	return GetServiceConfDirPath() + L"\\configs\\znc.conf";
