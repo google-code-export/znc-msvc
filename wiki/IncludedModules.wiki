@@ -1,5 +1,15 @@
 #summary Lists all modules that are included with the binaries download
-#labels Phase-Support
+#labels Phase-Support,Deprecated
+
+.
+
+.
+
+*As of August 2012, this page won't be updated any more. Please refer to the source files or binary distribution for module lists.*
+
+.
+
+.
 
 Colors: <font color="green">Green</font> means 'shipped with the official znc package', <font color="blue">Blue</font> means 'shipped in [http://en.znc.in/wiki/ZNC-Extra znc-extra]' and <font color="orange">Orange</font> means 'downloaded from [http://people.znc.in/~psychon/znc/modules/ ~psychon] or [http://en.znc.in/wiki/SVN crox' SVN] or somewhere else.
 
