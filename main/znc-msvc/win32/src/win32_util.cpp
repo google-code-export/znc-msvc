@@ -8,19 +8,21 @@
  */
 
 #include "stdafx.hpp"
-#include "znc_tray.hpp"
+#include "win32_util.h"
 
-// Credit for most of these utility functions:
+// Credit for some of these utility functions:
 // cxxjoe @ http://code.google.com/p/infekt/source/browse/trunk/src/lib/util.cpp
 // GPLv2 2011
 
+#pragma comment(lib, "Shlwapi.lib")
 
-bool CUtil::RemoveCwdFromDllSearchPath()
+
+bool CWinUtils::RemoveCwdFromDllSearchPath()
 {
 	// available from XP SP1:
-	if(CUtil::WinVerAtLeast(5, 1, 1))
+	if(CWinUtils::WinVerAtLeast(5, 1, 1))
 	{
-		typedef BOOL (WINAPI *fsdd)(LPCTSTR);
+		typedef BOOL (WINAPI *fsdd)(LPCWSTR);
 
 		// remove the current directory from the DLL search path by calling SetDllDirectory:
 		fsdd l_fsdd = (fsdd)GetProcAddress(GetModuleHandleW(L"Kernel32.dll"), "SetDllDirectory");
@@ -34,7 +36,7 @@ bool CUtil::RemoveCwdFromDllSearchPath()
 }
 
 
-bool CUtil::HardenHeap()
+bool CWinUtils::HardenHeap()
 {
 #ifndef _DEBUG
 	// Activate program termination on heap corruption.
@@ -54,7 +56,7 @@ bool CUtil::HardenHeap()
 #define PROCESS_DEP_ENABLE 0x01
 #endif
 
-bool CUtil::EnforceDEP()
+bool CWinUtils::EnforceDEP()
 {
 #ifndef _WIN64
 	// Explicitly activate DEP, especially important for XP SP3.
@@ -73,9 +75,9 @@ bool CUtil::EnforceDEP()
 }
 
 
-bool CUtil::WinVerAtLeast(DWORD dwMajor, DWORD dwMinor, WORD dwServicePack)
+bool CWinUtils::WinVerAtLeast(DWORD dwMajor, DWORD dwMinor, WORD dwServicePack)
 {
-	OSVERSIONINFOEX l_osver = { sizeof(OSVERSIONINFOEX), 0 };
+	OSVERSIONINFOEXW l_osver = { sizeof(OSVERSIONINFOEXW), 0 };
 	l_osver.dwPlatformId = VER_PLATFORM_WIN32_NT;
 	l_osver.dwMajorVersion = dwMajor;
 	l_osver.dwMinorVersion = dwMinor;
@@ -96,81 +98,39 @@ bool CUtil::WinVerAtLeast(DWORD dwMajor, DWORD dwMinor, WORD dwServicePack)
 		dwlInfo |= VER_SERVICEPACKMAJOR;
 	}
 
-	return (::VerifyVersionInfo(&l_osver, dwlInfo, dwlConditionMask) != FALSE);
+	return (::VerifyVersionInfoW(&l_osver, dwlInfo, dwlConditionMask) != FALSE);
 }
 
 
-bool CUtil::CreateFolderPath(const std::wstring& a_path)
+bool CWinUtils::CreateFolderPath(const std::wstring& a_path)
 {
-	int r = ::SHCreateDirectoryEx(0, a_path.c_str(), NULL);
+	int r = ::SHCreateDirectoryExW(0, a_path.c_str(), NULL);
 
 	return (r == ERROR_SUCCESS || r == ERROR_FILE_EXISTS || r == ERROR_ALREADY_EXISTS);
 }
 
 
-CResourceBitmap::CResourceBitmap(int resId) :
-	m_hGlobal(NULL)
+std::wstring CWinUtils::GetExePath()
 {
-	HRSRC hRes = ::FindResource(g_hInstance, MAKEINTRESOURCE(resId), L"PNG");
+	WCHAR l_buf[1000] = {0};
+	WCHAR l_buf2[1000] = {0};
 
-	if(!hRes)
-	{
-		return;
-	}
+	::GetModuleFileNameW(NULL, (LPWCH)l_buf, 999);
+	::GetLongPathNameW(l_buf, l_buf2, 999);
 
-	DWORD dwSize = ::SizeofResource(g_hInstance, hRes);
-	const void *pResData = ::LockResource(
-		::LoadResource(g_hInstance, hRes));
-
-	if(dwSize < 1 || !pResData)
-	{
-		return;
-	}
-
-	HGLOBAL hGlob = ::GlobalAlloc(GMEM_MOVEABLE, dwSize);
-
-	if(hGlob)
-	{
-		void *pGlobBuf = ::GlobalLock(hGlob);
-
-		if(pGlobBuf)
-		{
-			memcpy_s(pGlobBuf, dwSize, pResData, dwSize);
-
-			IStream *pStream;
-			if(SUCCEEDED(::CreateStreamOnHGlobal(hGlob, FALSE, &pStream)))
-			{
-				Gdiplus::Bitmap* gdipBmp = Gdiplus::Bitmap::FromStream(pStream);
-
-				// done its duty here, Bitmap probably keeps a ref:
-				pStream->Release();
-
-				if(gdipBmp && gdipBmp->GetLastStatus() == Gdiplus::Ok)
-				{
-					// it worked!
-					m_hGlobal = hGlob;
-					m_bmp = std::shared_ptr<Gdiplus::Bitmap>(gdipBmp);
-
-					return; // postpone cleanup to destructor! ;)
-				}
-
-				delete gdipBmp;
-			}
-
-			::GlobalUnlock(pGlobBuf);
-		}
-
-		::GlobalFree(hGlob);
-	}
+	return l_buf2;
 }
 
-CResourceBitmap::~CResourceBitmap()
-{
-	m_bmp.reset();
 
-	if(m_hGlobal)
-	{
-		::GlobalUnlock(m_hGlobal);
-		::GlobalFree(m_hGlobal);
-	}
+std::wstring CWinUtils::GetExeDir()
+{
+	WCHAR l_buf[1000] = {0};
+	WCHAR l_buf2[1000] = {0};
+
+	::GetModuleFileNameW(NULL, (LPWCH)l_buf, 999);
+	::GetLongPathNameW(l_buf, l_buf2, 999);
+	::PathRemoveFileSpecW(l_buf2);
+	::PathRemoveBackslashW(l_buf2);
+
+	return l_buf2;
 }

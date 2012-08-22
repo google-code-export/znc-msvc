@@ -9,7 +9,10 @@
 
 #pragma once
 
-class CUtil
+#include <Windows.h>
+#include <string>
+
+class CWinUtils
 {
 public:
 	static bool RemoveCwdFromDllSearchPath();
@@ -17,4 +20,6 @@ public:
 	static bool EnforceDEP();
 	static bool WinVerAtLeast(DWORD dwMajor, DWORD dwMinor, WORD dwServicePack = -1);
 	static bool CreateFolderPath(const std::wstring& a_path);
+	static std::wstring GetExePath();
+	static std::wstring GetExeDir();
 };

@@ -33,6 +33,9 @@
     <ClCompile Include="..\..\modules\extra_win32\win32_service_helper.cpp">
       <Filter>Related Modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\win32_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\getopt.h">

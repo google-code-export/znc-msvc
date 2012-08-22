@@ -31,8 +31,6 @@ static void GenerateHelp(const char *appname) {
 	CUtils::PrintMessage("You do not normally have to use --datadir.");
 }
 
-// ToDo: implement --install and -- uninstall functions
-
 int main(int argc, char *argv[])
 {
 	CZNCWindowsService Svc;
