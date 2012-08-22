@@ -12,8 +12,6 @@
 #include "registry.h"
 #include "win32_util.h"
 
-#define ERROR_EXITCODE -1
-
 
 CZNCWindowsService *CZNCWindowsService::thisSvc = 0;
 
@@ -75,18 +73,18 @@ DWORD CZNCWindowsService::Init()
 
 	hEventLog = RegisterEventSourceW(NULL, ZNC_EVENT_PROVIDER);
 	if (hEventLog == NULL)
-		return ERROR_EXITCODE;
+		return ::GetLastError();
 
 	if(CZNC::GetCoreVersion() != VERSION)
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, INIT_CATEGORY, MSG_DLL_VERSION_MISMATCH, NULL, 0, 0, NULL, NULL);
-		return ERROR_EXITCODE;
+		return ERROR_BAD_ENVIRONMENT;
 	}
 
 	if (!InitCsocket())
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, INIT_CATEGORY, MSG_CSOCKET_FAILED, NULL, 0, 0, NULL, NULL);
-		return ERROR_EXITCODE;
+		return ERROR_BAD_ENVIRONMENT;
 	}
 
 	if (thisSvc->sDataDir.empty())
@@ -125,19 +123,22 @@ DWORD CZNCWindowsService::Init()
 
 	if(!pZNC->ParseConfig("", sError))
 	{
+		DWORD l_errno = ::GetLastError();
+
 		LPSTR pInsertStrings[2] = { NULL };
 		pInsertStrings[0] = const_cast<char*>(thisSvc->sDataDir.c_str());
 		pInsertStrings[1] = const_cast<char*>(sError.c_str());
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_CONFIG_CORRUPTED, NULL, 2, 0, (LPCSTR*)pInsertStrings, NULL);
 		CZNC::_Reset();
-		return ERROR_EXITCODE;
+
+		return l_errno;
 	}
 
 	if(!pZNC->OnBoot())
 	{
 		ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, CONFIG_CATEGORY, MSG_MODULE_BOOT_ERROR, NULL, 0, 0, NULL, NULL);
 		CZNC::_Reset();
-		return ERROR_EXITCODE;
+		return ERROR_INVALID_PARAMETER;
 	}
 
 	return NO_ERROR;
@@ -155,16 +156,22 @@ DWORD CZNCWindowsService::Loop()
 	}
 	catch (CException e)
 	{
-		/// :TODO: implement! ///
 		if(e.GetType() == CException::EX_Shutdown)
 		{
+			// by reporting a status of SERVICE_STOPPED and exiting cleanly, we
+			// halt our own service.
 			ReportEvent(hEventLog, EVENTLOG_WARNING_TYPE, RUNTIME_CATEGORY, MSG_RUNTIME_SHUTDOWN, NULL, 0, 0, NULL, NULL);
 			dwRet = 0;
 		}
 		else if(e.GetType() == CException::EX_Restart)
 		{
+			// we can't restart from within this service without causing possible nasty endless restart
+			// loops, having only one reliable restart per day and/or causing lots of error-type event log entries.
+			// so instead we just shut down.
+			// note: because win32_service_helper.cpp intercepts the restart command, this code shouldn't ever be reached,
+			// but just in case, we do keep it.
 			ReportEvent(hEventLog, EVENTLOG_WARNING_TYPE, RUNTIME_CATEGORY, MSG_RUNTIME_RESTART, NULL, 0, 0, NULL, NULL);
-			dwRet = ERROR_EXITCODE;
+			dwRet = ERROR_RESTART_APPLICATION;
 		}
 	}
 
@@ -178,8 +185,7 @@ VOID CZNCWindowsService::ReportServiceStatus(DWORD dwCurrentState, DWORD dwWin32
 	serviceStatus.dwCurrentState = dwCurrentState;
 	if(dwWin32ExitCode != NO_ERROR)
 	{
-		serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
-		serviceStatus.dwServiceSpecificExitCode = dwWin32ExitCode;
+		serviceStatus.dwWin32ExitCode = dwWin32ExitCode;
 	}
 	serviceStatus.dwWaitHint = dwWaitHint;
 
@@ -219,7 +225,9 @@ VOID WINAPI CZNCWindowsService::ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 	}
 
 	thisSvc->ReportServiceStatus(SERVICE_RUNNING, NO_ERROR, 0);
+
 	Result = thisSvc->Loop();
+
 	thisSvc->ReportServiceStatus(SERVICE_STOPPED, Result, 0);
 }
 
@@ -273,13 +281,33 @@ DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
 
 			SERVICE_DELAYED_AUTO_START_INFO l_sdasi = { 0 };
 			l_sdasi.fDelayedAutostart = TRUE;
-			::ChangeServiceConfig2(l_hsvc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, &l_sdasi);
+			::ChangeServiceConfig2W(l_hsvc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, &l_sdasi);
 		}
 
 		// update description:
 		SERVICE_DESCRIPTIONW l_sd = { 0 };
 		l_sd.lpDescription = ZNC_SERVICE_DESCRIPTION;
 		::ChangeServiceConfig2W(l_hsvc, SERVICE_CONFIG_DESCRIPTION, &l_sd);
+
+		// set recovery options:
+		SERVICE_FAILURE_ACTIONSW l_sfa = { 0 };
+		SC_ACTION l_actions[3];
+		l_sfa.dwResetPeriod = 86400; // in seconds
+		l_sfa.cActions = 3;
+		l_actions[0].Delay = 0;
+		l_actions[0].Type = SC_ACTION_RESTART;
+		l_actions[1].Delay = 60000;
+		l_actions[1].Type = SC_ACTION_RESTART;
+		l_actions[2].Delay = 0;
+		l_actions[2].Type = SC_ACTION_NONE;
+		l_sfa.lpsaActions = (LPSC_ACTION)&l_actions;
+		::ChangeServiceConfig2W(l_hsvc, SERVICE_CONFIG_FAILURE_ACTIONS, &l_sfa);
+
+		if(CWinUtils::WinVerAtLeast(6, 0))
+		{
+			SERVICE_FAILURE_ACTIONS_FLAG l_saf = { FALSE };
+			::ChangeServiceConfig2W(l_hsvc, SERVICE_CONFIG_FAILURE_ACTIONS_FLAG, &l_saf);
+		}
 
 		::CloseServiceHandle(l_hsvc);
 

@@ -132,6 +132,7 @@ nmake -f Modules.make CFG=$(Platform)-$(Configuration) clean</NMakeCleanCommandL
     <ClCompile Include="..\..\modules\crypt.cpp" />
     <ClCompile Include="..\..\modules\extra\ctcpflood.cpp" />
     <ClCompile Include="..\..\modules\disconkick.cpp" />
+    <ClCompile Include="..\..\modules\extra_win32\win32_service_helper.cpp" />
     <ClCompile Include="..\..\modules\fail2ban.cpp" />
     <ClCompile Include="..\..\modules\extra\fakeonline.cpp" />
     <ClCompile Include="..\..\modules\extra_win32\fish.cpp" />
