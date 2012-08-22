@@ -1,0 +1,19 @@
+#summary How to migrate to ZNC for Windows v0.206 and later from an earlier version.
+#labels Phase-Deploy,Featured
+
+==Scenario 1==
+If you were running ZNC from the command line, nothing much changes for you. Delete your old ZNC installation folder, download the new ZIP archive or use the installer and run `znc --datadir=C:\blah` or whatever you were using, just like before. Happy IRCing!
+
+
+==Scenario 2==
+If you were already running ZNC as a service, there are some things to consider. First, you should make a backup of your .znc config directory (probably located inside your ZNC installation folder).
+Next, you have to stop and delete the service from Windows' registry, e.g. like this:
+
+  * `net stop ZNC`
+  * `sc delete ZNC`
+  * Delete the registry key `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\eventlog\Application\ZNCServiceEventProvider`
+
+Then, delete your old ZNC program files. Next up, install the new ZNC version. I strongly recommend you use the provided setup file as that will take care of everything, including adding a service entry, configuring it and adding a Windows Firewall exception for ZNC_Service.exe. You will be asked for the path to your configuration directory during setup. I suggest you use the default value of `C:\ProgramData\ZNC\Configuration` and move the contents of your old .znc folder there.
+If you decide against using the provided setup file, please refer to the instructions on [ServiceSetup].
+
+Please be aware that the service runs as "Local Service" now. Do not change it to "SYSTEM". Seriously, running network services under the SYSTEM account exposes your system to great possible damage, so don't do it. Happy IRCing!
