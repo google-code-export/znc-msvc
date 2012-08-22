@@ -25,12 +25,30 @@ public:
 	virtual ~CServiceHelperMod();
 
 	/* ZNC events */
+	EModRet OnStatusCommand(CString& sLine);
 	void OnModCommand(const CString& sLine);
 
 protected:
 	/* local methods */
 
 };
+
+
+CModule::EModRet CServiceHelperMod::OnStatusCommand(CString& sLine)
+{
+	if(ZNCWin32ServiceMode() && m_pUser && m_pUser->IsAdmin())
+	{
+		const CString sCommand = sLine.Token(0);
+
+		if(sCommand.Equals("RESTART"))
+		{
+			PutStatus("Error: for technical reasons, restarting ZNC when running as a service is not possible. Please restart ZNC via outside means.");
+			return HALTCORE;
+		}
+	}
+
+	return CONTINUE;
+}
 
 
 void CServiceHelperMod::OnModCommand(const CString& sLine)

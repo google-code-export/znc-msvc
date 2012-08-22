@@ -198,6 +198,9 @@
     <ClCompile Include="..\..\modules\webadmin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\modules\extra_win32\win32_service_helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Modules.make">
