@@ -1,6 +1,21 @@
 #summary Shows how to make ZNC run as a service.
 #labels Deprecated,Phase-Deploy
 
+.
+
+.
+
+.
+
+
+*Important: These instructions only apply to ZNC for Windows before version 0.206 - apart from the removal paragraph, they should not be followed anymore as they are insecure and obsolete! Please read [ServiceSetup] for the current instructions.*
+
+.
+
+.
+
+.
+
 ===Prerequisites===
 
   * We assume that you installed ZNC according to StarterGuide and that you have a working configuration file.
