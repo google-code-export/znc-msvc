@@ -1,6 +1,16 @@
 #summary znc-msvc Changelog.
 #labels Featured,Phase-Support
 
+== 2012-08-22 (0.206) ==
+  * First 0.206 preview release with lots of new things, more 0.206 releases will follow.
+  * Brand-new installer, including service setup, firewall exceptions
+  * Lots of work has been put into running ZNC as a proper Windows service. The documentation is now being updated to reflect this.
+  * A very basic GUI program (ZNC_Tray.exe) to control the service has been created. This will greatly be improved upon in following 0.206 releases.
+  * All executables are now code-signed.
+  * OpenSSL is now 1.0.1c.
+  * All the upstream changes.
+  * Fixed some strftime-related crash bugs (issue 48).
+
 == 2011-11-09 (0.202r2) ==
   * Important bugfix that prevented lots of servers from being connected to. Please refer to issue 39 and revision 339, revision 340 and revision 341 for details.
   * Updated c-ares to git master branch version + patch by [http://c-ares.haxx.se/mail/c-ares-archive-2011-10/0001.shtml Bert Belder].
