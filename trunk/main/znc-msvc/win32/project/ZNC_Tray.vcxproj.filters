@@ -24,9 +24,6 @@
     <ClCompile Include="..\znc_tray\control_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\znc_tray\util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\znc_tray\tray_icon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -40,6 +37,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\znc_tray\znc_setup_wizard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\win32_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\znc_tray\resource_bitmap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,7 +71,7 @@
     <ClInclude Include="..\znc_tray\znc_setup_wizard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\znc_tray\util.h">
+    <ClInclude Include="..\src\win32_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

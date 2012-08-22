@@ -64,7 +64,7 @@ bool CTrayIcon::Add(char a_color)
 
 		this->_InitNotifyIconData(&l_nid);
 
-		l_nid.uVersion = (CUtil::WinVerAtLeast(6, 0) ? NOTIFYICON_VERSION_4 : NOTIFYICON_VERSION);
+		l_nid.uVersion = (CWinUtils::WinVerAtLeast(6, 0) ? NOTIFYICON_VERSION_4 : NOTIFYICON_VERSION);
 
 		::Shell_NotifyIcon(NIM_SETVERSION, &l_nid);
 	}
@@ -164,7 +164,7 @@ void CTrayIcon::_InitNotifyIconData(PNOTIFYICONDATA nid)
 
 	RtlZeroMemory(nid, sizeof(NOTIFYICONDATA));
 
-	if(CUtil::WinVerAtLeast(6, 0))
+	if(CWinUtils::WinVerAtLeast(6, 0))
 	{
 		nid->cbSize = sizeof(NOTIFYICONDATA);
 	}
@@ -179,7 +179,7 @@ void CTrayIcon::_InitNotifyIconData(PNOTIFYICONDATA nid)
 	the icon will stop working ...
 	ref: http://msdn.microsoft.com/en-us/library/windows/desktop/bb773352%28v=vs.85%29.aspx */
 
-	if(CUtil::WinVerAtLeast(6, 1)) // identify icon by GUID on Windows 7
+	if(CWinUtils::WinVerAtLeast(6, 1)) // identify icon by GUID on Windows 7
 	{
 		static const GUID ls_iconGuid = // {C28F9A28-C95E-4E99-ADFD-9A7EFA8530DF}
 			{ 0xc28f9a28, 0xc95e, 0x4e99, { 0xad, 0xfd, 0x9a, 0x7e, 0xfa, 0x85, 0x30, 0xdf } };
@@ -202,7 +202,7 @@ void CTrayIcon::OnWmTrayIconEvent(WPARAM wParam, LPARAM lParam)
 
 	// ref: http://msdn.microsoft.com/en-us/library/windows/desktop/bb773352%28v=vs.85%29.aspx
 
-	if(CUtil::WinVerAtLeast(6, 0)) // NOTIFYICON_VERSION_4
+	if(CWinUtils::WinVerAtLeast(6, 0)) // NOTIFYICON_VERSION_4
 	{
 		uMsg = LOWORD(lParam);
 

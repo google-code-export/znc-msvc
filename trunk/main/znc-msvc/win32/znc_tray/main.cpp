@@ -18,9 +18,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR wszComm
 	g_hInstance = hInstance;
 
 	// enforce some things:
-	CUtil::EnforceDEP();
-	CUtil::HardenHeap();
-	CUtil::RemoveCwdFromDllSearchPath();
+	CWinUtils::EnforceDEP();
+	CWinUtils::HardenHeap();
+	CWinUtils::RemoveCwdFromDllSearchPath();
 
 	// init COM:
 	::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);

@@ -68,7 +68,7 @@ void CControlWindow::InitialSetup()
 	::SendMessage(m_hwndStatusBar, SB_SIMPLE, TRUE, 0);
 
 	// set up UAC button icons:
-	if(CUtil::WinVerAtLeast(6, 0))
+	if(CWinUtils::WinVerAtLeast(6, 0))
 	{
 		::SendDlgItemMessage(m_hwndDlg, IDC_BTN_START, BCM_SETSHIELD, 0, TRUE);
 		::SendDlgItemMessage(m_hwndDlg, IDC_BTN_STOP, BCM_SETSHIELD, 0, TRUE);
@@ -137,7 +137,7 @@ void CControlWindow::Show()
 				const std::wstring l_confDirPath = CZNCSetupWizard::GetServiceConfDirPath() + L"\\configs";
 
 				// ignore any failures, we handle errors from WriteZncConf below:
-				CUtil::CreateFolderPath(l_confDirPath);
+				CWinUtils::CreateFolderPath(l_confDirPath);
 
 				if(m_initialConf->WriteZncConf(CZNCSetupWizard::GetServiceZncConfPath()))
 				{

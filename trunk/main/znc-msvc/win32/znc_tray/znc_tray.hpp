@@ -13,7 +13,7 @@ extern HINSTANCE g_hInstance;
 // obtained through RegisterWindowMessage:
 extern UINT WM_TASKBARCREATED;
 
-#include "util.h"
+#include "win32_util.h"
 
 class CResourceBitmap
 {

@@ -10,6 +10,7 @@
 #include "stdafx.hpp"
 #include "znc_service.h"
 #include "registry.h"
+#include "win32_util.h"
 
 #define ERROR_EXITCODE -1
 
@@ -239,43 +240,6 @@ VOID WINAPI CZNCWindowsService::ControlHandler(DWORD dwControl)
 	return;
 }
 
-/*void CZNCWindowsService::OutputHookProc(int type, const char* text, void *userData)
-{
-	if(type == 2)
-	{
-		LPSTR pInsertStrings[1] = { NULL };
-		pInsertStrings[0] = const_cast<char*>(text);
-		ReportEvent(thisSvc->hEventLog, EVENTLOG_ERROR_TYPE, RUNTIME_CATEGORY, MSG_RUNTIME_ERROR, NULL, 1, 0, (LPCSTR*)pInsertStrings, NULL);
-	}
-}*/
-
-
-#pragma comment(lib, "Shlwapi.lib") // :TODO: move me
-
-static std::wstring GetExePath() // :TODO: move me
-{
-	WCHAR l_buf[1000] = {0};
-	WCHAR l_buf2[1000] = {0};
-
-	::GetModuleFileNameW(NULL, (LPWCH)l_buf, 999);
-	::GetLongPathNameW(l_buf, l_buf2, 999);
-
-	return l_buf2;
-}
-
-static std::wstring GetExeDir() // :TODO: move me
-{
-	WCHAR l_buf[1000] = {0};
-	WCHAR l_buf2[1000] = {0};
-
-	::GetModuleFileNameW(NULL, (LPWCH)l_buf, 999);
-	::GetLongPathNameW(l_buf, l_buf2, 999);
-	::PathRemoveFileSpecW(l_buf2);
-	::PathRemoveBackslashW(l_buf2);
-
-	return l_buf2;
-}
-
 
 DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
 {
@@ -290,7 +254,7 @@ DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
 
 	DWORD l_result = 0;
 	
-	const std::wstring l_exePath = L"\"" + GetExePath() + L"\"";
+	const std::wstring l_exePath = L"\"" + CWinUtils::GetExePath() + L"\"";
 
 	SC_HANDLE l_hsvc = ::CreateServiceW(l_hscm, ZNC_SERVICE_NAME, ZNC_SERVICE_NAME,
 		SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG | SERVICE_START | SERVICE_STOP,
@@ -303,23 +267,13 @@ DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
 	}
 	else
 	{
-		if(!a_startTypeManual)
+		if(!a_startTypeManual && CWinUtils::WinVerAtLeast(6, 0))
 		{
 			// change start type to "auto (delayed)" on supported OSes:
 
-			OSVERSIONINFOEXW l_osver = { sizeof(OSVERSIONINFOEXW), 0 };
-			l_osver.dwMajorVersion = 6;
-
-			DWORDLONG dwlVerCond = 0;
-			VER_SET_CONDITION(dwlVerCond, VER_MAJORVERSION, VER_GREATER_EQUAL);
-			VER_SET_CONDITION(dwlVerCond, VER_MINORVERSION, VER_GREATER_EQUAL);
-
-			if(::VerifyVersionInfoW(&l_osver, VER_MAJORVERSION | VER_MINORVERSION, dwlVerCond))
-			{
-				SERVICE_DELAYED_AUTO_START_INFO l_sdasi = { 0 };
-				l_sdasi.fDelayedAutostart = TRUE;
-				::ChangeServiceConfig2(l_hsvc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, &l_sdasi);
-			}
+			SERVICE_DELAYED_AUTO_START_INFO l_sdasi = { 0 };
+			l_sdasi.fDelayedAutostart = TRUE;
+			::ChangeServiceConfig2(l_hsvc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, &l_sdasi);
 		}
 
 		// update description:
@@ -334,7 +288,7 @@ DWORD CZNCWindowsService::InstallService(bool a_startTypeManual)
 
 		if(l_evlKey.OpenForWriting(L"SYSTEM\\CurrentControlSet\\services\\eventlog\\Application\\" ZNC_EVENT_PROVIDER))
 		{
-			const std::wstring l_eventProviderDllPath = GetExeDir() + L"\\service_provider.dll";
+			const std::wstring l_eventProviderDllPath = CWinUtils::GetExeDir() + L"\\service_provider.dll";
 
 			l_evlKey.WriteDword(L"CategoryCount", 3);
 			l_evlKey.WriteString(L"CategoryMessageFile", l_eventProviderDllPath);
