@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2009-2011 flakes @ EFNet
- * Updated 09 March 2011
+ * Copyright (C) 2009-2012 flakes @ EFNet
+ * Updated 18 October 2012
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 as published
