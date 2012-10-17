@@ -1038,6 +1038,7 @@ protected:
 	CString m_method;
 	bool m_needsAuth;
 	CString m_host;
+	CString m_path;
 	bool m_bHideErrors;
 
 	CTwitterHTTPSock(CTwitterModule *pModInstance, const CString& sMethod, bool bSilentErrors = true) :
@@ -1046,6 +1047,7 @@ protected:
 		m_timedOut = false;
 		m_needsAuth = true;
 		m_host = "api.twitter.com";
+		m_path = "/1";
 	}
 
 	void Timeout()
@@ -1126,14 +1128,14 @@ protected:
 
 	void DoRequest(const CString& sHTTPMethod, const MCString& mParams)
 	{
-		CString sUrl = "https://" + m_host + "/" + m_method;
+		CString sUrl = "https://" + m_host + m_path + "/" + m_method;
 
 		MCString mParamsCopy(mParams);
 		PrepareParameters(sHTTPMethod, sUrl, mParamsCopy, (sHTTPMethod != "POST"));
 
 		if(sHTTPMethod == "POST")
 		{
-			Post(mParamsCopy, m_host, "/" + m_method, 443, true);
+			Post(mParamsCopy, m_host, m_path + "/" + m_method, 443, true);
 		}
 		else
 		{
@@ -1144,7 +1146,7 @@ protected:
 			}
 			sQuery.erase(sQuery.size() - 1);
 
-			Get(m_host, "/" + m_method + sQuery, 443, true);
+			Get(m_host, "/" + m_method + m_path + sQuery, 443, true);
 		}
 	}
 
@@ -1469,6 +1471,7 @@ public:
 		{
 			m_method = "search.atom";
 			m_host = "search.twitter.com";
+			m_path = "";
 			m_needsAuth = false;
 			m_countSupported = false;
 		}
