@@ -1047,7 +1047,7 @@ protected:
 		m_timedOut = false;
 		m_needsAuth = true;
 		m_host = "api.twitter.com";
-		m_path = "/1";
+		m_path = "/1.1";
 	}
 
 	void Timeout()
@@ -1146,7 +1146,7 @@ protected:
 			}
 			sQuery.erase(sQuery.size() - 1);
 
-			Get(m_host, "/" + m_method + m_path + sQuery, 443, true);
+			Get(m_host, m_path + "/" + m_method + sQuery, 443, true);
 		}
 	}
 
@@ -1190,6 +1190,7 @@ public:
 		CTwitterHTTPSock(pModInstance, "oauth/request_token", false)
 	{
 		m_accessToken = false;
+		m_path = "";
 	}
 
 	void Request(const CString& sAccessTokenPIN)
@@ -1256,7 +1257,7 @@ public:
 				{
 					pMod->m_waitingForPIN = true;
 
-					pMod->PutModule("Please open this page in your browser to authorize ZNC: http://twitter.com/oauth/authorize?oauth_callback=oob&oauth_token=" + pMod->m_token);
+					pMod->PutModule("Please open this page in your browser to authorize ZNC: https://twitter.com/oauth/authorize?oauth_callback=oob&oauth_token=" + pMod->m_token);
 					pMod->PutModule("If you allowed ZNC access, now enter the PIN code from the web page!");
 				}
 			}
