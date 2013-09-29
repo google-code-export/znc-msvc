@@ -162,7 +162,7 @@ void CControlWindow::OnServiceFirstStarted(bool a_started)
 {
 	if(!a_started)
 	{
-		::MessageBox(m_hwndDlg, L"The config file has been writted, but starting the service failed for some reason. Please make sure you installed the entire package correctly.",
+		::MessageBox(m_hwndDlg, L"The config file has been written, but starting the service failed for some reason. Please make sure you installed the entire package correctly.",
 			L"ZNC Config", MB_ICONEXCLAMATION);
 
 		return;
