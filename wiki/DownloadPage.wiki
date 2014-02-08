@@ -1,0 +1,13 @@
+#summary ZNC-MSVC downloads
+
+= Current Release =
+
+This is the current work-in-progress ZNC 1.x build for Windows:
+
+* [http://znc-msvc.irsoft.de/downloads/znc-2014-02-08-setup.exe znc-2014-02-08-setup.exe]
+
+Please note that the tray application is not considered stable or ready for production yet.
+
+= Old Releases / Archive =
+
+The archive is available here on Google Code: [http://code.google.com/p/znc-msvc/downloads/list?can=1&q=&sort=-uploaded Archive downloads]
