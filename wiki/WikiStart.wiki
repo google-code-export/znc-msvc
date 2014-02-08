@@ -3,12 +3,13 @@
   * Help setting up ZNC on Windows: StarterGuide
   * Running ZNC as a Windows service: ServiceSetup
 
-  * Release news and history of changes: [Changelog]
+  * Release news and history of changes: [Changelog] (_not up to date_)
   * Help migrating to 0.206 and later from an earlier version: [Migration0206]
 
-  * Help setting up modskype: ModSkypeSetup<br />_modskype turns a ZNC account into a bot that relays messages between IRC channels and Skype chat rooms._
+  * Help setting up modskype: ModSkypeSetup<br />_modskype turns a ZNC account into a bot that relays messages between IRC channels and Skype chat rooms._ (_0.xxx versions only_)
 
-  * Instructions on how to build ZNC on Windows: [BuildingZNC]
+  * Source code on github: [https://github.com/KiNgMaR/znc/tree/msvc]
+  * Instructions on how to build ZNC on Windows: [BuildingZNC] (_not up to date_)
 
   * Help with a certain feature or module: http://www.znc.in/ or irc.efnet.org #znc.
   * Something else? Ask on IRC!
