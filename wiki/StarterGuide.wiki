@@ -8,7 +8,9 @@
 
 ===First Start (1.x)===
   * Uninstall any earlier ZNC versions
-  * Open a new cmd.exe instance, navigate to the `Program Files\ZNC` folder, type `znc_cli.exe --makeconf`, then follow the instructions. When you're done, simply enter `znc_cli` and hit return to start the program.
+  * Now you have to create a configuration file.
+  * Recommended way: use the *ZNC - Create Config File* shortcut from the start menu
+  * Manual way: open a new cmd.exe instance, navigate to the `Program Files\ZNC` folder, type `znc_cli.exe --makeconf`, then follow the instructions. When you're done, simply enter `znc_cli` and hit return to start the program.
   * Your configuration is stored in `%appdata%\ZNC` by default.
 
 ===Notes===
