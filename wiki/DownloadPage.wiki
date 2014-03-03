@@ -16,7 +16,8 @@ Please post your feedback in the issue tracker.
 
 == "Starting the service failed. Make sure it's installed correctly." ==
 
-The GUI is not yet ready for general use - most likely the ZNC configuration is missing. You have to create a configuration file using the shortcut from the start menu, then move + rename the <code>%appdata%\ZNC</code> folder to <code>C:\ProgramData\ZNC\Configuration</code> (Windows Vista / Server 2008 and later).
+The GUI is not yet ready for general use - most likely the ZNC configuration is missing. You have to create a configuration file using the shortcut from the start menu, then move + rename the `%appdata%\ZNC` folder to `C:\ProgramData\ZNC\Configuration` (Windows Vista / Server 2008 and later).
+After that, ensure that the Windows Account "_LOCAL SERVICE_" has read and write permissions on the entire folder and its contents.
 
 == Old Releases / Archive ==
 
