@@ -6,7 +6,7 @@
 
 This is the current work-in-progress ZNC 1.x build for Windows:
 
-  * [http://znc-msvc.irsoft.de/downloads/znc-2014-04-13-setup.exe znc-2014-04-13-setup.exe] (includes updated Heartbleed-fixed OpenSSL)
+  * [http://znc-msvc.irsoft.de/downloads/znc-2014-06-14-setup.exe znc-2014-06-14-setup.exe] (includes updated OpenSSL)
 
 Please note that the tray application is not considered stable or ready for production yet.
 
